@@ -1,0 +1,6 @@
+[run]
+branch = True
+source = nova_dpm
+
+[report]
+ignore_errors = True
