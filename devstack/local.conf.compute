@@ -1,0 +1,21 @@
+#Minimal Contents
+#----------------
+ADMIN_PASSWORD=admin
+MYSQL_PASSWORD=mysql
+RABBIT_PASSWORD=rabbit
+SERVICE_PASSWORD=admin
+SERVICE_TOKEN=service
+
+[[local|localrc]]
+# Enable plugins
+enable_plugin nova-dpm https://git.openstack.org/openstack/nova-dpm.git
+
+# Set to True to install the latest zhmcclient from source
+INSTALL_ZHMCCLIENT=TRUE
+
+#Logging
+#-------
+LOGFILE=/opt/stack/logs/stack.sh.log
+SCREEN_LOGDIR=~/screen_log/
+LOGDAYS=1
+
