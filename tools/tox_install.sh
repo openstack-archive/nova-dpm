@@ -1,65 +1,59 @@
 #!/usr/bin/env bash
 
-# This wrapper for tox's package installer will use the existing package
-# if it exists, else use zuul-cloner if that program exists. That last case should only
-# happen with devs running unit tests locally.
-
-# From the tox.ini config page:
-# install_command=ARGV
-# default:
-# pip install {opts} {packages}
+# Base code from https://github.com/openstack/glance_store/blob/master/tools/tox_install.sh
+#
+# Library constraint file contains version pin that is in conflict with
+# installing the library from source. We should replace the version pin in
+# the constraints file before applying it for from-source installation.
 
 ZUUL_CLONER=/usr/zuul-env/bin/zuul-cloner
 BRANCH_NAME=master
-nova_installed=$(echo "import nova" | python 2>/dev/null ; echo $?)
-NOVA_DIR=$HOME/nova
+LIB_DIR=python-zhmcclient
+LIB_NAME=zhmcclient
+LIB_LOCATION=git+https://github.com/zhmcclient/$LIB_DIR#egg=$LIB_NAME
+requirements_installed=$(echo "import openstack_requirements" | python 2>/dev/null ; echo $?)
 
-set -e
-set -x
+set -e -x
 
-install_cmd="pip install -c$1"
+CONSTRAINTS_FILE=$1
 shift
 
-# The devstack based functional tests have nova checked out in
-# $NOVA_DIR on the test systems - with the change to test in it.
-# Use this directory if it exists, so that this script installs the
-# nova version to test here.
-# Note that the functional tests use sudo to run tox and thus
-# variables used for zuul-cloner to check out the correct version are
-# lost.
-if [ -d "$NOVA_DIR" ]; then
-    echo "FOUND nova code at $NOVA_DIR - using"
-    $install_cmd -U -e $NOVA_DIR
-elif [ $nova_installed -eq 0 ]; then
-    echo "ALREADY INSTALLED" > /tmp/tox_install.txt
-    location=$(python -c "import nova; print(nova.__file__)")
-    echo "ALREADY INSTALLED at $location"
+install_cmd="pip install"
+mydir=$(mktemp -dt "$LIB_NAME-tox_install-XXXXXXX")
+trap "rm -rf $mydir" EXIT
+localfile=$mydir/upper-constraints.txt
+if [[ $CONSTRAINTS_FILE != http* ]]; then
+    CONSTRAINTS_FILE=file://$CONSTRAINTS_FILE
+fi
+curl $CONSTRAINTS_FILE -k -o $localfile
+install_cmd="$install_cmd -c$localfile"
 
-    echo "Nova already installed; using existing package"
+if [ $requirements_installed -eq 0 ]; then
+    echo "ALREADY INSTALLED" > /tmp/tox_install.txt
+    echo "Requirements already installed; using existing package"
 elif [ -x "$ZUUL_CLONER" ]; then
     echo "ZUUL CLONER" > /tmp/tox_install.txt
-    # Make this relative to current working directory so that
-    # git clean can remove it. We cannot remove the directory directly
-    # since it is referenced after $install_cmd -e.
-    mkdir -p .tmp
-    NOVA_DIR=$(/bin/mktemp -d -p $(pwd)/.tmp)
-    pushd $NOVA_DIR
+    pushd $mydir
     $ZUUL_CLONER --cache-dir \
         /opt/git \
         --branch $BRANCH_NAME \
         git://git.openstack.org \
-        openstack/nova
-    cd openstack/nova
+        openstack/requirements
+    cd openstack/requirements
     $install_cmd -e .
     popd
 else
     echo "PIP HARDCODE" > /tmp/tox_install.txt
-    if [ -z "$NOVA_PIP_LOCATION" ]; then
-        NOVA_PIP_LOCATION="git+https://git.openstack.org/openstack/nova@$BRANCH_NAME#egg=nova"
+    if [ -z "$REQUIREMENTS_PIP_LOCATION" ]; then
+        REQUIREMENTS_PIP_LOCATION="git+https://git.openstack.org/openstack/requirements@$BRANCH_NAME#egg=requirements"
     fi
-    $install_cmd -U -e ${NOVA_PIP_LOCATION}
+    $install_cmd -U -e ${REQUIREMENTS_PIP_LOCATION}
 fi
+
+# This is the main purpose of the script: Allow local installation of
+# the current repo. It is listed in constraints file and thus any
+# install will be constrained and we need to unconstrain it.
+edit-constraints $localfile -- $LIB_NAME "-e $LIB_LOCATION"
 
 $install_cmd -U $*
 exit $?
-
