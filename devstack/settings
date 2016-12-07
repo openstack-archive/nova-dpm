@@ -1,0 +1,21 @@
+# Devstack settings
+# These defaults can be overridden in the localrc section of the local.conf file
+
+# Add nova-dpm to enabled services
+enable_service nova-dpm
+
+# NovaLink install/upgrade settings
+INSTALL_ZHMCCLIENT=$(trueorfalse False INSTALL_ZHMCCLIENT)
+
+# Nova settings
+DPM_DRIVER=dpm.driver.DPMDriver
+
+# dpm settings
+HMC=$HMC
+HMC_USERNAME=$HMC_USERNAME
+HMC_PASSWORD=$HMC_PASSWORD
+HOST=$HOST
+CPC_UUID=$CPC_UUID
+MAX_PROC=$MAX_PROC
+MAX_MEM=$MAX_MEM
+MAX_INSTANCES=$MAX_INSTANCES
