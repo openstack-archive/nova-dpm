@@ -1,0 +1,15 @@
+# Devstack settings
+# These defaults can be overridden in the localrc section of the local.conf file
+
+# Add nova-dpm to enabled services
+enable_service nova-dpm
+
+# NovaLink install/upgrade settings
+# INSTALL_NOVALINK=$(trueorfalse False INSTALL_NOVALINK)
+INSTALL_ZHMCCLIENT=$(trueorfalse False INSTALL_ZHMCCLIENT)
+DPM_ADMIN_GROUP=${DPM_ADMIN_GROUP:-dpm_admin}
+
+# Nova settings
+DPM_DRIVER=dpm.driver.DPMDriver
+INSTANCE_NAME_TEMPLATE=${INSTANCE_NAME_TEMPLATE:-"%(display_name).13s-%(uuid).8s-dvm"}
+COMPUTE_MONITORS=${COMPUTE_MONITORS:-nova.compute.monitors.all_monitors}
