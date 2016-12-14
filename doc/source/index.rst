@@ -53,3 +53,16 @@ Contents:
     usage
     contributing
 
+Specifications
+==============
+
+Here you can find the specs, and spec template, for each release:
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   specs/ocata/index
+
+
+
