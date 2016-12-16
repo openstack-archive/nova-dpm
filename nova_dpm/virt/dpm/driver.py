@@ -17,13 +17,17 @@ A connection to a z Systems through Dynamic Partition Manager( DPM) APIs.
 
 Supports DPM APIs for virtualization in z Systems
 """
+
 import nova_dpm.conf
 import requests.packages.urllib3
 
+from nova import context as context_object
 from nova import exception
+from nova.objects import flavor as flavor_object
 from nova.virt import driver
 from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
+from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
 from oslo_utils import importutils
 
@@ -48,6 +52,7 @@ class DPMDriver(driver.ComputeDriver):
 
         self._host = None
         self._client = None
+        self._cpc = None
 
         # Retrieve zhmc ipaddress, username, password from the nova.conf
         zhmc = CONF.dpm.hmc
@@ -89,15 +94,15 @@ class DPMDriver(driver.ComputeDriver):
                 'max_partitions': CONF.dpm.max_instances
                 }
 
-        cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
+        self._cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
         LOG.debug("Matching hypervisor found %(cpcsubset_name)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
                   {'cpcsubset_name': conf['cpcsubset_name'],
                    'uuid': conf['cpc_uuid'],
-                   'cpcname': cpc.properties['name']})
+                   'cpcname': self._cpc.properties['name']})
 
-        utils.valide_host_conf(conf, cpc)
-        self._host = Host.Host(conf, cpc, self._client)
+        utils.valide_host_conf(conf, self._cpc)
+        self._host = Host.Host(conf, self._cpc, self._client)
 
     def get_available_resource(self, nodename):
         """Retrieve resource information.
@@ -141,11 +146,6 @@ class DPMDriver(driver.ComputeDriver):
             return True
         # Refresh and check again.
         return nodename in self.get_available_nodes(refresh=True)
-
-    def get_num_instances(self):
-        LOG.debug("get_num_instances")
-        # TODO(preethipy): Will be updated with actual number of instances
-        return 0
 
     def attach_volume(self, context, connection_info, instance, mountpoint,
                       disk_bus=None, device_type=None, encryption=None):
@@ -203,3 +203,25 @@ class DPMDriver(driver.ComputeDriver):
     def _disconnect_volume(self, connection_info, disk_dev):
         vol_driver = self._get_volume_driver(connection_info)
         vol_driver.disconnect_volume(connection_info, disk_dev)
+
+    def get_info(self, instance):
+
+        info = vm.InstanceInfo()
+
+        return info
+
+    def spawn(self, context, instance, image_meta, injected_files,
+              admin_password, network_info=None, block_device_info=None,
+              flavor=None):
+
+        if not flavor:
+            context = context_object.get_admin_context(read_deleted='yes')
+            flavor = (
+                flavor_object.Flavor.get_by_id(context,
+                                               instance.instance_type_id))
+        LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
+
+        inst = vm.Instance(instance, flavor, self._cpc)
+        inst.launch()
+
+        # TODO(pranjank): implement start partition
