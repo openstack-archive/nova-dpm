@@ -17,21 +17,25 @@ A connection to a z Systems through Dynamic Partition Manager( DPM) APIs.
 
 Supports DPM APIs for virtualization in z Systems
 """
-from nova_dpm.virt.dpm import host as Host
-from nova_dpm.virt.dpm import utils
-
-from nova.virt import driver
-from oslo_log import log as logging
-from oslo_utils import importutils
-
 import nova_dpm.conf
 import requests.packages.urllib3
 
+from nova import exception
+from nova.virt import driver
+from nova_dpm.virt.dpm import host as Host
+from nova_dpm.virt.dpm import utils
+from oslo_log import log as logging
+from oslo_utils import importutils
 
 LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
 
 zhmcclient = None
+
+dpm_volume_drivers = [
+    'fibre_channel=nova_dpm.virt.dpm.volume.'
+    'fibrechannel.DpmFibreChannelVolumeDriver',
+]
 
 
 class DPMDriver(driver.ComputeDriver):
@@ -53,6 +57,12 @@ class DPMDriver(driver.ComputeDriver):
         self._get_zhmclient(zhmc, userid, password)
         LOG.debug("HMC details %(zhmc)s %(userid)s"
                   % {'zhmc': zhmc, 'userid': userid})
+
+        self._initiator = None
+        self._fc_wwnns = None
+        self._fc_wwpns = None
+
+        self.volume_drivers = self._get_volume_drivers()
 
     def _get_zhmclient(self, zhmc, userid, password):
         LOG.debug("_get_zhmclient")
@@ -83,7 +93,8 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("Matching hypervisor found %(cpcsubset_name)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
                   {'cpcsubset_name': conf['cpcsubset_name'],
-                   'uuid': conf['cpc_uuid']})
+                   'uuid': conf['cpc_uuid'],
+                  'cpcname': cpc.properties['name']})
 
         utils.valide_host_conf(conf, cpc)
         self._host = Host.Host(conf, cpc, self._client)
@@ -135,3 +146,60 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("get_num_instances")
         # TODO(preethipy): Will be updated with actual number of instances
         return 0
+
+    def attach_volume(self, context, connection_info, instance, mountpoint,
+                      disk_bus=None, device_type=None, encryption=None):
+
+        # There currently is no need for disk_info. I just left it in
+        # in case we need it in the future
+        disk_info = {}
+        self._connect_volume(connection_info, disk_info)
+
+    def detach_volume(self, connection_info, instance, mountpoint,
+                      encryption=None):
+
+        # There currently is no need for disk_dev. I just left it in
+        # in case we need it in the future
+        disk_dev = {}
+        self._disconnect_volume(connection_info, disk_dev)
+
+    def _get_volume_drivers(self):
+        driver_registry = dict()
+        for driver_str in dpm_volume_drivers:
+            driver_type, _sep, driver = driver_str.partition('=')
+            driver_class = importutils.import_class(driver)
+            driver_registry[driver_type] = driver_class(self._host)
+        return driver_registry
+
+    def _get_volume_driver(self, connection_info):
+        driver_type = connection_info.get('driver_volume_type')
+        if driver_type not in self.volume_drivers:
+            raise exception.VolumeDriverNotFound(driver_type=driver_type)
+        return self.volume_drivers[driver_type]
+
+    def get_volume_connector(self, instance):
+        """The Fibre Channel connector properties."""
+        props = {}
+        wwpns = {}
+
+        # TODO(stefan) replace the next lines of code by a call
+        # to DPM to retrieve WWPNs for the instance
+        hbas = ["0x50014380242b9751", "0x50014380242b9711"]
+
+        if hbas:
+            for hba in hbas:
+                wwpn = hba.replace('0x', '')
+                wwpns.append(wwpn)
+
+        if wwpns:
+            props['wwpns'] = wwpns
+
+        return props
+
+    def _connect_volume(self, connection_info, disk_info):
+        vol_driver = self._get_volume_driver(connection_info)
+        vol_driver.connect_volume(connection_info, disk_info)
+
+    def _disconnect_volume(self, connection_info, disk_dev):
+        vol_driver = self._get_volume_driver(connection_info)
+        vol_driver.disconnect_volume(connection_info, disk_dev)
