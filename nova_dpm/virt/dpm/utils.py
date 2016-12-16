@@ -51,3 +51,18 @@ def valide_host_conf(conf, cpc):
                        'cpcuuid': conf['cpc_uuid'],
                        'cpcname': cpc.properties['name']})
         raise exception.ValidationError(errormsg)
+
+
+class PartitionState(object):
+
+    COMMUNICATION_NOT_ACTIVE = 'communications-not-active'
+    DEGRADED = 'degraded'
+    PAUSED = 'paused'
+    RESERVATION_ERROR = 'reservation-error'
+    RUNNING = 'active'
+    SHUTTING_DOWN = 'stopping'
+    STARTING = 'starting'
+    STOPPED = 'stopped'
+    TERMINATED = 'terminated"'
+    UNKNOWN = 'status-check'
+
