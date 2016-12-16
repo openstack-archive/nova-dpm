@@ -18,8 +18,12 @@ A connection to a z Systems through Dynamic Partition Manager( DPM) APIs.
 Supports DPM APIs for virtualization in z Systems
 """
 from nova_dpm.virt.dpm import host as Host
+from nova_dpm.virt.dpm import partition
 from nova_dpm.virt.dpm import utils
+from nova_dpm.virt.dpm import vm
 
+from nova import context as context_object
+from nova.objects import flavor as flavor_object
 from nova.virt import driver
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -44,6 +48,7 @@ class DPMDriver(driver.ComputeDriver):
 
         self._host = None
         self._client = None
+        self._cpc = None
 
         # Retrieve zhmc ipaddress, username, password from the nova.conf
         zhmc = CONF.dpm.hmc
@@ -79,15 +84,15 @@ class DPMDriver(driver.ComputeDriver):
                 'max_partitions': CONF.dpm.max_instances
                 }
 
-        cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
+        self._cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
         LOG.debug("Matching hypervisor found %(host)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
                   {'host': conf['hostname'],
                    'uuid': conf['cpc_uuid'],
-                   'cpcname': cpc.properties['name']})
+                   'cpcname': self._cpc.properties['name']})
 
-        utils.valide_host_conf(conf, cpc)
-        self._host = Host.Host(conf, cpc, self._client)
+        utils.valide_host_conf(conf, self._cpc)
+        self._host = Host.Host(conf, self._cpc, self._client)
 
     def get_available_resource(self, nodename):
         """Retrieve resource information.
@@ -135,3 +140,26 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("get_num_instances")
         # TODO(preethipy): Will be updated with actual number of instances
         return 0
+
+    def get_info(self, instance):
+
+        info = vm.InstanceInfo()
+
+        return info
+
+    def spawn(self, context, instance, image_meta, injected_files,
+              admin_password, network_info=None, block_device_info=None,
+              flavor=None):
+
+        if not flavor:
+            context = context_object.get_admin_context(read_deleted='yes')
+            flavor = (
+                flavor_object.Flavor.get_by_id(context,
+                                               instance.instance_type_id))
+        LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
+
+        part = partition.Partition(instance, flavor)
+        partition_manager = zhmcclient.PartitionManager(self._cpc)
+        partition_manager.create(part.properties())
+
+        # TODO(pranjank): implement start partition
