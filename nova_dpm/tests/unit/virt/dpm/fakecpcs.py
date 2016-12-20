@@ -30,7 +30,7 @@ def getFakeCPC(cpcmanager):
 
 def getFakeCPCconf():
 
-    conf = {'hostname': "S12subset",
+    conf = {'host': "S12subset",
             'cpc_uuid': "1232132",
             'max_processors': 10,
             'max_memory_mb': 200,
