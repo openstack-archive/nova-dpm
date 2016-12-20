@@ -80,11 +80,12 @@ class DPMDriver(driver.ComputeDriver):
                 }
 
         cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
+        conf['cpcname'] = cpc.properties['name']
         LOG.debug("Matching hypervisor found %(host)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
                   {'host': conf['hostname'],
                    'uuid': conf['cpc_uuid'],
-                   'cpcname': cpc.properties['name']})
+                   'cpcname': conf['cpcname']})
 
         utils.valide_host_conf(conf, cpc)
         self._host = Host.Host(conf, cpc, self._client)

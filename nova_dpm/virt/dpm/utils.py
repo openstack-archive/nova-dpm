@@ -33,10 +33,10 @@ def valide_host_conf(conf, cpc):
                       "available amount of processors %(max_proc)d on "
                       "CPC uuid %(cpcuuid)s and CPC name %(cpcname)s")
                     % {'config_proc': conf['max_processors'],
-                       'subsetname': conf['host'],
+                       'subsetname': conf['hostname'],
                        'max_proc': cpc.properties['processor-count-ifl'],
                        'cpcuuid': conf['cpc_uuid'],
-                       'cpcname': conf['hostname']})
+                       'cpcname': conf['cpcname']})
         raise Exception(errormsg)
     if (conf['max_memory_mb'] > cpc.properties['storage-customer']):
         # TODO(preethipy): Exception infrastructure to be finalized
@@ -48,5 +48,5 @@ def valide_host_conf(conf, cpc):
                        'subsetname': conf['host'],
                        'max_proc': cpc.properties['processor-count-ifl'],
                        'max_mem': conf['cpc_uuid'],
-                       'cpcname': conf['hostname']})
+                       'cpcname': conf['cpcname']})
         raise Exception(errormsg)
