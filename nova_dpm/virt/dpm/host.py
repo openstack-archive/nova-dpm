@@ -31,8 +31,8 @@ class Host(object):
 
     def __init__(self, conf, cpc, client):
 
-        LOG.debug('Host initializing for host %(hostname)s'
-                  % {'hostname': cpc.properties['name']})
+        LOG.debug('Host initializing for cpcsubset %(cpcsubset_name)s'
+                  % {'cpcsubset_name': self.conf['cpcsubset_name']})
 
         self._conf = conf
         self._client = client
@@ -63,7 +63,7 @@ class Host(object):
             "hypervisor_version": 1000,  # TODO(preethipy): Update with
             # relevant value
             "numa_topology": "",  # TODO(preethipy): Update with relevant value
-            "hypervisor_hostname": self._conf['hostname'],
+            "hypervisor_hostname": self._conf['cpcsubset_name'],
             "cpc_name": self._cpc.properties['name'],
             "disk_available_least": 1024,  # TODO(preethipy): Update with
             # relevant value

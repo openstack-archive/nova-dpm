@@ -72,7 +72,7 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("init_host")
 
         # retrieve from ncpu service configurationfile
-        conf = {'hostname': CONF.dpm.host,
+        conf = {'cpcsubset_name': CONF.dpm.host,
                 'cpc_uuid': CONF.dpm.cpc_uuid,
                 'max_processors': CONF.dpm.max_processors,
                 'max_memory_mb': CONF.dpm.max_memory,
@@ -80,11 +80,10 @@ class DPMDriver(driver.ComputeDriver):
                 }
 
         cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
-        LOG.debug("Matching hypervisor found %(host)s for UUID "
+        LOG.debug("Matching hypervisor found %(cpcsubset_name)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
-                  {'host': conf['hostname'],
-                   'uuid': conf['cpc_uuid'],
-                   'cpcname': cpc.properties['name']})
+                  {'cpcsubset_name': conf['cpcsubset_name'],
+                   'uuid': conf['cpc_uuid']})
 
         utils.valide_host_conf(conf, cpc)
         self._host = Host.Host(conf, cpc, self._client)
@@ -116,8 +115,8 @@ class DPMDriver(driver.ComputeDriver):
         """
         # TODO(preethipy): Refresh parameter should be handled to fetch
         # updated nodenames
-        LOG.debug("get_available_nodes return node %(hostname)s" %
-                  {'hostname': self._host.properties["hypervisor_hostname"]})
+        LOG.debug("get_available_nodes return node %(cpcsubset_name)s" %
+                  {'cpcsubset_name': self._host.properties["hypervisor_hostname"]})
         nodenames = [self._host.properties["hypervisor_hostname"]]
 
         return nodenames
