@@ -62,5 +62,6 @@ class HostTestCase(TestCase):
 
         host1 = host.Host(conf, cpc, client)
         host_properties = host1.properties
-        self.assertEqual(host_properties['hypervisor_hostname'], 'S12subset')
+        self.assertEqual(host_properties['hypervisor_hostname'],
+                         'S12subset')
         self.assertEqual(host_properties['cpc_name'], 'fakecpc')
