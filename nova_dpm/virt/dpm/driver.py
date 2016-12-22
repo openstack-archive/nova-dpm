@@ -35,6 +35,14 @@ import requests.packages.urllib3
 LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
 
+CPCSUBSET_NAME = 'cpcsubset_name'
+CPC_UUID = 'cpc_uuid'
+MAX_PROCESSORS = 'max_processors'
+MAX_MEMORY_MB = 'max_memory_mb'
+MAX_PARTITIONS = 'max_partitions'
+OBJECT_ID = 'object-id'
+HYPERVISOR_HOSTNAME = 'hypervisor_hostname'
+
 zhmcclient = None
 
 
@@ -77,22 +85,22 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("init_host")
 
         # retrieve from ncpu service configurationfile
-        conf = {'cpcsubset_name': CONF.dpm.host,
-                'cpc_uuid': CONF.dpm.cpc_uuid,
-                'max_processors': CONF.dpm.max_processors,
-                'max_memory_mb': CONF.dpm.max_memory,
-                'max_partitions': CONF.dpm.max_instances
-                }
+        self._conf = {CPCSUBSET_NAME: CONF.dpm.host,
+                      CPC_UUID: CONF.dpm.cpc_uuid,
+                      MAX_PROCESSORS: CONF.dpm.max_processors,
+                      MAX_MEMORY_MB: CONF.dpm.max_memory,
+                      MAX_PARTITIONS: CONF.dpm.max_instances
+                      }
 
-        self._cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
+        self._cpc = self._client.cpcs.find(**{OBJECT_ID: self._conf[CPC_UUID]})
         LOG.debug("Matching hypervisor found %(cpcsubset_name)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
-                  {'cpcsubset_name': conf['cpcsubset_name'],
-                   'uuid': conf['cpc_uuid'],
+                  {'cpcsubset_name': self._conf[CPCSUBSET_NAME],
+                   'uuid': self._conf[CPC_UUID],
                    'cpcname': self._cpc.properties['name']})
 
-        utils.valide_host_conf(conf, self._cpc)
-        self._host = Host.Host(conf, self._cpc, self._client)
+        utils.valide_host_conf(self._conf, self._cpc)
+        self._host = Host.Host(self._conf, self._cpc, self._client)
 
     def get_available_resource(self, nodename):
         """Retrieve resource information.
@@ -123,8 +131,8 @@ class DPMDriver(driver.ComputeDriver):
         # updated nodenames
         LOG.debug("get_available_nodes return node %(cpcsubset_name)s" %
                   {'cpcsubset_name': self._host.properties[
-                      "hypervisor_hostname"]})
-        nodenames = [self._host.properties["hypervisor_hostname"]]
+                      HYPERVISOR_HOSTNAME]})
+        nodenames = [self._host.properties[HYPERVISOR_HOSTNAME]]
 
         return nodenames
 
@@ -161,6 +169,40 @@ class DPMDriver(driver.ComputeDriver):
 
         part = partition.Partition(instance, flavor)
         partition_manager = zhmcclient.PartitionManager(self._cpc)
-        partition_manager.create(part.properties())
+        _partition = partition_manager.create(part.properties())
+        self._create_nic(_partition, network_info=network_info)
 
         # TODO(pranjank): implement start partition
+
+    def _create_nic(self, _partition, network_info):
+            # TODO(preethipy): This function can be moved to Partition.py
+            # TODO(preethipy): Implement the listener flow to register for
+            # nic creation events
+            LOG.debug("Creating nic interface for the instance")
+
+            for vif in network_info:
+
+                port_id = vif['id']
+                vif_type = vif['type']
+                mac = vif['address']
+                vif_details = vif['details']
+                dpm_object_id = vif_details[OBJECT_ID]
+
+                # Only dpm_vswitch attachments are supported for now
+                if vif_type != "dpm_vswitch":
+                    raise Exception
+
+                dpm_nic_dict = {
+                    "name": "OpenStack_Port_" + port_id,
+                    "description": "OpenStack mac= " + mac +
+                                   ", CPCSubset= " +
+                                   self._conf[CPCSUBSET_NAME],
+                    "virtual-switch-uri": "/api/virtual-switches/"
+                                          + dpm_object_id
+                }
+                nic_interface = _partition.nics.create(dpm_nic_dict)
+                LOG.debug("NIC created successfully %(nic_name) "
+                          "with URI %(nic_uri)"
+                          % {'nic_name': nic_interface.properties['name'],
+                             'nic_uri': nic_interface.properties[
+                                 'virtual-switch-uri']})
