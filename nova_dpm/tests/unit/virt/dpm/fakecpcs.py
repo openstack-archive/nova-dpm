@@ -11,7 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from zhmcclient._cpc import Cpc
+
+from zhmcclient._logging import _log_call
+from zhmcclient._resource import BaseResource
 
 
 def getFakeCPC(cpcmanager):
@@ -22,7 +24,7 @@ def getFakeCPC(cpcmanager):
     cpc_props['storage-customer'] = 100
     cpc_props['processor-count-pending-ifl'] = 6
     cpc_props['processor-count-ifl'] = 12
-    cpc_props['storage-customer-available'] = 50
+    cpc_props['storage-customer-available'] = 500
 
     cpc = Cpc(cpcmanager, cpc_props['object-uri'], cpc_props)
     return cpc
@@ -43,3 +45,16 @@ def getFakeCPCwithProp(cpcmanager, cpc_props):
 
     cpc = Cpc(cpcmanager, cpc_props['object-uri'], cpc_props)
     return cpc
+
+
+class Cpc(BaseResource):
+    def __init__(self, manager, uri, properties):
+        super(Cpc, self).__init__(manager, uri, properties)
+
+    @property
+    @_log_call
+    def dpm_enabled(self):
+        return True
+
+    def pull_full_properties(self):
+        self._pull_full_properties = True
