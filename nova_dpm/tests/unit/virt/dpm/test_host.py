@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import json
 import mock
 
 from nova.test import TestCase
@@ -24,16 +26,30 @@ cpcsubset unit testcase
 """
 
 
+def fakeHost():
+    session = fakezhmcclient.Session("dummy", "dummy",
+                                     "dummy")
+    client = fakezhmcclient.Client(session)
+
+    cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
+    cpc = fakecpcs.getFakeCPC(cpcmanager)
+    conf = fakecpcs.getFakeCPCconf()
+
+    host1 = host.Host(conf, cpc, client)
+    return host1
+
+
 class HostTestCase(TestCase):
 
     def setUp(self):
         super(HostTestCase, self).setUp()
+        self._session = fakezhmcclient.Session(
+            "dummy", "dummy", "dummy")
 
     @mock.patch.object(host.LOG, 'debug')
     def test_host(self, mock_warning):
 
-        session = fakezhmcclient.Session("dummy", "dummy", "dummy")
-        client = fakezhmcclient.Client(session)
+        client = fakezhmcclient.Client(self._session)
 
         cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
         cpc = fakecpcs.getFakeCPC(cpcmanager)
@@ -53,8 +69,7 @@ class HostTestCase(TestCase):
     @mock.patch.object(host.LOG, 'debug')
     def test_host_properties(self, mock_warning):
 
-        session = fakezhmcclient.Session("dummy", "dummy", "dummy")
-        client = fakezhmcclient.Client(session)
+        client = fakezhmcclient.Client(self._session)
 
         cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
         cpc = fakecpcs.getFakeCPC(cpcmanager)
@@ -65,3 +80,7 @@ class HostTestCase(TestCase):
         self.assertEqual(host_properties['hypervisor_hostname'],
                          'S12subset')
         self.assertEqual(host_properties['cpc_name'], 'fakecpc')
+        cpu_info = host_properties['cpu_info']
+        cpu_info_dict = json.loads(cpu_info)
+        self.assertEqual(cpu_info_dict['arch'], 's390x')
+        self.assertEqual(cpu_info_dict['vendor'], 'IBM')

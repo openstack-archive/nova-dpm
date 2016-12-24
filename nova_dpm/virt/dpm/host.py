@@ -23,6 +23,14 @@ from oslo_serialization import jsonutils
 
 
 LOG = logging.getLogger(__name__)
+PRSM_HYPERVISOR = 'PRSM'
+S390_ARCH = 's390x'
+IBM = 'IBM'
+HOST = 'host'
+CPC_SOCKETS = 0  # TODO(preethipy): Update with relevant value
+CPC_THREADS = 1  # TODO(preethipy): Update with relevant value
+HYPERVISOR_VERSION = 1000  # TODO(preethipy): Update with
+# relevant value
 
 zhmcclient = None
 
@@ -59,16 +67,15 @@ class Host(object):
             "memory_mb_used": self._get_mem_used(),
             "local_gb_used": 0,  # TODO(preethipy): Update with relevant value
             "cpu_info": self._get_cpu_info(self._conf["max_processors"]),
-            "hypervisor_type": "PRSM",
-            "hypervisor_version": 1000,  # TODO(preethipy): Update with
-            # relevant value
+            "hypervisor_type": PRSM_HYPERVISOR,
+            "hypervisor_version": HYPERVISOR_VERSION,
             "numa_topology": "",  # TODO(preethipy): Update with relevant value
             "hypervisor_hostname": self._conf['cpcsubset_name'],
             "cpc_name": self._cpc.properties['name'],
             "disk_available_least": 1024,  # TODO(preethipy): Update with
             # relevant value
             'supported_instances':
-            [("s390", obj_fields.HVType.BAREMETAL, obj_fields.VMMode.HVM)]}
+            [(S390_ARCH, obj_fields.HVType.BAREMETAL, obj_fields.VMMode.HVM)]}
         # TODO(preethipy): BareMETAL will be updated with PRSM after HVType
         # updated in upstream code
 
@@ -86,13 +93,13 @@ class Host(object):
 
         """
         cpu_info = dict()
-        cpu_info['arch'] = 's390x'
-        cpu_info['model'] = 'host'
-        cpu_info['vendor'] = 'IBM'
+        cpu_info['arch'] = S390_ARCH
+        cpu_info['model'] = HOST
+        cpu_info['vendor'] = IBM
         topology = dict()
-        topology['sockets'] = 1  # TODO(preethipy): Update with relevant value
+        topology['sockets'] = CPC_SOCKETS
         topology['cores'] = cores
-        topology['threads'] = 1  # TODO(preethipy): Update with relevant value
+        topology['threads'] = CPC_THREADS
         cpu_info['topology'] = topology
 
         features = list()  # TODO(preethipy): Update with featureset required

@@ -31,6 +31,12 @@ def getCpcmgrForClient(client):
     return cpcmgr
 
 
+def getdummyCpcmgr():
+    zhmclientcpcmgr = getzhmclientCpcmgr("0.0.0.0",
+                                         "dummyuser", "dummypassword")
+    return zhmclientcpcmgr
+
+
 def getzhmclientCpcmgr(ipaddress, username, password):
     session = Session(ipaddress, username, password)
     client = Client(session)
@@ -51,10 +57,11 @@ class CpcManager(BaseManager):
 
     def list(self, full_properties=False):
         cpc_list = []
-        zhmclientcpcmgr = getzhmclientCpcmgr("0.0.0.0",
-                                             "dummyuser", "dummypassword")
-        cpc_list.append(fakecpcs.getFakeCPC(zhmclientcpcmgr))
+        cpc_list.append(fakecpcs.getFakeCPC(getdummyCpcmgr()))
         return cpc_list
+
+    def find(self, **kwargs):
+        return fakecpcs.getFakeCPC(getdummyCpcmgr())
 
 
 class Session(object):

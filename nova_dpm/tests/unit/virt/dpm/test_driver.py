@@ -14,10 +14,13 @@
 import mock
 import nova_dpm.conf
 
+from nova import exception
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
+from nova_dpm.tests.unit.virt.dpm import test_host as testhost
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import driver as dpm_driver
+from nova_dpm.virt.dpm import host as Host
 
 
 """
@@ -28,18 +31,31 @@ dpm_driver.zhmcclient = fakezhmcclient
 CONF = nova_dpm.conf.CONF
 
 
+class mockConf(object):
+    def __init__(self):
+        return
+
+    def populateMockConf(self, mockconf):
+        mockconf.hmc_username = "dummyuser"
+        mockconf.hmc_password = "dummy"
+        mockconf.hmc = "1.1.1.1"
+        mockconf.host = "dummysubset"
+        mockconf.cpc_uuid = "00000000-aaaa-bbbb-cccc-abcdabcdabcd"
+        mockconf.max_processors = 5
+        mockconf.max_memory = 50
+        mockconf.max_instances = 10
+        return mockconf
+
+
 class DPMdriverTestCase(TestCase):
 
     def setUp(self):
         super(DPMdriverTestCase, self).setUp()
 
     @mock.patch.object(driver.LOG, 'debug')
-    @mock.patch.object(CONF, 'dpm')
-    def test_host(self, mock_dpmconf, mock_warning):
-
-        mock_dpmconf.hmc_username = "dummyuser"
-        mock_dpmconf.hmc_password = "dummy"
-        mock_dpmconf.hmc = "1.1.1.1"
+    @mock.patch.object(CONF, 'dpm', return_value=mockConf)
+    def test_host(self, mockdpmconf, mock_warning):
+        mockdpmconf = mockConf().populateMockConf(mockdpmconf)
 
         dummyvirtapi = None
         dpmdriver = driver.DPMDriver(dummyvirtapi)
@@ -49,9 +65,49 @@ class DPMdriverTestCase(TestCase):
         expected_arg = 'HMC details 1.1.1.1 dummyuser'
         assertlogs = False
         for call in mock_warning.call_args_list:
-
             if (len(call) > 0):
                 if (len(call[0]) > 0 and call[0][0] == expected_arg):
                     assertlogs = True
 
         self.assertTrue(assertlogs)
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(CONF, 'dpm')
+    @mock.patch.object(Host, 'HOST', return_value=testhost.fakeHost())
+    def test_init_host(self, mockhost, mockdpmconf, mock_warning):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+        dpmdriver.init_host(None)
+
+        mockhost = testhost.fakeHost()
+        host_properties = mockhost.properties
+        self.assertEqual(host_properties['hypervisor_hostname'],
+                         'S12subset')
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(CONF, 'dpm')
+    def test_invalid_mem_config(self, mockdpmconf, mock_warning):
+        mock_dpmconf = mockConf().populateMockConf(mockdpmconf)
+
+        mock_dpmconf.max_memory = 1000
+
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        self.assertRaises(exception.ValidationError,
+                          dpmdriver.init_host,
+                          None)
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(CONF, 'dpm')
+    def test_invalid_proc_config(self, mockdpmconf, mock_warning):
+        mock_dpmconf = mockConf().populateMockConf(mockdpmconf)
+
+        mock_dpmconf.max_processors = 50
+
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        self.assertRaises(exception.ValidationError,
+                          dpmdriver.init_host,
+                          None)
