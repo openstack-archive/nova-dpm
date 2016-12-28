@@ -222,6 +222,7 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
         inst = vm.Instance(instance, flavor, self._cpc)
-        inst.launch()
+        inst.create()
+        inst.attach_nic(network_info)
 
         # TODO(pranjank): implement start partition
