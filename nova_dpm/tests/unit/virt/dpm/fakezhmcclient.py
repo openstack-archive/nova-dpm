@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from nova_dpm.tests.unit.virt.dpm import fakecpcs
+from zhmcclient._cpc import Cpc
 from zhmcclient._manager import BaseManager
 
 import zhmcclient
@@ -52,7 +53,7 @@ class CpcManager(BaseManager):
         # Parameters:
         #   client (:class:`~zhmcclient.Client`):
         #      Client object for the HMC to be used.
-        super(CpcManager, self).__init__()
+        super(CpcManager, self).__init__(Cpc)
         self._session = client.session
 
     def list(self, full_properties=False):

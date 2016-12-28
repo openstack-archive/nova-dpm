@@ -49,7 +49,9 @@ def getFakeCPCwithProp(cpcmanager, cpc_props):
 
 class Cpc(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Cpc, self).__init__(manager, uri, properties)
+        super(Cpc, self).__init__(manager, uri, properties,
+                                  uri_prop='object-uri',
+                                  name_prop='name')
 
     @property
     @_log_call
