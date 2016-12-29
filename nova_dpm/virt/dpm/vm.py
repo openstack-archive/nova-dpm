@@ -60,7 +60,9 @@ class Instance(object):
         self.instance = instance
         self.flavor = flavor
         self.cpc = cpc
-        self.partition = None
+        # TODO(preethipy): populate partition it
+        # is already created for a given instance
+        self.partition = self.getPartitionForInstance()
 
     def properties(self):
         properties = {}
@@ -70,6 +72,9 @@ class Instance(object):
             properties['initial-memory'] = self.flavor.memory_mb
             properties['maximum-memory'] = self.flavor.memory_mb
         return properties
+
+    def getPartitionForInstance(self):
+        return None
 
     def create(self, properties):
         partition_manager = zhmcclient.PartitionManager(self.cpc)
@@ -94,7 +99,7 @@ class Instance(object):
                 raise Exception
 
             dpm_nic_dict = {
-                "name": "OpenStack_Port_" + port_id,
+                "name": "OpenStack_Port_" + str(port_id),
                 "description": "OpenStack mac= " + mac +
                                ", CPCSubset= " +
                                conf[CPCSUBSET_NAME],
@@ -102,11 +107,12 @@ class Instance(object):
                                       + dpm_object_id
             }
             nic_interface = self.partition.nics.create(dpm_nic_dict)
-            LOG.debug("NIC created successfully %(nic_name) "
-                      "with URI %(nic_uri)"
+            LOG.debug("NIC created successfully %(nic_name)s "
+                      "with URI %(nic_uri)s"
                       % {'nic_name': nic_interface.properties['name'],
                          'nic_uri': nic_interface.properties[
                              'virtual-switch-uri']})
+            return nic_interface
 
     def attachHba(self, conf):
         LOG.debug('Creating vhbas for instance',
@@ -117,7 +123,7 @@ class Instance(object):
             adapter_port = adapterPort['port']
             dpm_hba_dict = {
                 "name": "OpenStack_Port_" + adapter_object_id +
-                        "_" + adapter_port,
+                        "_" + str(adapter_port),
                 "description": "OpenStack CPCSubset= " +
                                conf[CPCSUBSET_NAME],
                 "adapter-port-uri": "/api/adapters/"
