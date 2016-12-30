@@ -74,10 +74,10 @@ class Instance(object):
     def properties(self):
         properties = {}
         properties['name'] = self.instance.hostname
-        if not self.flavor:
-            properties['cp-processors'] = self.flavor.vcpus
-            properties['initial-memory'] = self.flavor.memory_mb
-            properties['maximum-memory'] = self.flavor.memory_mb
+        properties['cp-processors'] = self.flavor.vcpus
+        properties['initial-memory'] = self.flavor.memory_mb
+        properties['maximum-memory'] = self.flavor.memory_mb
+
         return properties
 
     def create(self, properties):
@@ -195,11 +195,11 @@ class InstanceInfo(object):
 
     """
 
-    def __init__(self, instance, cpc, client):
+    def __init__(self, instance, cpc):
         self.instance = instance
         self.cpc = cpc
         self.partition = None
-        partition_manager = client.PartitionManager(self.cpc)
+        partition_manager = zhmcclient.PartitionManager(self.cpc)
         partition_lists = partition_manager.list(full_properties=False)
         for partition in partition_lists:
             if partition.properties['name'] == self.instance.hostname:

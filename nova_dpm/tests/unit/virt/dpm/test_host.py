@@ -16,7 +16,7 @@ import json
 import mock
 
 from nova.test import TestCase
-from nova_dpm.tests.unit.virt.dpm import fakecpcs
+from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.virt.dpm import host
 
@@ -27,13 +27,12 @@ cpcsubset unit testcase
 
 
 def fakeHost():
-    session = fakezhmcclient.Session("dummy", "dummy",
-                                     "dummy")
-    client = fakezhmcclient.Client(session)
 
+    session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
+    client = fakezhmcclient.Client(session)
     cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
-    cpc = fakecpcs.getFakeCPC(cpcmanager)
-    conf = fakecpcs.getFakeCPCconf()
+    cpc = fakezhmcclient.getFakeCPC(cpcmanager)
+    conf = fakezhmcclient.getFakeCPCconf()
 
     host1 = host.Host(conf, cpc, client)
     return host1
@@ -66,17 +65,14 @@ class HostTestCase(TestCase):
         super(HostTestCase, self).setUp()
         self._session = fakezhmcclient.Session(
             "dummy", "dummy", "dummy")
+        self._client = fakezhmcclient.Client(self._session)
+        self._cpcmanager = fakezhmcclient.getCpcmgrForClient(self._client)
+        self._cpc = fakezhmcclient.getFakeCPC(self._cpcmanager)
+        self._conf = fakeutils.getFakeCPCconf()
 
     @mock.patch.object(host.LOG, 'debug')
     def test_host(self, mock_warning):
-
-        client = fakezhmcclient.Client(self._session)
-
-        cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
-        cpc = fakecpcs.getFakeCPC(cpcmanager)
-        conf = fakecpcs.getFakeCPCconf()
-
-        host.Host(conf, cpc, client)
+        host.Host(self._conf, self._cpc, self._client)
 
         expected_arg = "Host initializing done"
         assertlogs = False
@@ -93,8 +89,8 @@ class HostTestCase(TestCase):
         client = fakezhmcclient.Client(self._session)
 
         cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
-        cpc = fakecpcs.getFakeCPC(cpcmanager)
-        conf = fakecpcs.getFakeCPCconf()
+        cpc = fakezhmcclient.getFakeCPC(cpcmanager)
+        conf = fakeutils.getFakeCPCconf()
 
         host1 = host.Host(conf, cpc, client)
         host_properties = host1.properties
