@@ -91,7 +91,9 @@ class DPMDriver(driver.ComputeDriver):
                 'cpc_uuid': CONF.dpm.cpc_uuid,
                 'max_processors': CONF.dpm.max_processors,
                 'max_memory_mb': CONF.dpm.max_memory,
-                'max_partitions': CONF.dpm.max_instances
+                'max_partitions': CONF.dpm.max_instances,
+                'physical_storage_adapter_mappings':
+                    CONF.dpm.physical_storage_adapter_mappings
                 }
 
         self._cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
@@ -179,6 +181,8 @@ class DPMDriver(driver.ComputeDriver):
 
     def get_volume_connector(self, instance):
         """The Fibre Channel connector properties."""
+        inst = vm.Instance(instance, self._cpc)
+        inst.get_hba_properties()
         props = {}
         wwpns = {}
 
@@ -217,7 +221,7 @@ class DPMDriver(driver.ComputeDriver):
 
     def get_info(self, instance):
 
-        info = vm.InstanceInfo(instance, self._cpc)
+        info = vm.InstanceInfo(instance, self._cpc, self._client)
 
         return info
 
@@ -233,6 +237,12 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
         inst = vm.Instance(instance, flavor, self._cpc)
-        inst.launch()
+        inst.create(inst.properties())
+        inst.attach_nic(network_info)
+
+        block_device_mapping = driver.block_device_info_get_mapping(
+            block_device_info)
+        inst.attachHba(CONF)
+        inst._build_resources(context, instance, block_device_mapping)
 
         # TODO(pranjank): implement start partition
