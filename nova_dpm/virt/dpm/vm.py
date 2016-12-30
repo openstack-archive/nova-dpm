@@ -26,6 +26,7 @@ from nova.i18n import _LE
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from oslo_utils import importutils
+from zhmcclient._exceptions import NotFound
 
 zhmcclient = None
 
@@ -123,7 +124,7 @@ class Instance(object):
                   instance=self.instance)
         mapping = self.createStorageAdapterUris(conf)
         for adapterPort in mapping.get_adapter_port_mapping():
-            adapter_object_id = adapterPort['dpm_object_id']
+            adapter_object_id = adapterPort['adapter_id']
             adapter_port = adapterPort['port']
             dpm_hba_dict = {
                 "name": "OpenStack_Port_" + adapter_object_id +
@@ -133,7 +134,7 @@ class Instance(object):
                 "adapter-port-uri": "/api/adapters/"
                                     + adapter_object_id +
                                     "/storage-ports/" +
-                                    adapter_port
+                                    str(adapter_port)
             }
             hba = self.partition.hbas.create(dpm_hba_dict)
             LOG.debug("HBA created successfully %(hba_name)s "
@@ -264,7 +265,7 @@ class PhysicalAdapterModel(object):
             # TODO(andreas_s): Optimize in zhmcclient - For 'find' the
             # whole list of items is retrieved
             return self._cpc.adapters.find(**{'object-id': adapter_id})
-        except zhmcclient.NotFound:
+        except NotFound:
             LOG.error(_LE("Configured adapter %s could not be "
                           "found. Please update the agent "
                           "configuration. Agent terminated!"),
