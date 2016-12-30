@@ -87,24 +87,24 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("init_host")
 
         # retrieve from ncpu service configurationfile
-        conf = {'cpcsubset_name': CONF.dpm.host,
-                'cpc_uuid': CONF.dpm.cpc_uuid,
-                'max_processors': CONF.dpm.max_processors,
-                'max_memory_mb': CONF.dpm.max_memory,
-                'max_partitions': CONF.dpm.max_instances,
-                'physical_storage_adapter_mappings':
-                    CONF.dpm.physical_storage_adapter_mappings
-                }
+        self._conf = {'cpcsubset_name': CONF.dpm.host,
+                      'cpc_uuid': CONF.dpm.cpc_uuid,
+                      'max_processors': CONF.dpm.max_processors,
+                      'max_memory_mb': CONF.dpm.max_memory,
+                      'max_partitions': CONF.dpm.max_instances,
+                      'physical_storage_adapter_mappings':
+                          CONF.dpm.physical_storage_adapter_mappings}
 
-        self._cpc = self._client.cpcs.find(**{"object-id": conf['cpc_uuid']})
+        self._cpc = self._client.cpcs.find(**{
+            "object-id": self._conf['cpc_uuid']})
         LOG.debug("Matching hypervisor found %(cpcsubset_name)s for UUID "
                   "%(uuid)s and CPC %(cpcname)s" %
-                  {'cpcsubset_name': conf['cpcsubset_name'],
-                   'uuid': conf['cpc_uuid'],
+                  {'cpcsubset_name': self._conf['cpcsubset_name'],
+                   'uuid': self._conf['cpc_uuid'],
                    'cpcname': self._cpc.properties['name']})
 
-        utils.valide_host_conf(conf, self._cpc)
-        self._host = Host.Host(conf, self._cpc, self._client)
+        utils.valide_host_conf(self._conf, self._cpc)
+        self._host = Host.Host(self._conf, self._cpc, self._client)
 
     def get_available_resource(self, nodename):
         """Retrieve resource information.
@@ -221,7 +221,7 @@ class DPMDriver(driver.ComputeDriver):
 
     def get_info(self, instance):
 
-        info = vm.InstanceInfo(instance, self._cpc, self._client)
+        info = vm.InstanceInfo(instance, self._cpc)
 
         return info
 
@@ -236,13 +236,13 @@ class DPMDriver(driver.ComputeDriver):
                                                instance.instance_type_id))
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
-        inst = vm.Instance(instance, flavor, self._cpc)
+        inst = vm.Instance(instance, self._cpc, self._client, flavor)
         inst.create(inst.properties())
-        inst.attach_nic(network_info)
+        inst.attach_nic(self._conf, network_info)
 
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
-        inst.attachHba(CONF)
+        inst.attachHba(self._conf)
         inst._build_resources(context, instance, block_device_mapping)
 
         # TODO(pranjank): implement start partition
