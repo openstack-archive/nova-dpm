@@ -26,6 +26,7 @@ from nova.i18n import _LE
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from oslo_utils import importutils
+from zhmcclient._exceptions import NotFound
 
 zhmcclient = None
 
@@ -74,7 +75,7 @@ class Instance(object):
     def properties(self):
         properties = {}
         properties['name'] = self.instance.hostname
-        if not self.flavor:
+        if self.flavor is not None:
             properties['cp-processors'] = self.flavor.vcpus
             properties['initial-memory'] = self.flavor.memory_mb
             properties['maximum-memory'] = self.flavor.memory_mb
@@ -123,7 +124,7 @@ class Instance(object):
                   instance=self.instance)
         mapping = self.createStorageAdapterUris(conf)
         for adapterPort in mapping.get_adapter_port_mapping():
-            adapter_object_id = adapterPort['dpm_object_id']
+            adapter_object_id = adapterPort['adapter_id']
             adapter_port = adapterPort['port']
             dpm_hba_dict = {
                 "name": "OpenStack_Port_" + adapter_object_id +
@@ -133,7 +134,7 @@ class Instance(object):
                 "adapter-port-uri": "/api/adapters/"
                                     + adapter_object_id +
                                     "/storage-ports/" +
-                                    adapter_port
+                                    str(adapter_port)
             }
             hba = self.partition.hbas.create(dpm_hba_dict)
             LOG.debug("HBA created successfully %(hba_name)s "
@@ -195,11 +196,11 @@ class InstanceInfo(object):
 
     """
 
-    def __init__(self, instance, cpc, client):
+    def __init__(self, instance, cpc):
         self.instance = instance
         self.cpc = cpc
         self.partition = None
-        partition_manager = client.PartitionManager(self.cpc)
+        partition_manager = zhmcclient.PartitionManager(self.cpc)
         partition_lists = partition_manager.list(full_properties=False)
         for partition in partition_lists:
             if partition.properties['name'] == self.instance.hostname:
@@ -264,7 +265,7 @@ class PhysicalAdapterModel(object):
             # TODO(andreas_s): Optimize in zhmcclient - For 'find' the
             # whole list of items is retrieved
             return self._cpc.adapters.find(**{'object-id': adapter_id})
-        except zhmcclient.NotFound:
+        except NotFound:
             LOG.error(_LE("Configured adapter %s could not be "
                           "found. Please update the agent "
                           "configuration. Agent terminated!"),
