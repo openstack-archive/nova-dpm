@@ -236,9 +236,9 @@ class DPMDriver(driver.ComputeDriver):
                                                instance.instance_type_id))
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
-        inst = vm.Instance(instance, flavor, self._cpc)
+        inst = vm.Instance(instance, self._cpc, self._client, flavor)
         inst.create(inst.properties())
-        inst.attach_nic(network_info)
+        inst.attach_nic(CONF, network_info)
 
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)

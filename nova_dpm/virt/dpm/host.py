@@ -69,7 +69,7 @@ class Host(object):
             "cpu_info": self._get_cpu_info(self._conf["max_processors"]),
             "hypervisor_type": PRSM_HYPERVISOR,
             "hypervisor_version": HYPERVISOR_VERSION,
-            "numa_topology": "",  # TODO(preethipy): Update with relevant value
+            "numa_topology": None,  # TODO(preethipy): Update with relevant value
             "hypervisor_hostname": self._conf['cpcsubset_name'],
             "cpc_name": self._cpc.properties['name'],
             "disk_available_least": 1024,  # TODO(preethipy): Update with
