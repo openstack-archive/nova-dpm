@@ -70,6 +70,9 @@ class DPMDriver(driver.ComputeDriver):
         self.volume_drivers = self._get_volume_drivers()
 
     def _get_zhmclient(self, zhmc, userid, password):
+        """This function helps in lazy loading zhmclient. The zhmcclient can
+        otherwise be set to fakezhmcclient for unittest framework
+        """
         LOG.debug("_get_zhmclient")
         # TODO(preethipy): The below line will be removed once the warnings are
         # supressed within zhmclient code
@@ -245,4 +248,4 @@ class DPMDriver(driver.ComputeDriver):
         inst.attachHba(self._conf)
         inst._build_resources(context, instance, block_device_mapping)
 
-        # TODO(pranjank): implement start partition
+        inst.launch()
