@@ -36,7 +36,7 @@ DPM_TO_NOVA_STATE = {
     utils.PartitionState.STOPPED: power_state.SHUTDOWN,
     utils.PartitionState.UNKNOWN: power_state.NOSTATE,
     utils.PartitionState.PAUSED: power_state.PAUSED,
-    utils.PartitionState.STARTING: power_state.NOSTATE
+    utils.PartitionState.STARTING: power_state.PAUSED
 }
 
 OBJECT_ID = 'object-id'
@@ -57,20 +57,21 @@ def _translate_vm_state(dpm_state):
     return nova_state
 
 
+def _get_zhmclient():
+    LOG.debug("_get_zhmclient")
+    global zhmcclient
+    if zhmcclient is None:
+        zhmcclient = importutils.import_module('zhmcclient')
+
+
 class Instance(object):
     def __init__(self, instance, cpc, client, flavor=None):
-        self._get_zhmclient()
+        _get_zhmclient()
         self.instance = instance
         self.flavor = flavor
         self.cpc = cpc
         self.client = client
         self.partition = self.get_partition(self.cpc, self.instance)
-
-    def _get_zhmclient(self):
-        LOG.debug("_get_zhmclient")
-        global zhmcclient
-        if zhmcclient is None:
-            zhmcclient = importutils.import_module('zhmcclient')
 
     def properties(self):
         properties = {}
@@ -86,7 +87,6 @@ class Instance(object):
         self.partition = partition_manager.create(properties)
 
     def attach_nic(self, conf, network_info):
-        # TODO(preethipy): This function can be moved to Partition.py
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
@@ -163,7 +163,7 @@ class Instance(object):
                   instance=self.instance)
         resources = {}
         instance.vm_state = vm_states.BUILDING
-        instance.task_state = task_states.BLOCK_DEVICE_MAPPING
+        instance.task_state = task_states.SPAWNING
         instance.save()
 
         block_device_info = compute_manager.ComputeManager().\
@@ -172,11 +172,28 @@ class Instance(object):
         resources['block_device_info'] = block_device_info
         return resources
 
-    def get_hba_properties():
+    def get_hba_properties(self):
         LOG.debug('Get Hba properties')
 
-    def launch(self):
-        self.create()
+    def launch(self, partition=None):
+        LOG.debug('Partition launch triggered')
+        self.instance.vm_state = vm_states.BUILDING
+        self.instance.task_state = task_states.SPAWNING
+        self.instance.save()
+        bootproperties = self.get_boot_properties()
+        self.partition.update_properties(properties=bootproperties)
+        result = self.partition.start(True)
+        return result
+
+    def get_boot_properties(self):
+        LOG.debug('Retrieving boot properties for partition')
+        # TODO(preethipy): update the boot-device to storage-adapter
+        # TODO(preethipy): update the boot-storage-device with valid
+        # HBA uri
+        # TODO(preethipy): update boot-logical-unit-number and
+        # boot-world-wide-port-name
+        bootProperties = {'boot-device': 'test-operating-system'}
+        return bootProperties
 
     def get_partition(self, cpc, instance):
         partition = None
@@ -197,6 +214,7 @@ class InstanceInfo(object):
     """
 
     def __init__(self, instance, cpc):
+        _get_zhmclient()
         self.instance = instance
         self.cpc = cpc
         self.partition = None
@@ -205,6 +223,7 @@ class InstanceInfo(object):
         for partition in partition_lists:
             if partition.properties['name'] == self.instance.hostname:
                 self.partition = partition
+                self.partition.pull_full_properties()
 
     @property
     def state(self):
