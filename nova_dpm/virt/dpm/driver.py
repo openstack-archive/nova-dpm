@@ -252,3 +252,22 @@ class DPMDriver(driver.ComputeDriver):
         inst._build_resources(context, instance, block_device_mapping)
 
         inst.launch()
+
+    def destroy(self, context, instance, network_info, block_device_info=None,
+                destroy_disks=True, migrate_data=None):
+        inst = vm.Instance(instance, self._cpc, self._client)
+        inst.destroy()
+
+    def power_off(self, instance, timeout=0, retry_interval=0):
+        inst = vm.Instance(instance, self._cpc, self._client)
+        inst.power_off_vm()
+
+    def power_on(self, context, instance, network_info,
+                 block_device_info=None):
+        inst = vm.Instance(instance, self._cpc, self._client)
+        inst.power_on_vm()
+
+    def reboot(self, context, instance, network_info, reboot_type,
+               block_device_info=None, bad_volumes_callback=None):
+        inst = vm.Instance(instance, self._cpc, self._client)
+        inst.reboot_vm()
