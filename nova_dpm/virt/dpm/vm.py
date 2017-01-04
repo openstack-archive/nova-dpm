@@ -23,6 +23,8 @@ from nova.compute import manager as compute_manager
 from nova.compute import power_state
 from nova.compute import task_states
 from nova.compute import vm_states
+from nova import exception
+from nova.i18n import _
 from nova.i18n import _LE
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
@@ -192,19 +194,63 @@ class Instance(object):
         result = self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM is fixed to return correct status on API return
-        self._loop_status_update(result, 5)
+        self._loop_status_update(result, 5, 'Active')
 
-    def _loop_status_update(self, result, iterations):
+    def destroy(self):
+        LOG.debug('Partition Destroy triggered')
+        if self.partition:
+            result = self.partition.stop(True)
+            # TODO(preethipy): The below method to be removed once the bug
+            # on DPM is fixed to return correct status on API return
+            self._loop_status_update(result, 5, 'stopped')
+            if (self.partition.properties['status'] == 'stopped'):
+                self.partition.delete()
+            else:
+                errormsg = (_("Partition - %(partition)s status "
+                              "%(status)s is invalid") %
+                            {'partition': self.partition.properties['name'],
+                             'status': self.partition.properties['status']})
+                raise exception.InstanceInvalidState(errormsg)
+        else:
+            errormsg = (_("Partition - %(partition)s does not exist") %
+                        {'partition': self.partition.properties['name']})
+            raise exception.InstanceNotFound(errormsg)
+
+    def switch_vm(self, switchmode):
+        if switchmode == "poweron":
+            result = self.partition.start(True)
+            # TODO(preethipy): The below method to be removed once the bug
+            # on DPM is fixed to return correct status on API return
+            self._loop_status_update(result, 5, 'Active')
+
+        elif switchmode == "poweroff":
+            result = self.partition.stop(True)
+            # TODO(preethipy): The below method to be removed once the bug
+            # on DPM is fixed to return correct status on API return
+            self._loop_status_update(result, 5, 'stopped')
+
+        elif switchmode == "reboot":
+            result = self.partition.stop(True)
+            # TODO(preethipy): The below method to be removed once the bug
+            # on DPM is fixed to return correct status on API return
+            self._loop_status_update(result, 5, 'stopped')
+
+            result = self.partition.start(True)
+            # TODO(preethipy): The below method to be removed once the bug
+            # on DPM is fixed to return correct status on API return
+            self._loop_status_update(result, 5, 'Active')
+
+    def _loop_status_update(self, result, iterations, status):
         # TODO(preethipy): This method loops until the partition goes out
         # of pause state or until the iterations complete. Introduced because
         # of the bug in DPM for having status populated correctly only
         # after 4-5 seconds
         self.partition.pull_full_properties()
         if (result['status'] == 'complete'):
-            while (self.partition.properties['status'] == 'paused') and \
-                    (iterations):
-                LOG.debug("sleep for 2 seconds every iteration for"
-                          " status check")
+            while (self.partition.properties['status'] != status)\
+                    and (iterations):
+                LOG.debug("sleep for 2 seconds every iteration "
+                          "for status check")
                 time.sleep(2)
                 iterations -= 1
 
