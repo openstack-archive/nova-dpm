@@ -252,3 +252,8 @@ class DPMDriver(driver.ComputeDriver):
         inst._build_resources(context, instance, block_device_mapping)
 
         inst.launch()
+
+    def destroy(self, context, instance, network_info, block_device_info=None,
+                destroy_disks=True, migrate_data=None):
+        inst = vm.Instance(instance, self._cpc, self._client)
+        inst.destroy()
