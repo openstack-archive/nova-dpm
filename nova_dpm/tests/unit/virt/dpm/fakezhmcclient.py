@@ -160,7 +160,7 @@ class CpcManager(BaseManager):
 
 class Cpc(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Cpc, self).__init__(manager, uri, properties,
+        super(Cpc, self).__init__(manager, uri, None, properties,
                                   uri_prop='object-uri',
                                   name_prop='name')
 
@@ -200,7 +200,7 @@ class PartitionManager(BaseManager):
 class Partition(BaseResource):
     def __init__(self, manager, uri, properties):
         super(Partition, self).__init__(
-            manager, uri, properties,
+            manager, uri, None, properties,
             uri_prop='object-uri', name_prop='name')
 
     def pull_full_properties(self):
@@ -231,7 +231,7 @@ class NicManager(BaseManager):
 
 class Nic(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Nic, self).__init__(manager, uri, properties,
+        super(Nic, self).__init__(manager, uri, None, properties,
                                   uri_prop='object-uri',
                                   name_prop='name')
 
@@ -263,7 +263,7 @@ class HbaManager(BaseManager):
 
 class Hba(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Hba, self).__init__(manager, uri, properties,
+        super(Hba, self).__init__(manager, uri, None, properties,
                                   uri_prop='object-uri',
                                   name_prop='name')
 
@@ -296,7 +296,7 @@ class AdapterManager(BaseManager):
 class Adapter(BaseResource):
 
     def __init__(self, manager, uri, properties):
-        super(Adapter, self).__init__(manager, uri, properties,
+        super(Adapter, self).__init__(manager, uri, None, properties,
                                       uri_prop='object-uri',
                                       name_prop='name')
 
