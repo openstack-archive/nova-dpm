@@ -19,12 +19,12 @@ Supports DPM APIs for virtualization in z Systems
 """
 
 import nova_dpm.conf
-import requests.packages.urllib3
 
 from nova import context as context_object
 from nova import exception
 from nova.objects import flavor as flavor_object
 from nova.virt import driver
+from nova_dpm.virt.dpm import client as _client
 from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
 from nova_dpm.virt.dpm import vm
@@ -70,15 +70,14 @@ class DPMDriver(driver.ComputeDriver):
         self.volume_drivers = self._get_volume_drivers()
 
     def _get_zhmclient(self, zhmc, userid, password):
+        """Lazy initialization for zhmcclient
+
+        This function helps in lazy loading zhmclient. The zhmcclient can
+        otherwise be set to fakezhmcclient for unittest framework
+        """
+
         LOG.debug("_get_zhmclient")
-        # TODO(preethipy): The below line will be removed once the warnings are
-        # supressed within zhmclient code
-        requests.packages.urllib3.disable_warnings()
-
-        global zhmcclient
-        if zhmcclient is None:
-            zhmcclient = importutils.import_module('zhmcclient')
-
+        _client.get_zhmclient()
         session = zhmcclient.Session(zhmc, userid, password)
         self._client = zhmcclient.Client(session)
 
@@ -245,4 +244,4 @@ class DPMDriver(driver.ComputeDriver):
         inst.attachHba(self._conf)
         inst._build_resources(context, instance, block_device_mapping)
 
-        # TODO(pranjank): implement start partition
+        inst.launch()
