@@ -139,3 +139,21 @@ class VmHBATestCase(TestCase):
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_hba(self, mock_debug):
         self.inst.attachHba(self.conf)
+        assertlogs = False
+        hba_name = 'OpenStack_Port_aaaaaaaa-bbbb-cccc-1123-567890abcdef_1'
+        for call in mock_debug.call_args_list:
+            if "HBA created successfully" in call[0][0] \
+                    and hba_name in call[0][0]:
+                assertlogs = True
+        self.assertTrue(assertlogs)
+
+    @mock.patch.object(vm.LOG, 'debug')
+    def test_get_hba(self, mock_debug):
+        self.inst.attachHba(self.conf)
+        assertlogs = False
+        hba_name = 'OpenStack_Port_aaaaaaaa-bbbb-cccc-1123-567890abcdef_1'
+        for call in mock_debug.call_args_list:
+            if "HBA created successfully" in call[0][0] \
+                    and hba_name in call[0][0]:
+                assertlogs = True
+        self.assertTrue(assertlogs)
