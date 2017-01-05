@@ -36,7 +36,7 @@ ALL_DPM_OPTS = [
     cfg.IntOpt('max_instances', help="""
     Maximum number of instances (partitions) that can be created for this
     OpenStack hypervisor host"""),
-    cfg.StrOpt('physical_storage_adapter_mappings', help="""
+    cfg.MultiStrOpt('physical_storage_adapter_mappings', help="""
     Physical storage adapter with port details for hba creation""")
 ]
 
