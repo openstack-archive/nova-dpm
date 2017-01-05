@@ -17,7 +17,10 @@
 Host will have the handle to the CPCSubsetMgr which will retrieve cpcsubsets
 """
 
+import nova.conf
+from nova import context as context_object
 from nova.objects import fields as obj_fields
+from nova.objects import instance as instance_object
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
@@ -47,7 +50,7 @@ class Host(object):
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
         # to be populated
-        self._properties = self._get_host_poperties()
+        self._properties = None
 
         LOG.debug('Host initializing done')
 
@@ -107,11 +110,44 @@ class Host(object):
         return jsonutils.dumps(cpu_info)
 
     def _get_proc_used(self):
-        # TODO(preethipy): should return processor used once the
-        # instances created
-        return 0
+        instance_list = self._get_instances_list()
+        partition_list = self._partition_list()
+        processor_used = 0
+        for instance in instance_list:
+            for partition in partition_list:
+                if (instance.hostname ==
+                        partition.properties['name']):
+                    processor_used = max(
+                        processor_used,
+                        partition.get_property('cp-processors'))
+                    break
+
+        return processor_used
 
     def _get_mem_used(self):
-        # TODO(preethipy): should return memory used once the
-        # instances created
-        return 0
+        instance_list = self._get_instances_list()
+        partition_list = self._partition_list()
+        memory_used = 0
+        for instance in instance_list:
+            for partition in partition_list:
+                if (instance.hostname ==
+                        partition.properties['name']):
+                    # In DPM initial-memory is same as
+                    # current memory used by partition
+                    memory_used += partition.get_property(
+                        'initial-memory')
+                    break
+
+        return memory_used
+
+    def _get_instances_list(self):
+        context = context_object.get_admin_context(read_deleted='no')
+        instance_list = (
+            instance_object.InstanceList.get_by_host(
+                context, nova.conf.CONF.host))
+        return instance_list
+
+    def _partition_list(self):
+        partition_manager = self._cpc.partitions
+        partition_lists = partition_manager.list(full_properties=False)
+        return partition_lists
