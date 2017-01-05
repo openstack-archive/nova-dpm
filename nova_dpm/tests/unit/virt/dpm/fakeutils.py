@@ -13,6 +13,12 @@
 # limitations under the License.
 
 
+from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
+
+
+INSTANCE_HOST_NAME2 = fakezhmcclient.PARTITION_NAME2
+
+
 def getFakeCPCconf():
 
     conf = {'cpcsubset_name': "S12subset",
