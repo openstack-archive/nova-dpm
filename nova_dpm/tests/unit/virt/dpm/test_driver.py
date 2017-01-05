@@ -14,13 +14,18 @@
 import mock
 import nova_dpm.conf
 
+from nova import context as context_object
 from nova import exception
+from nova.objects import flavor as flavor_object
 from nova.test import TestCase
+from nova.virt import driver as driv
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.tests.unit.virt.dpm import test_host as testhost
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import host as dpmHost
+from nova_dpm.virt.dpm import vm
+from nova_dpm.virt.dpm.volume import fibrechannel
 
 
 """
@@ -28,6 +33,21 @@ cpcsubset unit testcase
 """
 
 CONF = nova_dpm.conf.CONF
+
+PARTITION_WWPN = 'C05076FFEB8000D6'
+BLOCK_DEVICE = [{
+    'connection_info': {
+        'driver_volume_type': 'fibre_channel',
+        'connector': {
+            'wwpns': [PARTITION_WWPN],
+            'host': '3cfb165c-0df3-4d80-87b2-4c353e61318f'},
+        'data': {
+            'initiator_target_map': {
+                PARTITION_WWPN: [
+                    '500507680B214AC1',
+                    '500507680B244AC0']},
+            'target_discovered': False,
+            'target_lun': 0}}}]
 
 
 class DPMdriverTestCase(TestCase):
@@ -89,3 +109,90 @@ class DPMdriverTestCase(TestCase):
         self.assertRaises(exception.ValidationError,
                           dpmdriver.init_host,
                           None)
+
+    def test_get_volume_drivers(self):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+        driver_reg = dpmdriver._get_volume_drivers()
+        self.assertTrue(isinstance(driver_reg['fibre_channel'],
+                                   fibrechannel.DpmFibreChannelVolumeDriver))
+
+    @mock.patch.object(fibrechannel.DpmFibreChannelVolumeDriver,
+                       'connect_volume')
+    def test_attach_volume(self, mock_connect_volume):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'fibre_channel'}
+
+        dpmdriver.attach_volume(None, connection_info, None, None)
+        mock_connect_volume.assert_called_once()
+
+    @mock.patch.object(fibrechannel.DpmFibreChannelVolumeDriver,
+                       'disconnect_volume')
+    def test_detach_volume(self, mock_disconnect_volume):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'fibre_channel'}
+
+        dpmdriver.detach_volume(connection_info, None, None)
+        mock_disconnect_volume.assert_called_once()
+
+    def test_attach_volume_Exception(self):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'Dummy_channel'}
+
+        self.assertRaises(exception.VolumeDriverNotFound,
+                          dpmdriver.attach_volume, None,
+                          connection_info, None, None)
+
+    def test_detach_volume_Exception(self):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'Dummy_channel'}
+
+        self.assertRaises(exception.VolumeDriverNotFound,
+                          dpmdriver.detach_volume,
+                          connection_info, None, None)
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance,
+                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
+    @mock.patch.object(driv, 'block_device_info_get_mapping',
+                       return_value=BLOCK_DEVICE)
+    def test_get_fc_boot_props(self, mock_block_device,
+                               mock_get_partition_wwpns,
+                               mock_get_partition):
+        dummy_virt_api = None
+        dpm_driver = driver.DPMDriver(dummy_virt_api)
+        inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
+        target_wwpn, lun = dpm_driver.get_fc_boot_props(
+            mock.Mock(), inst)
+        self.assertEqual(target_wwpn, '500507680B214AC1')
+        self.assertEqual(lun, '0')
+
+    @mock.patch.object(flavor_object.Flavor, 'get_by_id')
+    @mock.patch.object(context_object, 'get_admin_context')
+    @mock.patch.object(vm.PartitionInstance, 'create')
+    @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'properties')
+    def test_prep_for_spawn(self, mock_properties,
+                            mock_partition, mock_attac_hbas,
+                            mock_create, mock_context, mock_flavor):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+        dpmdriver._conf = mock.Mock()
+        dpmdriver.prep_for_spawn(mock.Mock, mock.Mock())
+        mock_create.assert_called_once()
+        mock_attac_hbas.assert_called_once()
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    def test_get_volume_connector(self, mock_get_partition):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+        dpmdriver.get_volume_connector(mock.Mock())
