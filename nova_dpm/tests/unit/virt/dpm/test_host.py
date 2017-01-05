@@ -15,15 +15,16 @@
 import json
 import mock
 
+from nova.objects import instance as instance_object
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.virt.dpm import host
 
-
 """
 cpcsubset unit testcase
 """
+host.zhmcclient = fakezhmcclient
 
 
 def fakeHost():
@@ -101,3 +102,14 @@ class HostTestCase(TestCase):
         cpu_info_dict = json.loads(cpu_info)
         self.assertEqual(cpu_info_dict['arch'], 's390x')
         self.assertEqual(cpu_info_dict['vendor'], 'IBM')
+
+    @mock.patch.object(host.LOG, 'debug')
+    @mock.patch.object(
+        instance_object.InstanceList,
+        'get_all', return_value=fakeutils.getFakeInstanceList())
+    def test_get_proc_used(self, mock_instancelist, mock_warning):
+        host_obj = host.Host(self._conf, self._cpc, self._client)
+        proc_used = host_obj._get_proc_used()
+        memory_used = host_obj._get_mem_used()
+        self.assertEqual(proc_used, fakezhmcclient.MAX_CP_PROCESSOR)
+        self.assertEqual(memory_used, fakezhmcclient.USED_MEMORY)

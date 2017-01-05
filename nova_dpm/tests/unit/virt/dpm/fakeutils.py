@@ -30,12 +30,31 @@ def getFakeInstance():
     return instance
 
 
+def getFakeInstanceList():
+    property1 = {'hostname': 'DummyPartition1'}
+    property2 = {'hostname': 'DummyPartition2'}
+
+    instance1 = Instance(property1)
+    instance2 = Instance(property2)
+
+    instance_list = []
+    instance_list.append(instance1)
+    instance_list.append(instance2)
+
+    return instance_list
+
+
 class Instance(object):
     hostname = None
 
     def __init__(self, properties):
+        self.properties = properties
         global hostname
         hostname = properties['hostname']
 
     def save(self):
         return
+
+    @property
+    def hostname(self):
+        return self.properties['hostname']
