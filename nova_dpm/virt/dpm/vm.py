@@ -197,6 +197,7 @@ class InstanceInfo(object):
     """
 
     def __init__(self, instance, cpc):
+
         self._get_zhmclient()
         self.instance = instance
         self.cpc = cpc

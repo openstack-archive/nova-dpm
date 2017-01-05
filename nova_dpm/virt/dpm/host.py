@@ -111,6 +111,7 @@ class Host(object):
         return jsonutils.dumps(cpu_info)
 
     def _get_proc_used(self):
+
         instance_list = self._get_instances_list()
         partition_list = self._partition_list()
         processor_used = 0
