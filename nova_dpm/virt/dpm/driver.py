@@ -79,7 +79,9 @@ class DPMDriver(driver.ComputeDriver):
                       'max_memory_mb': CONF.dpm.max_memory,
                       'max_partitions': CONF.dpm.max_instances,
                       'physical_storage_adapter_mappings':
-                          CONF.dpm.physical_storage_adapter_mappings}
+                          CONF.dpm.physical_storage_adapter_mappings,
+                      'storage_boot_params':
+                          CONF.dpm.storage_boot_params}
 
         self._cpc = self._client.cpcs.find(**{
             "object-id": self._conf['cpc_uuid']})
@@ -168,14 +170,9 @@ class DPMDriver(driver.ComputeDriver):
     def get_volume_connector(self, instance):
         """The Fibre Channel connector properties."""
         inst = vm.PartitionInstance(instance, self._cpc)
-        inst.get_hba_properties()
+        hbas = inst.get_hba_wwpns()
         props = {}
-        wwpns = {}
-
-        # TODO(stefan) replace the next lines of code by a call
-        # to DPM to retrieve WWPNs for the instance
-        hbas = ["0x50014380242b9751", "0x50014380242b9711"]
-
+        wwpns = []
         if hbas:
             for hba in hbas:
                 wwpn = hba.replace('0x', '')
@@ -183,6 +180,7 @@ class DPMDriver(driver.ComputeDriver):
 
         if wwpns:
             props['wwpns'] = wwpns
+            props['host'] = instance.uuid
 
         return props
 
@@ -209,9 +207,14 @@ class DPMDriver(driver.ComputeDriver):
 
         return info
 
-    def spawn(self, context, instance, image_meta, injected_files,
-              admin_password, network_info=None, block_device_info=None,
-              flavor=None):
+    def default_device_names_for_instance(self,
+                                          instance,
+                                          root_device_name,
+                                          *block_device_lists):
+        self.prep_for_spawn(context=None, instance=instance)
+
+    def prep_for_spawn(self, context, instance,
+                       flavor=None):
 
         if not flavor:
             context = context_object.get_admin_context(read_deleted='yes')
@@ -220,16 +223,39 @@ class DPMDriver(driver.ComputeDriver):
                                                instance.instance_type_id))
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
-        inst = vm.PartitionInstance(instance, self._cpc, flavor)
+        inst = vm.Instance(instance, self._cpc, self._client, flavor)
         inst.create(inst.properties())
-        for vif in network_info:
-            inst.attach_nic(self._conf, vif)
+
+        inst.attachHba(self._conf)
+
+    def spawn(self, context, instance, image_meta, injected_files,
+              admin_password, network_info=None, block_device_info=None,
+              flavor=None):
+
+        inst = vm.PartitionInstance(instance, self._cpc)
 
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
-        inst.attachHba(self._conf)
-        inst._build_resources(context, instance, block_device_mapping)
 
+        LOG.debug("Block device mapping %(block_device_map)s"
+                  % {'block_device_map': str(block_device_mapping)})
+
+        hbas = inst.get_hba_uris()
+
+        booturi = str(hbas[0] if len(hbas) > 0 else "")
+        LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
+                  % {'uri': booturi, 'name': instance.hostname})
+
+        host_wwpn = (block_device_mapping[0]
+                     ['connection_info']
+                     ['connector']['wwpns'][0])
+        target_wwpn = (block_device_mapping[0]
+                       ['connection_info']['data']
+                       ['initiator_target_map'][host_wwpn][0])
+        lun = str(block_device_mapping[0]
+                  ['connection_info']['data']['target_lun'])
+
+        inst.set_boot_properties(target_wwpn, lun, booturi)
         inst.launch()
 
     def destroy(self, context, instance, network_info, block_device_info=None,
