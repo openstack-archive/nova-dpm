@@ -166,23 +166,28 @@ class DPMDriver(driver.ComputeDriver):
         return self.volume_drivers[driver_type]
 
     def get_volume_connector(self, instance):
-        """The Fibre Channel connector properties."""
+        """Get connector information for the instance for attaching to volumes.
+
+        Connector information is a dictionary representing the initiator WWPNs
+        of the partition WWPNs that will be making the connection, hostname of
+        the machine as follows::
+            {
+                'wwpns': list of wwpns,
+                'host': UUID of instance
+            }
+
+        Cinder
+            creates a corresponding "host" on the Storage Subsystem,
+             representing the Instance.
+
+            discovers the instances LUNs to see which storage
+             paths are active.
+        """
         inst = vm.PartitionInstance(instance, self._cpc)
-        inst.get_hba_properties()
+        wwpns = inst.get_partition_wwpns()
         props = {}
-        wwpns = {}
-
-        # TODO(stefan) replace the next lines of code by a call
-        # to DPM to retrieve WWPNs for the instance
-        hbas = ["0x50014380242b9751", "0x50014380242b9711"]
-
-        if hbas:
-            for hba in hbas:
-                wwpn = hba.replace('0x', '')
-                wwpns.append(wwpn)
-
-        if wwpns:
-            props['wwpns'] = wwpns
+        props['wwpns'] = wwpns
+        props['host'] = instance.uuid
 
         return props
 
@@ -209,9 +214,51 @@ class DPMDriver(driver.ComputeDriver):
 
         return info
 
-    def spawn(self, context, instance, image_meta, injected_files,
-              admin_password, network_info=None, block_device_info=None,
-              flavor=None):
+    def default_device_names_for_instance(self,
+                                          instance,
+                                          root_device_name,
+                                          *block_device_lists):
+        """Prepare for spawn
+
+        This method is implemented as hack to get the "boot from volume"
+         use case going. The original intend of this method is
+         irrelevant for the nova-dpm driver.
+
+        Nova was initially developed for software hypervisors like
+        libvirt/kvm. Therefore it has a different way of dealing
+        with LUNs (volumes) and WWPNs. In the libvirt/kvm case,
+        a LUN requested by an instance gets attached to the hypervisor
+        (compute node). The hypervisor then takes care of virtualizing
+        and offering it to the instance itself. In this case,
+        the the hypervisors WWPNs are used as initiator.
+        Those need to be configured in the Storage Subsystems hostmapping.
+        The instances itself do not deal with LUN IDs and WWPNs at all!
+        With DPM this is different. There is no hypervisor to
+        attach the LUNs to. In fact the instance (partition) has direct
+        access to an HBA with it's own host WWPN. Therefore the Instances
+        host WWPN (and not the compute node ones) must be used for the
+        LUN masking in the Storage Subsystem.
+
+        Typically, an instance is created in the Nova drivers 'spawn' method.
+        But before that spawn method is even called, the Nova manager
+        asks the driver for the initiator WWPNs to be used. But at this point
+        in time it is not yet available, as the partition and the
+        corresponding vHBA do not yet exist.
+
+        To work around this, we abuse this method to create the partition and
+        the vHBAs before Nova is asking for the initial WWPNs.
+
+        The flow from nova manager.py perspective is like this:
+
+            driver.default_device_names_for_instance (hack to create
+             the partition and it's vHBAs)
+            driver.get_volume_connector (returns the partitions WWPNs)
+            driver.spawn (continues setting up the partition)
+        """
+        self.prep_for_spawn(context=None, instance=instance)
+
+    def prep_for_spawn(self, context, instance,
+                       flavor=None):
 
         if not flavor:
             context = context_object.get_admin_context(read_deleted='yes')
@@ -222,15 +269,83 @@ class DPMDriver(driver.ComputeDriver):
 
         inst = vm.PartitionInstance(instance, self._cpc, flavor)
         inst.create(inst.properties())
+
+        inst.attach_hbas(self._conf)
+
+    def spawn(self, context, instance, image_meta, injected_files,
+              admin_password, network_info=None, block_device_info=None,
+              flavor=None):
+
+        inst = vm.PartitionInstance(instance, self._cpc)
+
         for vif in network_info:
             inst.attach_nic(self._conf, vif)
 
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
-        inst.attachHba(self._conf)
-        inst._build_resources(context, instance, block_device_mapping)
 
+        LOG.debug("Block device mapping %(block_device_map)s"
+                  % {'block_device_map': str(block_device_mapping)})
+
+        hbas = inst.get_hba_uris()
+
+        adapter_uuid, port = (
+            vm.PhysicalAdapterModel.parse_config_line(
+                self._conf['physical_storage_adapter_mappings'][0]))
+
+        booturi = None
+
+        for hba in hbas:
+            if hba.find(adapter_uuid):
+                booturi = str(hba)
+                break
+
+        if not booturi:
+            raise Exception('No HBA found')
+
+        LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
+                  % {'uri': booturi, 'name': instance.hostname})
+
+        part_boot_wwpn = None
+        wwpns = inst.get_partition_wwpns()
+
+        if not wwpns:
+            raise Exception('No target WWPNs found')
+
+        # In this release our consideration
+        # is we will use one wwpn to connect with
+        # volume. So will use first item in the list
+        part_boot_wwpn = wwpns[0]
+
+        target_wwpn, lun = self._extract_fc_boot_props(
+            block_device_mapping, part_boot_wwpn)
+
+        inst.set_boot_properties(target_wwpn, lun, booturi)
         inst.launch()
+
+    def _extract_fc_boot_props(self, block_device_mapping, partition_wwpn):
+
+        # block_device_mapping is a list of mapped block devices.
+        # In dpm case we are mapping only one device
+        # So block_device_mapping contains one item in the list
+        # i.e. block_device_mapping[0]
+        mapped_block_device = block_device_mapping[0]
+
+        host_wwpns = (mapped_block_device['connection_info']
+                      ['connector']['wwpns'])
+
+        if partition_wwpn not in host_wwpns:
+            raise Exception('Partition WWPN not found from cinder')
+
+        target_wwpns = (mapped_block_device['connection_info']['data']
+                        ['initiator_target_map'][partition_wwpn])
+        # target_wwpns is a list of wwpns which will be accessible
+        # from host wwpn. So we can use any of the target wwpn in the
+        # list. Default we are using first target wwpn target_wwpns[0]
+        target_wwpn = target_wwpns[0]
+        lun = str(mapped_block_device['connection_info']
+                  ['data']['target_lun'])
+        return target_wwpn, lun
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
