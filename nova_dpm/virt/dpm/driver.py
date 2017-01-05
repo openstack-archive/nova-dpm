@@ -79,7 +79,9 @@ class DPMDriver(driver.ComputeDriver):
                       'max_memory_mb': CONF.dpm.max_memory,
                       'max_partitions': CONF.dpm.max_instances,
                       'physical_storage_adapter_mappings':
-                          CONF.dpm.physical_storage_adapter_mappings}
+                          CONF.dpm.physical_storage_adapter_mappings,
+                      'storage_boot_params':
+                          CONF.dpm.storage_boot_params}
 
         self._cpc = self._client.cpcs.find(**{
             "object-id": self._conf['cpc_uuid']})
@@ -168,14 +170,9 @@ class DPMDriver(driver.ComputeDriver):
     def get_volume_connector(self, instance):
         """The Fibre Channel connector properties."""
         inst = vm.PartitionInstance(instance, self._cpc)
-        inst.get_hba_properties()
+        hbas = inst.get_hba_wwpns()
         props = {}
-        wwpns = {}
-
-        # TODO(stefan) replace the next lines of code by a call
-        # to DPM to retrieve WWPNs for the instance
-        hbas = ["0x50014380242b9751", "0x50014380242b9711"]
-
+        wwpns = []
         if hbas:
             for hba in hbas:
                 wwpn = hba.replace('0x', '')
@@ -225,12 +222,55 @@ class DPMDriver(driver.ComputeDriver):
         for vif in network_info:
             inst.attach_nic(self._conf, vif)
 
+        inst.attachHba(self._conf)
+
+        # TODO(preethipy): _build_resources invokes _prep_block_device
+        # which in turn returns resources containing block_device_info.
+        # TargetWWPN and TargetLUN details should be fetched from
+        # block_device_info and be used as boot parameters for the
+        # partition.
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
-        inst.attachHba(self._conf)
-        inst._build_resources(context, instance, block_device_mapping)
 
+        block_device_data = None
+        # TODO(preethipy): uncomment the below lines when testing
+        # cinder environment.
+        # resources = inst._build_resources(context, instance,
+        #                                  block_device_mapping)
+
+        # block_device_data = driver.block_device_info_get_mapping(
+        #    resources['block_device_mapping'])
+        LOG.debug("Block device mapping %(block_device_map)s"
+                  % {'block_device_map': str(block_device_mapping)})
+
+        # TODO(preethipy): block_device_mapping is expected to contain
+        # data having initiator_target_map and target_lun which should
+        # be used for booting the instance.
+
+        hbas = inst.get_hba_uris()
+
+        # TODO(preethipy): Using the first HBA created for temporary use.
+        # This should be replaces with the  HBA uri specified by the
+        # cinder code
+        booturi = str(hbas[0] if len(hbas) > 0 else "")
+        LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
+                  % {'uri': booturi, 'name': instance.hostname})
+
+        wwpn, lun = self.get_wwpn_lun(block_device_data)
+        inst.set_boot_properties(wwpn, lun, booturi)
         inst.launch()
+
+    def get_wwpn_lun(self, block_device_mapping):
+        # TODO(preethipy): wwpn_lun_str is currently read from
+        # conf file but has to be modifed to fetch wwpn and lun
+        # from block_device_mapping
+        wwpn_lun_str = self._conf['storage_boot_params']
+        result = wwpn_lun_str.split(":")
+        wwpn = str(result[0] if len(result) == 2 and result[0] else ""
+                   ).replace('0x', '')
+        lun = str(result[1] if len(result) == 2 and result[1] else ""
+                  ).replace('0x', '')
+        return wwpn, lun
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
