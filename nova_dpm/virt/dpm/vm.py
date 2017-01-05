@@ -294,7 +294,7 @@ class PhysicalAdapterModel(object):
     @staticmethod
     def _parse_config_line(line):
         result = line.split(":")
-        adapter_id = result[0]
+        adapter_id = result[1]
         # If no port-element-id was defined, default to 0
         # result[1] can also be '' - handled by 'and result[1]'
         port = int(result[1] if len(result) == 2 and result[1] else 0)
