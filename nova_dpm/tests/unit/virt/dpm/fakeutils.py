@@ -13,6 +13,16 @@
 # limitations under the License.
 
 
+from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
+
+
+# Data for fake Instance1
+INSTANCE_HOST_NAME1 = fakezhmcclient.PARTITION_NAME1
+
+# Data for fake Instance2
+INSTANCE_HOST_NAME2 = fakezhmcclient.PARTITION_NAME2
+
+
 def getFakeCPCconf():
 
     conf = {'cpcsubset_name': "S12subset",
@@ -30,12 +40,36 @@ def getFakeInstance():
     return instance
 
 
+def getFakeInstance1():
+    property = {'hostname': INSTANCE_HOST_NAME1}
+    instance = Instance(property)
+    return instance
+
+
+def getFakeInstance2():
+    property = {'hostname': INSTANCE_HOST_NAME2}
+    instance = Instance(property)
+    return instance
+
+
+def getFakeInstanceList():
+    instance_list = []
+    instance_list.append(getFakeInstance1())
+    instance_list.append(getFakeInstance2())
+    return instance_list
+
+
 class Instance(object):
     hostname = None
 
     def __init__(self, properties):
+        self.properties = properties
         global hostname
         hostname = properties['hostname']
 
     def save(self):
         return
+
+    @property
+    def hostname(self):
+        return self.properties['hostname']
