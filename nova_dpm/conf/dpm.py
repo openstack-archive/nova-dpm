@@ -48,8 +48,10 @@ ALL_DPM_OPTS = [
     Maximum amount of memory available on CpcSubset"""),
     cfg.IntOpt('max_instances', help="""
     Maximum number of instances that can be created on CpcSubset"""),
-    cfg.StrOpt('physical_storage_adapter_mappings', help="""
-    Physical storage adapter with port details for hba creation""")
+    cfg.MultiStrOpt('physical_storage_adapter_mappings', help="""
+    Physical storage adapter with port details for hba creation"""),
+    cfg.StrOpt('storage_boot_params', help="""
+    Target WWPN and LUN details for the partitions to boot""")
 ]
 
 
