@@ -39,7 +39,7 @@ DPM_TO_NOVA_STATE = {
     utils.PartitionState.STOPPED: power_state.SHUTDOWN,
     utils.PartitionState.UNKNOWN: power_state.NOSTATE,
     utils.PartitionState.PAUSED: power_state.PAUSED,
-    utils.PartitionState.STARTING: power_state.PAUSED
+    utils.PartitionState.STARTING: power_state.NOSTATE
 }
 
 OBJECT_ID = 'object-id'
