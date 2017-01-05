@@ -197,6 +197,7 @@ class InstanceInfo(object):
     """
 
     def __init__(self, instance, cpc):
+        self._get_zhmclient()
         self.instance = instance
         self.cpc = cpc
         self.partition = None
@@ -205,6 +206,12 @@ class InstanceInfo(object):
         for partition in partition_lists:
             if partition.properties['name'] == self.instance.hostname:
                 self.partition = partition
+
+    def _get_zhmclient(self):
+        LOG.debug("_get_zhmclient")
+        global zhmcclient
+        if zhmcclient is None:
+            zhmcclient = importutils.import_module('zhmcclient')
 
     @property
     def state(self):
