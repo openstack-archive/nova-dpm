@@ -21,6 +21,7 @@ from nova_dpm.tests.unit.virt.dpm import test_host as testhost
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import host as dpmHost
+from nova_dpm.virt.dpm.volume import fibrechannel
 
 
 """
@@ -113,3 +114,69 @@ class DPMdriverTestCase(TestCase):
         self.assertRaises(exception.ValidationError,
                           dpmdriver.init_host,
                           None)
+
+    @mock.patch.object(driver.LOG, 'debug')
+    def test_get_volume_drivers(self, mock_debug):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+        driver_reg = dpmdriver._get_volume_drivers()
+        self.assertTrue(isinstance(driver_reg['fibre_channel'],
+                                   fibrechannel.DpmFibreChannelVolumeDriver))
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(fibrechannel.LOG, 'debug')
+    def test_attach_volume(self, mock_debug_fibrechannel, mock_debug_driver):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'fibre_channel'}
+
+        dpmdriver.attach_volume(None, connection_info, None, None)
+        assertlogs = False
+
+        for call in mock_debug_fibrechannel.call_args_list:
+            if("Attached FC volume" in call[0][0]):
+                assertlogs = True
+        self.assertTrue(assertlogs)
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(fibrechannel.LOG, 'debug')
+    def test_detach_volume(self, mock_debug_fibrechannel, mock_debug_driver):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'fibre_channel'}
+
+        dpmdriver.detach_volume(connection_info, None, None)
+        assertlogs = False
+
+        for call in mock_debug_fibrechannel.call_args_list:
+            if ("Disconnected FC Volume" in call[0][0]):
+                assertlogs = True
+        self.assertTrue(assertlogs)
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(fibrechannel.LOG, 'debug')
+    def test_attach_volume_Exception(self, mock_debug_fibrechannel,
+                                     mock_debug_driver):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'Dummy_channel'}
+
+        self.assertRaises(exception.VolumeDriverNotFound,
+                          dpmdriver.attach_volume, None,
+                          connection_info, None, None)
+
+    @mock.patch.object(driver.LOG, 'debug')
+    @mock.patch.object(fibrechannel.LOG, 'debug')
+    def test_detach_volume_Exception(self, mock_debug_fibrechannel,
+                                     mock_debug_driver):
+        dummyvirtapi = None
+        dpmdriver = driver.DPMDriver(dummyvirtapi)
+
+        connection_info = {'driver_volume_type': 'Dummy_channel'}
+
+        self.assertRaises(exception.VolumeDriverNotFound,
+                          dpmdriver.detach_volume,
+                          connection_info, None, None)
