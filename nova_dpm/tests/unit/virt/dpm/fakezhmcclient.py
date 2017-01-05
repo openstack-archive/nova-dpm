@@ -21,6 +21,35 @@ import zhmcclient
 """Fake zhmcclient"""
 
 
+# Data for Fake partition1
+PARTITION_NAME1 = "DummyPartition1"
+PARTITION_URI1 = "/api/partitions/00000000-aaba-bbbb-cccc-abcdabcdabcd"
+PARTITION_CP_PROCESSOR1 = 1
+PARTITION_INITIAL_MEMORY1 = 512
+
+# Data for Fake partition2
+PARTITION_NAME2 = "DummyPartition2"
+PARTITION_URI2 = "/api/partitions/00000000-aaba-bcbb-cccc-abcdabcdabcd"
+PARTITION_CP_PROCESSOR2 = 2
+PARTITION_INITIAL_MEMORY2 = 1024
+
+# Data for Fake partition3
+PARTITION_NAME3 = "DummyPartition3"
+PARTITION_URI3 = "/api/partitions/00000000-aaba-bbbb-cdcc-abcdabcdabcd"
+PARTITION_CP_PROCESSOR3 = 1
+PARTITION_INITIAL_MEMORY3 = 512
+
+# Maxmimum cp-processor used by partition2 from above data
+MAX_CP_PROCESSOR = PARTITION_CP_PROCESSOR2
+
+# For used memory we are using DummyPartition1 and DummyPartition2
+# For more info please check function getFakeInstanceList()
+# in fakeutils.py
+# So used memory will be
+# PARTITION_INITIAL_MEMORY1 + PARTITION_INITIAL_MEMORY2
+USED_MEMORY = PARTITION_INITIAL_MEMORY1 + PARTITION_INITIAL_MEMORY2
+
+
 def getCpcmgr(ipaddress, username, password):
     session = Session(ipaddress, username, password)
     client = Client(session)
@@ -88,6 +117,54 @@ def getFakePartition():
     partition = Partition(getdummyCpcmgr(), partition_props['object-uri'],
                           partition_props)
     return partition
+
+
+def getFakePartition1():
+    partition_property1 = dict()
+    partition_property1['name'] = PARTITION_NAME1
+    partition_property1['object-uri'] = PARTITION_URI1
+    partition_property1['initial-memory'] = PARTITION_INITIAL_MEMORY1
+    partition_property1['cp-processors'] = PARTITION_CP_PROCESSOR1
+
+    partition = Partition(
+        getdummyCpcmgr(),
+        partition_property1['object-uri'], partition_property1)
+    return partition
+
+
+def getFakePartition2():
+    partition_property2 = dict()
+    partition_property2['name'] = PARTITION_NAME2
+    partition_property2['object-uri'] = PARTITION_URI2
+    partition_property2['initial-memory'] = PARTITION_INITIAL_MEMORY2
+    partition_property2['cp-processors'] = PARTITION_CP_PROCESSOR2
+
+    partition = Partition(
+        getdummyCpcmgr(),
+        partition_property2['object-uri'], partition_property2)
+    return partition
+
+
+def getFakePartition3():
+    partition_property3 = dict()
+    partition_property3['name'] = PARTITION_NAME3
+    partition_property3['object-uri'] = PARTITION_URI3
+    partition_property3['initial-memory'] = PARTITION_INITIAL_MEMORY3
+    partition_property3['cp-processors'] = PARTITION_CP_PROCESSOR3
+
+    partition = Partition(
+        getdummyCpcmgr(),
+        partition_property3['object-uri'], partition_property3)
+    return partition
+
+
+def getFakePartitionList():
+    partition_list = []
+    partition_list.append(getFakePartition1())
+    partition_list.append(getFakePartition2())
+    partition_list.append(getFakePartition3())
+
+    return partition_list
 
 
 def getFakeNicManager():
@@ -189,9 +266,7 @@ class PartitionManager(BaseManager):
         super(PartitionManager, self).__init__(cpc)
 
     def list(self, full_properties=False):
-        partition_list = []
-        partition_list.append(getFakePartition())
-        return partition_list
+        return getFakePartitionList()
 
     def find(self, **kwargs):
         return getFakePartition()
