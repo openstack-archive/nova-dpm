@@ -174,10 +174,10 @@ class PartitionInstance(object):
                          'virtual-switch-uri']})
         return nic_interface
 
-    def attachHba(self, conf):
+    def attach_hbas(self, conf):
         LOG.debug('Creating vhbas for instance',
                   instance=self.instance)
-        mapping = self.createStorageAdapterUris(conf)
+        mapping = self.get_storage_adapter_uris(conf)
         for adapterPort in mapping.get_adapter_port_mapping():
             adapter_object_id = adapterPort['adapter_id']
             adapter_port = adapterPort['port']
@@ -201,13 +201,13 @@ class PartitionInstance(object):
                          'adapter-port-uri': hba.properties[
                              'adapter-port-uri']})
 
-    def createStorageAdapterUris(self, conf):
+    def get_storage_adapter_uris(self, conf):
         LOG.debug('Creating Adapter uris')
         interface_mappings = conf['physical_storage_adapter_mappings']
         mapping = PhysicalAdapterModel(self.cpc)
         for entry in interface_mappings:
-            adapter_uuid, port = \
-                PhysicalAdapterModel._parse_config_line(entry)
+            adapter_uuid, port = (
+                PhysicalAdapterModel.parse_config_line(entry))
             adapter = mapping._get_adapter(adapter_uuid)
             mapping._validate_adapter_type(adapter)
             mapping._add_adapter_port(adapter_uuid, port)
@@ -227,16 +227,57 @@ class PartitionInstance(object):
         resources['block_device_info'] = block_device_info
         return resources
 
-    def get_hba_properties(self):
+    def get_hba_uris(self):
         LOG.debug('Get Hba properties')
+        return self.partition.get_property('hba-uris')
+
+    def get_hba_uri(self, conf):
+        hbas = self.get_hba_uris()
+
+        adapter_uuid, port = (
+            PhysicalAdapterModel.parse_config_line(
+                # As because we are using multiple
+                # storage in configuration. So
+                # we will use one i.e first adapter
+                # in the list
+                conf['physical_storage_adapter_mappings'][0]))
+
+        hba_uri = None
+
+        for hba in hbas:
+            if hba.find(adapter_uuid):
+                hba_uri = str(hba)
+                break
+
+        if not hba_uri:
+            raise Exception('No HBA found')
+        return hba_uri
+
+    def get_partition_wwpns(self):
+        LOG.debug('Get Partition wwpns')
+        partition_wwpns = []
+        if self.partition is not None:
+            hba_manager = self.partition.hbas
+            hbas = hba_manager.list(full_properties=False)
+            for hba in hbas:
+                wwpn = hba.get_property('wwpn')
+                partition_wwpns.append(wwpn.replace('0x', ''))
+        return partition_wwpns
+
+    def set_boot_properties(self, wwpn, lun, booturi):
+        LOG.debug('set_boot_properties')
+        bootProperties = {'boot-device': 'storage-adapter',
+                          'boot-storage-device': booturi,
+                          'boot-world-wide-port-name': wwpn,
+                          'boot-logical-unit-number': lun}
+        self.partition.update_properties(properties=bootProperties)
 
     def launch(self, partition=None):
         LOG.debug('Partition launch triggered')
         self.instance.vm_state = vm_states.BUILDING
         self.instance.task_state = task_states.SPAWNING
         self.instance.save()
-        bootproperties = self.get_boot_properties()
-        self.partition.update_properties(properties=bootproperties)
+
         result = self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM is fixed to return correct status on API return
@@ -428,10 +469,12 @@ class PhysicalAdapterModel(object):
         return self._adapter_ports
 
     @staticmethod
-    def _parse_config_line(line):
+    def parse_config_line(line):
         result = line.split(":")
         adapter_id = result[0]
         # If no port-element-id was defined, default to 0
         # result[1] can also be '' - handled by 'and result[1]'
         port = int(result[1] if len(result) == 2 and result[1] else 0)
+        LOG.debug('Adapter ID: %(adapterid)s and Port: %(port)s'
+                  % {"adapterid": str(adapter_id), "port": str(port)})
         return adapter_id, port
