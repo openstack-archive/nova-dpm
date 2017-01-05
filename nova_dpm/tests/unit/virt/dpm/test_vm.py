@@ -144,8 +144,6 @@ class VmHBATestCase(TestCase):
 
         self.inst = getMockInstance()
 
-        self.conf['physical_storage_adapter_mappings'] = \
-            ["aaaaaaaa-bbbb-cccc-1123-567890abcdef:1"]
         self.inst.partition.hbas = fakezhmcclient.getFakeHbaManager()
 
     @mock.patch.object(vm.LOG, 'debug')
@@ -162,4 +160,4 @@ class VmHBATestCase(TestCase):
 
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_hba(self, mock_debug):
-        self.inst.attachHba(self.conf)
+        self.inst.attach_hbas(self.conf)
