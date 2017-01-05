@@ -48,8 +48,14 @@ ALL_DPM_OPTS = [
     Maximum amount of memory available on CpcSubset"""),
     cfg.IntOpt('max_instances', help="""
     Maximum number of instances that can be created on CpcSubset"""),
-    cfg.StrOpt('physical_storage_adapter_mappings', help="""
-    Physical storage adapter with port details for hba creation""")
+    cfg.MultiStrOpt('physical_storage_adapter_mappings', help="""
+    Physical storage adapter with port details for hba creation
+    e.g.- physical_storage_adapter_mappings =
+    "439da232-b18d-11e6-9c12-42f2e9ef1641:0"
+    where '439da232-b18d-11e6-9c12-42f2e9ef164' is adapter id(uuid)
+    and '0' is the port number of the adapter.
+    Usually each adapter has multiple port so we need to use one port.
+    """)
 ]
 
 
