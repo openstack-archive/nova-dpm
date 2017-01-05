@@ -20,10 +20,10 @@ from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.virt.dpm import host
 
-
 """
 cpcsubset unit testcase
 """
+host.zhmcclient = fakezhmcclient
 
 
 def fakeHost():

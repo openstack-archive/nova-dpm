@@ -17,9 +17,12 @@
 Host will have the handle to the CPCSubsetMgr which will retrieve cpcsubsets
 """
 
+from nova import context as context_object
 from nova.objects import fields as obj_fields
+from nova.objects import instance as instance_object
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
+from oslo_utils import importutils
 
 
 LOG = logging.getLogger(__name__)
@@ -42,12 +45,13 @@ class Host(object):
         LOG.debug('Host initializing for cpcsubset %(cpcsubset_name)s'
                   % {'cpcsubset_name': conf['cpcsubset_name']})
 
+        self._get_zhmclient()
         self._conf = conf
         self._client = client
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
         # to be populated
-        self._properties = self._get_host_poperties()
+        self._properties = None
 
         LOG.debug('Host initializing done')
 
@@ -107,11 +111,36 @@ class Host(object):
         return jsonutils.dumps(cpu_info)
 
     def _get_proc_used(self):
-        # TODO(preethipy): should return processor used once the
-        # instances created
-        return 0
+        instance_list = self._get_instances_list()
+        partition_list = self._partition_list()
+        processor_used = 0
+        for instance in instance_list:
+            for partition in partition_list:
+                if (instance.hostname ==
+                        partition.properties['name']):
+                    if (processor_used <
+                            partition.get_property('cp-processors')):
+                        processor_used = partition.get_property(
+                            'cp-processors')
+        return processor_used
 
     def _get_mem_used(self):
         # TODO(preethipy): should return memory used once the
         # instances created
         return 0
+
+    def _get_instances_list(self):
+        context = context_object.get_admin_context(read_deleted='yes')
+        instance_list = instance_object.InstanceList.get_all(context)
+        return instance_list
+
+    def _partition_list(self):
+        partition_manager = zhmcclient.PartitionManager(self._cpc)
+        partition_lists = partition_manager.list(full_properties=False)
+        return partition_lists
+
+    def _get_zhmclient(self):
+        LOG.debug("_get_zhmclient")
+        global zhmcclient
+        if zhmcclient is None:
+            zhmcclient = importutils.import_module('zhmcclient')
