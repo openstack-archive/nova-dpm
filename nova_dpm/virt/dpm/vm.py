@@ -160,11 +160,11 @@ class Instance(object):
         interface_mappings = conf['physical_storage_adapter_mappings']
         mapping = PhysicalAdapterModel(self.cpc)
         for entry in interface_mappings:
-            adapter_uuid, port = \
+            adapter_uuid, port, device_num = \
                 PhysicalAdapterModel._parse_config_line(entry)
             adapter = mapping._get_adapter(adapter_uuid)
             mapping._validate_adapter_type(adapter)
-            mapping._add_adapter_port(adapter_uuid, port)
+            mapping._add_adapter_port(adapter_uuid, port, device_num)
         return mapping
 
     def _build_resources(self, context, instance, block_device_mapping):
@@ -370,9 +370,10 @@ class PhysicalAdapterModel(object):
                       adapter)
             sys.exit(1)
 
-    def _add_adapter_port(self, adapter_id, port):
+    def _add_adapter_port(self, adapter_id, port, device_num):
         self._adapter_ports.append({"adapter_id": adapter_id,
-                                    "port": port})
+                                    "port": port
+                                    "device-number": device_num})
 
     def get_adapter_port_mapping(self):
         """Get a list of adapter port uri
@@ -387,5 +388,6 @@ class PhysicalAdapterModel(object):
         adapter_id = result[0]
         # If no port-element-id was defined, default to 0
         # result[1] can also be '' - handled by 'and result[1]'
-        port = int(result[1] if len(result) == 2 and result[1] else 0)
-        return adapter_id, port
+        port = int(result[1] if len(result) == 3 and result[1] else 0)
+        device_num = int(result[2] if len(result) == 3 and result[2] else 0)
+        return adapter_id, port, device_num
