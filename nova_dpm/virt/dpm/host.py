@@ -18,6 +18,7 @@ Host will have the handle to the CPCSubsetMgr which will retrieve cpcsubsets
 """
 
 from nova.objects import fields as obj_fields
+from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
@@ -45,7 +46,7 @@ class Host(object):
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
         # to be populated
-        self._properties = self._get_host_poperties()
+        self._properties = None
 
         LOG.debug('Host initializing done')
 
@@ -105,11 +106,19 @@ class Host(object):
         return jsonutils.dumps(cpu_info)
 
     def _get_proc_used(self):
-        # TODO(preethipy): should return processor used once the
-        # instances created
-        return 0
+        part_list = vm.cpcsubset_partition_list(self._cpc)
+        processor_used = 0
+        for partition in part_list:
+            processor_used = max(
+                processor_used,
+                partition.get_property('ifl-processors'))
+
+        return processor_used
 
     def _get_mem_used(self):
-        # TODO(preethipy): should return memory used once the
-        # instances created
-        return 0
+        part_list = vm.cpcsubset_partition_list(self._cpc)
+        memory_used = 0
+        for partition in part_list:
+            memory_used += partition.get_property('initial-memory')
+
+        return memory_used

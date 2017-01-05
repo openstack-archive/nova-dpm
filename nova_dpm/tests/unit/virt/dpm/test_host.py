@@ -19,11 +19,12 @@ from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.virt.dpm import host
-
+from nova_dpm.virt.dpm import vm
 
 """
 cpcsubset unit testcase
 """
+host.zhmcclient = fakezhmcclient
 
 
 def fakeHost():
@@ -69,6 +70,7 @@ class HostTestCase(TestCase):
         self._cpcmanager = fakezhmcclient.getCpcmgrForClient(self._client)
         self._cpc = fakezhmcclient.getFakeCPC(self._cpcmanager)
         self._conf = fakeutils.getFakeCPCconf()
+        self.host_obj = host.Host(self._conf, self._cpc, self._client)
 
     @mock.patch.object(host.LOG, 'debug')
     def test_host(self, mock_warning):
@@ -101,3 +103,19 @@ class HostTestCase(TestCase):
         cpu_info_dict = json.loads(cpu_info)
         self.assertEqual(cpu_info_dict['arch'], 's390x')
         self.assertEqual(cpu_info_dict['vendor'], 'IBM')
+
+    @mock.patch.object(
+        vm,
+        'cpcsubset_partition_list',
+        return_value=fakezhmcclient.get_fake_partition_list())
+    def test_get_proc_used(self, mock_partitions_list):
+        proc_used = self.host_obj._get_proc_used()
+        self.assertEqual(proc_used, fakezhmcclient.MAX_CP_PROCESSOR)
+
+    @mock.patch.object(
+        vm,
+        'cpcsubset_partition_list',
+        return_value=fakezhmcclient.get_fake_partition_list())
+    def test_mem_used(self, mock_partitions_list):
+        memory_used = self.host_obj._get_mem_used()
+        self.assertEqual(memory_used, fakezhmcclient.USED_MEMORY)
