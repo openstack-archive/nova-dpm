@@ -99,7 +99,9 @@ class DPMDriver(driver.ComputeDriver):
                       'max_memory_mb': CONF.dpm.max_memory,
                       'max_partitions': CONF.dpm.max_instances,
                       'physical_storage_adapter_mappings':
-                          CONF.dpm.physical_storage_adapter_mappings}
+                          CONF.dpm.physical_storage_adapter_mappings,
+                      'storage_boot_params':
+                          CONF.dpm.storage_boot_params}
 
         self._cpc = self._client.cpcs.find(**{
             "object-id": self._conf['cpc_uuid']})
@@ -188,7 +190,7 @@ class DPMDriver(driver.ComputeDriver):
     def get_volume_connector(self, instance):
         """The Fibre Channel connector properties."""
         inst = vm.Instance(instance, self._cpc)
-        inst.get_hba_properties()
+        inst.get_hba_uris()
         props = {}
         wwpns = {}
 
@@ -251,6 +253,11 @@ class DPMDriver(driver.ComputeDriver):
         inst.attachHba(self._conf)
         inst._build_resources(context, instance, block_device_mapping)
 
+        hbas = inst.get_hba_uris()
+        booturi = str(hbas[0] if len(hbas) > 0 else "")
+        LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
+                  % {'uri': booturi, 'name': instance.hostname})
+        inst.set_boot_properties(self._conf, booturi)
         inst.launch()
 
     def destroy(self, context, instance, network_info, block_device_info=None,
