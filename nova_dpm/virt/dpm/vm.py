@@ -26,12 +26,10 @@ from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
+from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
-from oslo_utils import importutils
 from zhmcclient._exceptions import NotFound
-
-zhmcclient = None
 
 
 DPM_TO_NOVA_STATE = {
@@ -45,6 +43,7 @@ DPM_TO_NOVA_STATE = {
 OBJECT_ID = 'object-id'
 CPCSUBSET_NAME = 'cpcsubset_name'
 LOG = logging.getLogger(__name__)
+zhmcclient = client_proxy.import_zhmcclient()
 
 
 def _translate_vm_state(dpm_state):
@@ -60,22 +59,8 @@ def _translate_vm_state(dpm_state):
     return nova_state
 
 
-def _get_zhmclient():
-    """Lazy initialization for zhmcclient
-
-    This function helps in lazy loading zhmclient. The zhmcclient can
-    otherwise be set to fakezhmcclient for unittest framework
-    """
-
-    LOG.debug("_get_zhmclient")
-    global zhmcclient
-    if zhmcclient is None:
-        zhmcclient = importutils.import_module('zhmcclient')
-
-
 class Instance(object):
     def __init__(self, instance, cpc, client, flavor=None):
-        _get_zhmclient()
         self.instance = instance
         self.flavor = flavor
         self.cpc = cpc
@@ -285,7 +270,6 @@ class InstanceInfo(object):
     """
 
     def __init__(self, instance, cpc):
-        _get_zhmclient()
         self.instance = instance
         self.cpc = cpc
         self.partition = None

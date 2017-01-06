@@ -26,21 +26,25 @@ from nova_dpm.virt.dpm.vm import Instance
 vm unit testcase
 """
 
-vm.zhmcclient = fakezhmcclient
-session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
-client = fakezhmcclient.Client(session)
-cpc = fakezhmcclient.getFakeCPC()
-conf = fakeutils.getFakeCPCconf()
-inst = Instance(fakeutils.getFakeInstance(), cpc, client)
-inst.partition = fakezhmcclient.getFakePartition()
+
+def getMockInstance():
+    session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
+    client = fakezhmcclient.Client(session)
+    cpc = fakezhmcclient.getFakeCPC()
+    inst = Instance(fakeutils.getFakeInstance(), cpc, client)
+    inst.partition = fakezhmcclient.getFakePartition()
+    return inst
 
 
 class VmNicTestCase(TestCase):
 
     def setUp(self):
         super(VmNicTestCase, self).setUp()
+        vm.zhmcclient = fakezhmcclient
+        self.conf = fakeutils.getFakeCPCconf()
 
-        inst.partition.nics = fakezhmcclient.getFakeNicManager()
+        self.inst = getMockInstance()
+        self.inst.partition.nics = fakezhmcclient.getFakeNicManager()
 
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_nic(self, mock_debug):
@@ -50,7 +54,7 @@ class VmNicTestCase(TestCase):
                 'details':
                     {'object-id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
         network_info = [vif1]
-        nic_interface = inst.attach_nic(conf, network_info)
+        nic_interface = self.inst.attach_nic(self.conf, network_info)
         self.assertEqual(nic_interface.properties['name'],
                          "OpenStack_Port_1234")
         self.assertEqual(nic_interface.properties['object-uri'],
@@ -63,9 +67,14 @@ class VmHBATestCase(TestCase):
 
     def setUp(self):
         super(VmHBATestCase, self).setUp()
-        conf['physical_storage_adapter_mappings'] = \
+        vm.zhmcclient = fakezhmcclient
+        self.conf = fakeutils.getFakeCPCconf()
+
+        self.inst = getMockInstance()
+
+        self.conf['physical_storage_adapter_mappings'] = \
             ["aaaaaaaa-bbbb-cccc-1123-567890abcdef:1"]
-        inst.partition.hbas = fakezhmcclient.getFakeHbaManager()
+        self.inst.partition.hbas = fakezhmcclient.getFakeHbaManager()
 
     @mock.patch.object(vm.LOG, 'debug')
     @mock.patch.object(compute_manager.ComputeManager, '_prep_block_device',
@@ -74,11 +83,11 @@ class VmHBATestCase(TestCase):
         context = None
         novainstance = fakeutils.getFakeInstance()
         block_device_mapping = None
-        resources = inst._build_resources(
+        resources = self.inst._build_resources(
             context, novainstance, block_device_mapping)
         self.assertEqual(resources['block_device_info'],
                          "blockdeviceinfo")
 
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_hba(self, mock_debug):
-        inst.attachHba(conf)
+        self.inst.attachHba(self.conf)
