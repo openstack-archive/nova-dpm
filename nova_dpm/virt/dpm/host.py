@@ -32,8 +32,6 @@ CPC_THREADS = 1  # TODO(preethipy): Update with relevant value
 HYPERVISOR_VERSION = 1000  # TODO(preethipy): Update with
 # relevant value
 
-zhmcclient = None
-
 
 class Host(object):
 
