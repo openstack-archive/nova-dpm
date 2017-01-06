@@ -26,12 +26,10 @@ from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
+from nova_dpm.virt.dpm.client import Client as _client
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
-from oslo_utils import importutils
 from zhmcclient._exceptions import NotFound
-
-zhmcclient = None
 
 
 DPM_TO_NOVA_STATE = {
@@ -60,22 +58,9 @@ def _translate_vm_state(dpm_state):
     return nova_state
 
 
-def _get_zhmclient():
-    """Lazy initialization for zhmcclient
-
-    This function helps in lazy loading zhmclient. The zhmcclient can
-    otherwise be set to fakezhmcclient for unittest framework
-    """
-
-    LOG.debug("_get_zhmclient")
-    global zhmcclient
-    if zhmcclient is None:
-        zhmcclient = importutils.import_module('zhmcclient')
-
-
 class Instance(object):
     def __init__(self, instance, cpc, client, flavor=None):
-        _get_zhmclient()
+        self.zhmcclient = _client().get_zhmcclient()
         self.instance = instance
         self.flavor = flavor
         self.cpc = cpc
@@ -92,7 +77,7 @@ class Instance(object):
         return properties
 
     def create(self, properties):
-        partition_manager = zhmcclient.PartitionManager(self.cpc)
+        partition_manager = self.zhmcclient.PartitionManager(self.cpc)
         self.partition = partition_manager.create(properties)
 
     def attach_nic(self, conf, network_info):
@@ -160,11 +145,11 @@ class Instance(object):
         interface_mappings = conf['physical_storage_adapter_mappings']
         mapping = PhysicalAdapterModel(self.cpc)
         for entry in interface_mappings:
-            adapter_uuid, port = \
+            adapter_uuid, port, device_num = \
                 PhysicalAdapterModel._parse_config_line(entry)
             adapter = mapping._get_adapter(adapter_uuid)
             mapping._validate_adapter_type(adapter)
-            mapping._add_adapter_port(adapter_uuid, port)
+            mapping._add_adapter_port(adapter_uuid, port, device_num)
         return mapping
 
     def _build_resources(self, context, instance, block_device_mapping):
@@ -268,7 +253,7 @@ class Instance(object):
 
     def get_partition(self, cpc, instance):
         partition = None
-        partition_manager = zhmcclient.PartitionManager(cpc)
+        partition_manager = self.zhmcclient.PartitionManager(cpc)
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
@@ -285,16 +270,22 @@ class InstanceInfo(object):
     """
 
     def __init__(self, instance, cpc):
-        _get_zhmclient()
+        self.zhmcclient = _client.get_zhmcclient()
         self.instance = instance
         self.cpc = cpc
-        self.partition = None
-        partition_manager = zhmcclient.PartitionManager(self.cpc)
-        partition_lists = partition_manager.list(full_properties=False)
-        for partition in partition_lists:
-            if partition.properties['name'] == self.instance.hostname:
-                self.partition = partition
-                self.partition.pull_full_properties()
+        self._partition = None
+
+    @property
+    def partition(self):
+        if not self._partition:
+            partition_manager = self.zhmcclient.PartitionManager(self.cpc)
+            partition_lists = partition_manager.list(full_properties=False)
+            for partition in partition_lists:
+                if partition.properties['name'] == self.instance.hostname:
+                    self._partition = partition
+        if self._partition is not None:
+            self._partition.pull_full_properties()
+        return self._partition
 
     @property
     def state(self):
@@ -370,9 +361,10 @@ class PhysicalAdapterModel(object):
                       adapter)
             sys.exit(1)
 
-    def _add_adapter_port(self, adapter_id, port):
+    def _add_adapter_port(self, adapter_id, port, device_num):
         self._adapter_ports.append({"adapter_id": adapter_id,
-                                    "port": port})
+                                    "port": port,
+                                    "device-number": device_num})
 
     def get_adapter_port_mapping(self):
         """Get a list of adapter port uri
@@ -387,5 +379,6 @@ class PhysicalAdapterModel(object):
         adapter_id = result[0]
         # If no port-element-id was defined, default to 0
         # result[1] can also be '' - handled by 'and result[1]'
-        port = int(result[1] if len(result) == 2 and result[1] else 0)
-        return adapter_id, port
+        port = int(result[1] if len(result) == 3 and result[1] else 0)
+        device_num = int(result[2] if len(result) == 3 and result[2] else 0)
+        return adapter_id, port, device_num

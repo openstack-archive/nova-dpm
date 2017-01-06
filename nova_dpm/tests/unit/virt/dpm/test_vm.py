@@ -18,6 +18,7 @@ from nova.compute import manager as compute_manager
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
+from nova_dpm.virt.dpm import client
 from nova_dpm.virt.dpm import vm
 from nova_dpm.virt.dpm.vm import Instance
 
@@ -26,7 +27,7 @@ from nova_dpm.virt.dpm.vm import Instance
 vm unit testcase
 """
 
-vm.zhmcclient = fakezhmcclient
+client.zhmcclient = fakezhmcclient
 session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
 client = fakezhmcclient.Client(session)
 cpc = fakezhmcclient.getFakeCPC()
