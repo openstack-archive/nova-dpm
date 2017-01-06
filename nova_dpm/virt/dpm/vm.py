@@ -26,12 +26,10 @@ from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
+from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
-from oslo_utils import importutils
 from zhmcclient._exceptions import NotFound
-
-zhmcclient = None
 
 
 DPM_TO_NOVA_STATE = {
@@ -60,22 +58,9 @@ def _translate_vm_state(dpm_state):
     return nova_state
 
 
-def _get_zhmclient():
-    """Lazy initialization for zhmcclient
-
-    This function helps in lazy loading zhmclient. The zhmcclient can
-    otherwise be set to fakezhmcclient for unittest framework
-    """
-
-    LOG.debug("_get_zhmclient")
-    global zhmcclient
-    if zhmcclient is None:
-        zhmcclient = importutils.import_module('zhmcclient')
-
-
 class Instance(object):
     def __init__(self, instance, cpc, client, flavor=None):
-        _get_zhmclient()
+        self.zhmcclient = client_proxy.import_zhmcclient()
         self.instance = instance
         self.flavor = flavor
         self.cpc = cpc
@@ -92,7 +77,7 @@ class Instance(object):
         return properties
 
     def create(self, properties):
-        partition_manager = zhmcclient.PartitionManager(self.cpc)
+        partition_manager = self.zhmcclient.PartitionManager(self.cpc)
         self.partition = partition_manager.create(properties)
 
     def attach_nic(self, conf, network_info):
@@ -268,7 +253,7 @@ class Instance(object):
 
     def get_partition(self, cpc, instance):
         partition = None
-        partition_manager = zhmcclient.PartitionManager(cpc)
+        partition_manager = self.zhmcclient.PartitionManager(cpc)
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
@@ -285,11 +270,11 @@ class InstanceInfo(object):
     """
 
     def __init__(self, instance, cpc):
-        _get_zhmclient()
+        self.zhmcclient = client_proxy.import_zhmcclient()
         self.instance = instance
         self.cpc = cpc
         self.partition = None
-        partition_manager = zhmcclient.PartitionManager(self.cpc)
+        partition_manager = self.zhmcclient.PartitionManager(self.cpc)
         partition_lists = partition_manager.list(full_properties=False)
         for partition in partition_lists:
             if partition.properties['name'] == self.instance.hostname:
