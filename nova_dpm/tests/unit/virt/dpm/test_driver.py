@@ -18,8 +18,8 @@ from nova import exception
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.tests.unit.virt.dpm import test_host as testhost
+from nova_dpm.virt.dpm import client
 from nova_dpm.virt.dpm import driver
-from nova_dpm.virt.dpm import driver as dpm_driver
 from nova_dpm.virt.dpm import host as dpmHost
 
 
@@ -27,7 +27,6 @@ from nova_dpm.virt.dpm import host as dpmHost
 cpcsubset unit testcase
 """
 
-dpm_driver.zhmcclient = fakezhmcclient
 CONF = nova_dpm.conf.CONF
 
 
@@ -51,6 +50,7 @@ class DPMdriverTestCase(TestCase):
 
     def setUp(self):
         super(DPMdriverTestCase, self).setUp()
+        client.zhmcclient = fakezhmcclient
 
     @mock.patch.object(driver.LOG, 'debug')
     @mock.patch.object(CONF, 'dpm')
