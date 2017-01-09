@@ -42,7 +42,7 @@ DPM_TO_NOVA_STATE = {
     utils.PartitionState.STARTING: power_state.PAUSED
 }
 
-OBJECT_ID = 'object-id'
+OBJECT_ID = 'object_id'
 CPCSUBSET_NAME = 'cpcsubset_name'
 LOG = logging.getLogger(__name__)
 
