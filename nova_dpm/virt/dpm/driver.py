@@ -244,7 +244,8 @@ class DPMDriver(driver.ComputeDriver):
 
         inst = vm.Instance(instance, self._cpc, self._client, flavor)
         inst.create(inst.properties())
-        inst.attach_nic(self._conf, network_info)
+        for vif in network_info:
+            inst.attach_nic(self._conf, vif)
 
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
