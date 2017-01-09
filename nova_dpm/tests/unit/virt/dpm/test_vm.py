@@ -49,8 +49,7 @@ class VmNicTestCase(TestCase):
                 'address': "12-34-56-78-9A-BC",
                 'details':
                     {'object-id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
-        network_info = [vif1]
-        nic_interface = inst.attach_nic(conf, network_info)
+        nic_interface = inst.attach_nic(conf, vif1)
         self.assertEqual(nic_interface.properties['name'],
                          "OpenStack_Port_1234")
         self.assertEqual(nic_interface.properties['object-uri'],
