@@ -95,37 +95,35 @@ class Instance(object):
         partition_manager = zhmcclient.PartitionManager(self.cpc)
         self.partition = partition_manager.create(properties)
 
-    def attach_nic(self, conf, network_info):
+    def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
 
-        for vif in network_info:
+        port_id = vif['id']
+        vif_type = vif['type']
+        mac = vif['address']
+        vif_details = vif['details']
+        dpm_object_id = vif_details[OBJECT_ID]
 
-            port_id = vif['id']
-            vif_type = vif['type']
-            mac = vif['address']
-            vif_details = vif['details']
-            dpm_object_id = vif_details[OBJECT_ID]
+        # Only dpm_vswitch attachments are supported for now
+        if vif_type != "dpm_vswitch":
+            raise Exception
 
-            # Only dpm_vswitch attachments are supported for now
-            if vif_type != "dpm_vswitch":
-                raise Exception
-
-            dpm_nic_dict = {
-                "name": "OpenStack_Port_" + str(port_id),
-                "description": "OpenStack mac= " + mac +
-                               ", CPCSubset= " +
-                               conf[CPCSUBSET_NAME],
-                "virtual-switch-uri": "/api/virtual-switches/"
-                                      + dpm_object_id
-            }
-            nic_interface = self.partition.nics.create(dpm_nic_dict)
-            LOG.debug("NIC created successfully %(nic_name)s "
-                      "with URI %(nic_uri)s"
-                      % {'nic_name': nic_interface.properties['name'],
-                         'nic_uri': nic_interface.properties[
-                             'virtual-switch-uri']})
+        dpm_nic_dict = {
+            "name": "OpenStack_Port_" + str(port_id),
+            "description": "OpenStack mac=" + mac +
+                           ", CPCSubset=" +
+                           conf[CPCSUBSET_NAME],
+            "virtual-switch-uri": "/api/virtual-switches/"
+                                  + dpm_object_id
+        }
+        nic_interface = self.partition.nics.create(dpm_nic_dict)
+        LOG.debug("NIC created successfully %(nic_name)s "
+                  "with URI %(nic_uri)s"
+                  % {'nic_name': nic_interface.properties.get('name'),
+                     'nic_uri': nic_interface.properties.get(
+                         'virtual-switch-uri')})
         return nic_interface
 
     def attachHba(self, conf):
