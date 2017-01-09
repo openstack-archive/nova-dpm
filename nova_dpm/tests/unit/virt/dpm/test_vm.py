@@ -50,17 +50,29 @@ class VmNicTestCase(TestCase):
     def test_attach_nic(self, mock_debug):
 
         vif1 = {'id': 1234, 'type': 'dpm_vswitch',
-                'address': "12-34-56-78-9A-BC",
+                'address': '12-34-56-78-9A-BC',
                 'details':
-                    {'object-id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
-        network_info = [vif1]
-        nic_interface = self.inst.attach_nic(self.conf, network_info)
-        self.assertEqual(nic_interface.properties['name'],
-                         "OpenStack_Port_1234")
-        self.assertEqual(nic_interface.properties['object-uri'],
-                         "/api/partitions/00000000-aaaa-bbbb-"
-                         "cccc-abcdabcdabcd/nics/00000000-nics-"
-                         "bbbb-cccc-abcdabcdabcd")
+                    {'object_id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
+
+        ret_val = mock.Mock()
+        with mock.patch.object(fakezhmcclient.NicManager, 'create',
+                               return_value=ret_val) as mock_create:
+            nic_interface = self.inst.attach_nic(self.conf, vif1)
+        self.assertEqual(ret_val, nic_interface)
+        self.assertTrue(mock_create.called)
+        call_arg_dict = mock_create.mock_calls[0][1][0]
+        # Name
+        self.assertTrue(call_arg_dict['name'].startswith('OpenStack'))
+        self.assertIn(str(1234), call_arg_dict['name'])
+        # Description
+        self.assertTrue(call_arg_dict['description'].startswith('OpenStack'))
+        self.assertIn('mac=12-34-56-78-9A-BC', call_arg_dict['description'])
+        self.assertIn('CPCSubset=' + self.conf['cpcsubset_name'],
+                      call_arg_dict['description'])
+        # virtual-switch-uri
+        self.assertEqual(
+            '/api/virtual-switches/00000000-aaaa-bbbb-cccc-abcdabcdabcd',
+            call_arg_dict['virtual-switch-uri'])
 
 
 class VmHBATestCase(TestCase):
