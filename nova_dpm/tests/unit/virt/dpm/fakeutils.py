@@ -25,7 +25,10 @@ def getFakeCPCconf():
 
 
 def getFakeInstance():
-    props = {'hostname': 'DummyPartition'}
+    props = {
+        'hostname': 'DummyPartition',
+        'uuid': '6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+    }
     instance = Instance(props)
     return instance
 
@@ -34,8 +37,13 @@ class Instance(object):
     hostname = None
 
     def __init__(self, properties):
+        self.properties = properties
         global hostname
         hostname = properties['hostname']
 
     def save(self):
         return
+
+    @property
+    def uuid(self):
+        return self.properties['uuid']
