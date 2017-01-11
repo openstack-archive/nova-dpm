@@ -26,10 +26,16 @@ from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
+from nova_dpm import conf
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
+
+CONF = conf.CONF
+OPENSTACK_PREFIX = 'OpenStack'
+CPCSUBSET_PREFIX = 'CPCSubset='
+INSTANCE_PREFIX = 'Instance-'
 
 
 DPM_TO_NOVA_STATE = {
@@ -67,9 +73,26 @@ class Instance(object):
         self.client = client
         self.partition = self.get_partition(self.cpc, self.instance)
 
+    @property
+    def partition_name(self):
+        """This function will create partition name using uuid
+
+        :return: name of partition
+        """
+        return OPENSTACK_PREFIX + "-" + INSTANCE_PREFIX + self.instance.uuid
+
+    @property
+    def partition_description(self):
+        """This function will create partition description
+
+        :return: description to be used for partition creation
+        """
+        return OPENSTACK_PREFIX + " " + CPCSUBSET_PREFIX + CONF.host
+
     def properties(self):
         properties = {}
-        properties['name'] = self.instance.hostname
+        properties['name'] = self.partition_name
+        properties['description'] = self.partition_description
         if self.flavor is not None:
             properties['ifl-processors'] = self.flavor.vcpus
             properties['initial-memory'] = self.flavor.memory_mb
@@ -257,7 +280,7 @@ class Instance(object):
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
-            if part.properties['name'] == instance.hostname:
+            if part.properties['name'] == self.partition_name:
                 partition = part
         return partition
 
