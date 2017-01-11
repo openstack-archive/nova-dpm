@@ -16,6 +16,7 @@
 """
 Partition will map nova parameter to PRSM parameter
 """
+import re
 import sys
 import time
 
@@ -23,6 +24,7 @@ from nova.compute import manager as compute_manager
 from nova.compute import power_state
 from nova.compute import task_states
 from nova.compute import vm_states
+from nova.conf import CONF
 from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
@@ -32,6 +34,7 @@ from oslo_utils import importutils
 from zhmcclient._exceptions import NotFound
 
 zhmcclient = None
+OPENSTACK = 'OpenStack'
 
 
 DPM_TO_NOVA_STATE = {
@@ -73,6 +76,56 @@ def _get_zhmclient():
         zhmcclient = importutils.import_module('zhmcclient')
 
 
+def create_partition_name(uuid):
+    """This function will create partition name using uuid
+
+    e.g. uuid = '6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+    then the name which will return by this function is
+    'OpenStack-6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+
+    :param uuid: instance.uuid
+    :return: name of partition
+    """
+    return OPENSTACK + '-' + uuid
+
+
+def is_valid_partition_name(name):
+    """Validate the partition name
+
+    This funcation will validate the name of partition
+    which will managed by openstack
+
+    The valid format is
+    'OpenStack-6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+
+    :param name: name of partition
+    :return: bool
+    """
+    split_name = name.split('-', 1)
+    UUID_PATTERN = re.compile(
+        r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
+    if split_name[0] == OPENSTACK:
+        if UUID_PATTERN.match(split_name[1]):
+            return True
+    return False
+
+
+def get_uuid_from_partition_name(name):
+    """This function will return uuid from partition name
+
+    valid format of name:
+    'OpenStack-6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+    e.g. return uuid : 6511ee0f-0d64-4392-b9e0-cdbea10a17c3
+
+    :param name: partition name
+    :return: uuid
+    """
+    if is_valid_partition_name(name):
+        split_name = name.split('-', 1)
+        return split_name[1]
+    return None
+
+
 class Instance(object):
     def __init__(self, instance, cpc, client, flavor=None):
         _get_zhmclient()
@@ -84,7 +137,9 @@ class Instance(object):
 
     def properties(self):
         properties = {}
-        properties['name'] = self.instance.hostname
+        properties['name'] = create_partition_name(
+            self.instance.uuid)
+        properties['description'] = CONF.host
         if self.flavor is not None:
             properties['cp-processors'] = self.flavor.vcpus
             properties['initial-memory'] = self.flavor.memory_mb
@@ -272,7 +327,8 @@ class Instance(object):
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
-            if part.properties['name'] == instance.hostname:
+            if part.properties['name'] == create_partition_name(
+                    instance.uuid):
                 partition = part
         return partition
 
