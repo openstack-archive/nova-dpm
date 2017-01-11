@@ -146,7 +146,12 @@ class CpcManager(BaseManager):
         # Parameters:
         #   client (:class:`~zhmcclient.Client`):
         #      Client object for the HMC to be used.
-        super(CpcManager, self).__init__(Cpc)
+        query_props = [
+            'name',
+        ]
+        super(CpcManager, self).__init__(Cpc, uri_prop='object-uri',
+                                         name_prop='name',
+                                         query_props=query_props)
         self._session = client.session
 
     def list(self, full_properties=False):
@@ -186,7 +191,13 @@ class PartitionManager(BaseManager):
         # Parameters:
         #   cpc (:class:`~zhmcclient.Cpc`):
         #     CPC defining the scope for this manager.
-        super(PartitionManager, self).__init__(cpc)
+        query_props = [
+            'name',
+        ]
+        super(PartitionManager, self).__init__(cpc, None,
+                                               uri_prop='object-uri',
+                                               name_prop='name',
+                                               query_props=query_props)
 
     def list(self, full_properties=False):
         partition_list = []
@@ -215,7 +226,13 @@ class NicManager(BaseManager):
         # Parameters:
         #   partition (:class:`~zhmcclient.Partition`):
         #     Partition defining the scope for this manager.
-        super(NicManager, self).__init__(partition)
+        query_props = [
+            'name',
+        ]
+        super(NicManager, self).__init__(partition, None,
+                                         uri_prop='object-uri',
+                                         name_prop='name',
+                                         query_props=query_props)
 
     def list(self, full_properties=False):
         nic_list = []
@@ -247,7 +264,13 @@ class HbaManager(BaseManager):
         # Parameters:
         #   partition (:class:`~zhmcclient.Partition`):
         #     Partition defining the scope for this manager.
-        super(HbaManager, self).__init__(partition)
+        query_props = [
+            'name',
+        ]
+        super(HbaManager, self).__init__(partition, None,
+                                         uri_prop='object-uri',
+                                         name_prop='name',
+                                         query_props=query_props)
 
     def list(self, full_properties=False):
         hba_list = []
@@ -279,7 +302,13 @@ class AdapterManager(BaseManager):
         # Parameters:
         #   partition (:class:`~zhmcclient.Partition`):
         #     Partition defining the scope for this manager.
-        super(AdapterManager, self).__init__(partition)
+        query_props = [
+            'name',
+        ]
+        super(AdapterManager, self).__init__(partition, None,
+                                             uri_prop='object-uri',
+                                             name_prop='name',
+                                             query_props=query_props)
 
     def list(self, full_properties=False):
         adapter_list = []
