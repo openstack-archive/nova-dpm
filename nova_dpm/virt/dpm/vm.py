@@ -16,6 +16,7 @@
 """
 Partition will map nova parameter to PRSM parameter
 """
+import re
 import sys
 import time
 
@@ -26,10 +27,16 @@ from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
+from nova_dpm import conf
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
+
+CONF = conf.CONF
+OPENSTACK_PREFIX = 'OpenStack'
+UUID_PATTERN = re.compile(
+    r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
 
 
 DPM_TO_NOVA_STATE = {
@@ -59,6 +66,26 @@ def _translate_vm_state(dpm_state):
     return nova_state
 
 
+def is_valid_partition_name(name):
+    """Validate the partition name
+
+    This function will validate the name of partition
+    which is managed by openstack
+
+    The valid format is
+    'OpenStack-6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+
+    :param name: name of partition
+    :return: bool
+    """
+    split_name = name.split('-', 1)
+    if len(split_name) > 1:
+        if split_name[0] == OPENSTACK_PREFIX:
+            if UUID_PATTERN.match(split_name[1]):
+                return True
+    return False
+
+
 class Instance(object):
     def __init__(self, instance, cpc, client, flavor=None):
         self.instance = instance
@@ -67,9 +94,23 @@ class Instance(object):
         self.client = client
         self.partition = self.get_partition(self.cpc, self.instance)
 
+    @property
+    def partition_name(self):
+        """This function will create partition name using uuid
+
+        e.g. uuid = '6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+        then the name which will return by this function is
+        'OpenStack-6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+
+        :param uuid: instance.uuid
+        :return: name of partition
+        """
+        return OPENSTACK_PREFIX + '-' + self.instance.uuid
+
     def properties(self):
         properties = {}
-        properties['name'] = self.instance.hostname
+        properties['name'] = self.partition_name
+        properties['description'] = CONF.host
         if self.flavor is not None:
             properties['cp-processors'] = self.flavor.vcpus
             properties['initial-memory'] = self.flavor.memory_mb
@@ -257,7 +298,7 @@ class Instance(object):
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
-            if part.properties['name'] == instance.hostname:
+            if part.properties['name'] == self.partition_name:
                 partition = part
         return partition
 
