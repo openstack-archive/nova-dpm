@@ -36,6 +36,34 @@ def getMockInstance():
     return inst
 
 
+class InstancePropertiesTestCase(TestCase):
+    def setUp(self):
+        super(InstancePropertiesTestCase, self).setUp()
+        self.mock_nova_inst = mock.Mock()
+        self.mock_nova_inst.uuid = 'foo-id'
+
+    @mock.patch.object(vm.Instance, 'get_partition')
+    def test_partition_name(self, mock_get_part):
+        inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock())
+        self.assertEqual("OpenStack-Instance-foo-id", inst.partition_name)
+
+    @mock.patch.object(vm.Instance, 'get_partition')
+    def test_properties(self, mock_get_part):
+        mock_flavor = mock.Mock()
+        mock_flavor.vcpus = 5
+        mock_flavor.memory_mb = 2000
+
+        vm.CONF.set_override("host", "foo-host")
+        inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock(),
+                           flavor=mock_flavor)
+        props = inst.properties()
+        self.assertEqual('OpenStack-Instance-foo-id', props['name'])
+        self.assertEqual('OpenStack CPCsubset=foo-host', props['description'])
+        self.assertEqual(5, props['ifl-processors'])
+        self.assertEqual(2000, props['initial-memory'])
+        self.assertEqual(2000, props['maximum-memory'])
+
+
 class VmNicTestCase(TestCase):
 
     def setUp(self):
