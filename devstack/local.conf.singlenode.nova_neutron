@@ -21,9 +21,11 @@ enable_plugin nova-dpm http://git.openstack.org/openstack/nova-dpm
 
 
 [[post-config|$NOVA_CONF]]
+[DEFAULT]
+host = foo
 [dpm]
 max_instances = 10
-max_memory = 1000
+max_memory = 5000
 max_processors = 2
 host = foo
 cpc_uuid = <cpc-uuid>
