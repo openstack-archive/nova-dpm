@@ -71,7 +71,7 @@ class Instance(object):
         properties = {}
         properties['name'] = self.instance.hostname
         if self.flavor is not None:
-            properties['cp-processors'] = self.flavor.vcpus
+            properties['ifl-processors'] = self.flavor.vcpus
             properties['initial-memory'] = self.flavor.memory_mb
             properties['maximum-memory'] = self.flavor.memory_mb
         return properties
@@ -312,7 +312,7 @@ class InstanceInfo(object):
 
         num_cpu = None
         if self.partition is not None:
-            num_cpu = self.partition.get_property('cp-processors')
+            num_cpu = self.partition.get_property('ifl-processors')
 
         return num_cpu
 
