@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from zhmcclient._logging import _log_call
-from zhmcclient._manager import BaseManager
-from zhmcclient._resource import BaseResource
-
-import zhmcclient
 
 """Fake zhmcclient"""
 
@@ -29,7 +24,7 @@ def getCpcmgr(ipaddress, username, password):
 
 
 def getCpcmgrForClient(client):
-    cpcmgr = zhmcclient.CpcManager(client)
+    cpcmgr = CpcManager(client)
     return cpcmgr
 
 
@@ -42,7 +37,7 @@ def getdummyCpcmgr():
 def getzhmclientCpcmgr(ipaddress, username, password):
     session = Session(ipaddress, username, password)
     client = Client(session)
-    cpcmgr = zhmcclient.CpcManager(client)
+    cpcmgr = CpcManager(client)
     return cpcmgr
 
 
@@ -138,6 +133,21 @@ def getFakeAdapter(properties=None):
     return adapter
 
 
+class BaseResource(object):
+    def __init__(self, manager, object_uri, properties):
+        self.manager = manager
+        self.object_uri = object_uri
+        self.properties = properties
+
+    def get_property(self, name):
+        return self.properties[name]
+
+
+class BaseManager(object):
+    def __init__(self, resource):
+        self.resource = resource
+
+
 class CpcManager(BaseManager):
     """fake cpcmanager"""
 
@@ -146,13 +156,7 @@ class CpcManager(BaseManager):
         # Parameters:
         #   client (:class:`~zhmcclient.Client`):
         #      Client object for the HMC to be used.
-        query_props = [
-            'name',
-        ]
-        super(CpcManager, self).__init__(Cpc, None,
-                                         uri_prop='object-uri',
-                                         name_prop='name',
-                                         query_props=query_props)
+        super(CpcManager, self).__init__(Cpc)
         self._session = client.session
 
     def list(self, full_properties=False):
@@ -166,10 +170,9 @@ class CpcManager(BaseManager):
 
 class Cpc(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Cpc, self).__init__(manager, uri, None, properties)
+        super(Cpc, self).__init__(manager, uri, properties)
 
     @property
-    @_log_call
     def dpm_enabled(self):
         return True
 
@@ -177,7 +180,6 @@ class Cpc(BaseResource):
         self._pull_full_properties = True
 
     @property
-    @_log_call
     def adapters(self):
         return getFakeAdapterManager()
 
@@ -190,13 +192,7 @@ class PartitionManager(BaseManager):
         # Parameters:
         #   cpc (:class:`~zhmcclient.Cpc`):
         #     CPC defining the scope for this manager.
-        query_props = [
-            'name',
-        ]
-        super(PartitionManager, self).__init__(cpc, None,
-                                               uri_prop='object-uri',
-                                               name_prop='name',
-                                               query_props=query_props)
+        super(PartitionManager, self).__init__(cpc)
 
     def list(self, full_properties=False):
         partition_list = []
@@ -209,8 +205,7 @@ class PartitionManager(BaseManager):
 
 class Partition(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Partition, self).__init__(
-            manager, uri, None, properties)
+        super(Partition, self).__init__(manager, uri, properties)
 
     def pull_full_properties(self):
         self._pull_full_properties = True
@@ -224,13 +219,7 @@ class NicManager(BaseManager):
         # Parameters:
         #   partition (:class:`~zhmcclient.Partition`):
         #     Partition defining the scope for this manager.
-        query_props = [
-            'name',
-        ]
-        super(NicManager, self).__init__(partition, None,
-                                         uri_prop='object-uri',
-                                         name_prop='name',
-                                         query_props=query_props)
+        super(NicManager, self).__init__(partition)
 
     def list(self, full_properties=False):
         nic_list = []
@@ -246,7 +235,7 @@ class NicManager(BaseManager):
 
 class Nic(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Nic, self).__init__(manager, uri, None, properties)
+        super(Nic, self).__init__(manager, uri, properties)
 
     def pull_full_properties(self):
         self._pull_full_properties = True
@@ -260,13 +249,7 @@ class HbaManager(BaseManager):
         # Parameters:
         #   partition (:class:`~zhmcclient.Partition`):
         #     Partition defining the scope for this manager.
-        query_props = [
-            'name',
-        ]
-        super(HbaManager, self).__init__(partition, None,
-                                         uri_prop='object-uri',
-                                         name_prop='name',
-                                         query_props=query_props)
+        super(HbaManager, self).__init__(partition)
 
     def list(self, full_properties=False):
         hba_list = []
@@ -282,7 +265,7 @@ class HbaManager(BaseManager):
 
 class Hba(BaseResource):
     def __init__(self, manager, uri, properties):
-        super(Hba, self).__init__(manager, uri, None, properties)
+        super(Hba, self).__init__(manager, uri, properties)
 
     def pull_full_properties(self):
         self._pull_full_properties = True
@@ -296,13 +279,7 @@ class AdapterManager(BaseManager):
         # Parameters:
         #   partition (:class:`~zhmcclient.Partition`):
         #     Partition defining the scope for this manager.
-        query_props = [
-            'name',
-        ]
-        super(AdapterManager, self).__init__(partition, None,
-                                             uri_prop='object-uri',
-                                             name_prop='name',
-                                             query_props=query_props)
+        super(AdapterManager, self).__init__(partition)
 
     def list(self, full_properties=False):
         adapter_list = []
@@ -319,7 +296,7 @@ class AdapterManager(BaseManager):
 class Adapter(BaseResource):
 
     def __init__(self, manager, uri, properties):
-        super(Adapter, self).__init__(manager, uri, None, properties)
+        super(Adapter, self).__init__(manager, uri, properties)
 
     def pull_full_properties(self):
         self._pull_full_properties = True
