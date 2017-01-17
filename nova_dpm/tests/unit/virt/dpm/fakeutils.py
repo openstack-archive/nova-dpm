@@ -29,11 +29,11 @@ def getFakeInstance():
         'hostname': 'DummyPartition',
         'uuid': '6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
     }
-    instance = Instance(props)
+    instance = PartitionInstance(props)
     return instance
 
 
-class Instance(object):
+class PartitionInstance(object):
     hostname = None
 
     def __init__(self, properties):

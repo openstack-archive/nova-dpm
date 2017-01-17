@@ -105,7 +105,7 @@ def cpcsubset_partition_list(cpc):
     return openstack_partition_list
 
 
-class Instance(object):
+class PartitionInstance(object):
     def __init__(self, instance, cpc, client, flavor=None):
         self.instance = instance
         self.flavor = flavor
@@ -281,12 +281,12 @@ class Instance(object):
         LOG.debug('Partition reboot triggered')
         result = self.partition.stop(True)
         # TODO(preethipy): The below method to be removed once the bug
-        # on DPM(701894) is fixed to return correct status on API return
+        # on DPM is fixed to return correct status on API return
         self._loop_status_update(result, 5, 'stopped')
 
         result = self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
-        # on DPM(701894) is fixed to return correct status on API return
+        # on DPM is fixed to return correct status on API return
         self._loop_status_update(result, 5, 'Active')
 
     def _loop_status_update(self, result, iterations, status):
@@ -324,7 +324,7 @@ class Instance(object):
         return partition
 
 
-class InstanceInfo(object):
+class PartitionInstanceInfo(object):
     """Instance Information
 
     This object loads VM information like state, memory used etc
@@ -337,7 +337,7 @@ class InstanceInfo(object):
         self.partition = None
         partition_manager = self.cpc.partitions
         partition_lists = partition_manager.list(full_properties=False)
-        inst = Instance(self.instance, self.cpc, None)
+        inst = PartitionInstance(self.instance, self.cpc, None)
         for partition in partition_lists:
             if partition.properties['name'] == inst.partition_name:
                 self.partition = partition
