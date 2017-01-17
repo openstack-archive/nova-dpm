@@ -64,7 +64,7 @@ def _translate_vm_state(dpm_state):
     return nova_state
 
 
-class Instance(object):
+class PartitionInstance(object):
     def __init__(self, instance, cpc, client, flavor=None):
         self.instance = instance
         self.flavor = flavor
@@ -283,7 +283,7 @@ class Instance(object):
         return partition
 
 
-class InstanceInfo(object):
+class PartitionInstanceInfo(object):
     """Instance Information
 
     This object loads VM information like state, memory used etc
@@ -296,7 +296,7 @@ class InstanceInfo(object):
         self.partition = None
         partition_manager = zhmcclient.PartitionManager(self.cpc)
         partition_lists = partition_manager.list(full_properties=False)
-        inst = Instance(self.instance, self.cpc, None)
+        inst = PartitionInstance(self.instance, self.cpc, None)
         for partition in partition_lists:
             if partition.properties['name'] == inst.partition_name:
                 self.partition = partition
