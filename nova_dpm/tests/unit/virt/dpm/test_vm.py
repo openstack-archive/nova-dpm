@@ -19,7 +19,6 @@ from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.virt.dpm import vm
-from nova_dpm.virt.dpm.vm import Instance
 
 
 """
@@ -31,7 +30,7 @@ def getMockInstance():
     session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
     client = fakezhmcclient.Client(session)
     cpc = fakezhmcclient.getFakeCPC()
-    inst = Instance(fakeutils.getFakeInstance(), cpc, client)
+    inst = vm.PartitionInstance(fakeutils.getFakeInstance(), cpc, client)
     inst.partition = fakezhmcclient.getFakePartition()
     return inst
 
@@ -66,25 +65,28 @@ class InstancePropertiesTestCase(TestCase):
         self.mock_nova_inst.uuid = 'foo-id'
         vm.CONF.set_override("host", "foo")
 
-    @mock.patch.object(vm.Instance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_partition_name(self, mock_get_part):
-        inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock())
+        inst = vm.PartitionInstance(
+            self.mock_nova_inst, mock.Mock(), mock.Mock())
         self.assertEqual("OpenStack-foo-foo-id", inst.partition_name)
 
-    @mock.patch.object(vm.Instance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_partition_description(self, mock_get_part):
-        inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock())
+        inst = vm.PartitionInstance(
+            self.mock_nova_inst, mock.Mock(), mock.Mock())
         self.assertEqual("OpenStack CPCSubset=foo",
                          inst.partition_description)
 
-    @mock.patch.object(vm.Instance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_properties(self, mock_get_part):
         mock_flavor = mock.Mock()
         mock_flavor.vcpus = 5
         mock_flavor.memory_mb = 2000
 
-        inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock(),
-                           flavor=mock_flavor)
+        inst = vm.PartitionInstance(
+            self.mock_nova_inst, mock.Mock(),
+            mock.Mock(), flavor=mock_flavor)
         props = inst.properties()
         self.assertEqual('OpenStack-foo-foo-id', props['name'])
         self.assertEqual('OpenStack CPCSubset=foo', props['description'])
