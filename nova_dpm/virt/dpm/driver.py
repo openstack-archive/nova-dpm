@@ -197,9 +197,7 @@ class DPMDriver(driver.ComputeDriver):
 
     def list_instances(self):
 
-        partition_manager = zhmcclient.PartitionManager(self._cpc)
-        partition_lists = partition_manager.list(full_properties=False)
-
+        partition_lists = vm.partition_list(self._cpc)
         part_list = []
         for partition in partition_lists:
             part_list.append(partition.get_property('name'))
