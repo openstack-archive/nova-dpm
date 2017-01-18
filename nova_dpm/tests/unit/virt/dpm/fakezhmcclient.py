@@ -77,7 +77,9 @@ def getFakeCPCwithProp(cpcmanager, cpc_props):
 
 def getFakePartition():
     partition_props = dict()
-    partition_props['name'] = "DummyPartition"
+    partition_props['name'] = (
+        "OpenStack-Instance-6511ee0f-0d64-4392-b9e0-cdbea10a17c3")
+    partition_props['description'] = "OpenStack CPCSubset=foo"
     partition_props['object-uri'] = "/api/partitions/" \
                                     "00000000-aaaa-bbbb-cccc-abcdabcdabcd"
     partition = Partition(getdummyCpcmgr(), partition_props['object-uri'],

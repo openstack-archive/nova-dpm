@@ -36,6 +36,28 @@ def getMockInstance():
     return inst
 
 
+class VmFunctionTestCase(TestCase):
+    def setUp(self):
+        super(VmFunctionTestCase, self).setUp()
+        self.valid_name = (
+            'OpenStack-Instance-6511ee0f-0d64-4392-b9e0-cdbea10a17c3')
+        self.invalid_name = 'OpenStack-Instance-6511ee0f'
+        self.cpc = fakezhmcclient.getFakeCPC()
+
+    def test_is_valid_partition_name(self):
+        self.assertTrue(vm.is_valid_partition_name(self.valid_name))
+        self.assertFalse(vm.is_valid_partition_name(self.invalid_name))
+
+    @mock.patch.object(vm, 'DESCRIPTION', 'OpenStack CPCSubset=foo')
+    def test_partition_list(self):
+        partition_list = vm.partition_list(self.cpc)
+        list = self.cpc.partitions.list()
+        length = len(list)
+        for i in range(length):
+            self.assertEqual(list[i].get_property('name'),
+                             partition_list[i].get_property('name'))
+
+
 class InstancePropertiesTestCase(TestCase):
     def setUp(self):
         super(InstancePropertiesTestCase, self).setUp()
