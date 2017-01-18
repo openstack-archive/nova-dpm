@@ -16,6 +16,7 @@
 """
 Partition will map nova parameter to PRSM parameter
 """
+import re
 import sys
 import time
 
@@ -35,6 +36,8 @@ CONF = conf.CONF
 OPENSTACK_PREFIX = 'OpenStack'
 CPCSUBSET_PREFIX = 'CPCSubset='
 INSTANCE_PREFIX = 'Instance-'
+UUID_PATTERN = re.compile(
+    r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
 
 
 DPM_TO_NOVA_STATE = {
@@ -60,6 +63,43 @@ def _translate_vm_state(dpm_state):
         nova_state = power_state.NOSTATE
 
     return nova_state
+
+
+def is_valid_partition_name(name):
+    """Validate the partition name
+
+    This function will validate the name of partition
+    which is managed by openstack
+
+    The valid format is
+    'OpenStack-Instance-6511ee0f-0d64-4392-b9e0-cdbea10a17c3'
+
+    :param name: name of partition
+    :return: bool
+    """
+    split_name = name.split('-', 2)
+    if len(split_name) > 2:
+        if split_name[0] == OPENSTACK_PREFIX:
+            if split_name[1] + "-" == INSTANCE_PREFIX:
+                if UUID_PATTERN.match(split_name[2]):
+                    return True
+    return False
+
+
+def partition_list(cpc):
+    """Return the list of partitions which is managed by openstack
+
+    :param cpc: cpc
+    :return: list of partitions managed by openstack
+    """
+    cpc_partition_list = cpc.partitions.list()
+    openstack_partition_list = []
+
+    for partition in cpc_partition_list:
+        if is_valid_partition_name(partition.get_property('name')):
+            openstack_partition_list.append(partition)
+
+    return openstack_partition_list
 
 
 class Instance(object):
