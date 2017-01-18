@@ -196,11 +196,9 @@ class DPMDriver(driver.ComputeDriver):
 
     def list_instances(self):
 
-        partition_manager = self._cpc.partitions
-        partition_lists = partition_manager.list(full_properties=False)
-
+        partition_list = vm.cpcsubset_partition_list(self._cpc)
         part_list = []
-        for partition in partition_lists:
+        for partition in partition_list:
             part_list.append(partition.get_property('name'))
 
         return part_list

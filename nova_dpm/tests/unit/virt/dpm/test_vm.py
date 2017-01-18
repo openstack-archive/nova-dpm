@@ -36,22 +36,45 @@ def getMockInstance():
     return inst
 
 
+class VmFunctionTestCase(TestCase):
+    def setUp(self):
+        super(VmFunctionTestCase, self).setUp()
+        self.valid_name = (
+            'OpenStack-foo-6511ee0f-0d64-4392-b9e0-cdbea10a17c3')
+        self.invalid_name = 'OpenStack-Instance-6511ee0f'
+        self.cpc = fakezhmcclient.getFakeCPC()
+
+    @mock.patch.object(vm.CONF, 'host', 'foo')
+    def test_is_valid_partition_name(self):
+        self.assertTrue(vm.is_valid_partition_name(self.valid_name))
+        self.assertFalse(vm.is_valid_partition_name(self.invalid_name))
+
+    @mock.patch.object(vm.CONF, 'host', 'foo')
+    def test_partition_list(self):
+        partition_list = vm.cpcsubset_partition_list(self.cpc)
+        list = self.cpc.partitions.list()
+        length = len(list)
+        for i in range(length):
+            self.assertEqual(list[i].get_property('name'),
+                             partition_list[i].get_property('name'))
+
+
 class InstancePropertiesTestCase(TestCase):
     def setUp(self):
         super(InstancePropertiesTestCase, self).setUp()
         self.mock_nova_inst = mock.Mock()
         self.mock_nova_inst.uuid = 'foo-id'
-        vm.CONF.set_override("host", "foo-host")
+        vm.CONF.set_override("host", "foo")
 
     @mock.patch.object(vm.Instance, 'get_partition')
     def test_partition_name(self, mock_get_part):
         inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock())
-        self.assertEqual("OpenStack-Instance-foo-id", inst.partition_name)
+        self.assertEqual("OpenStack-foo-foo-id", inst.partition_name)
 
     @mock.patch.object(vm.Instance, 'get_partition')
     def test_partition_description(self, mock_get_part):
         inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock())
-        self.assertEqual("OpenStack CPCSubset=foo-host",
+        self.assertEqual("OpenStack CPCSubset=foo",
                          inst.partition_description)
 
     @mock.patch.object(vm.Instance, 'get_partition')
@@ -63,8 +86,8 @@ class InstancePropertiesTestCase(TestCase):
         inst = vm.Instance(self.mock_nova_inst, mock.Mock(), mock.Mock(),
                            flavor=mock_flavor)
         props = inst.properties()
-        self.assertEqual('OpenStack-Instance-foo-id', props['name'])
-        self.assertEqual('OpenStack CPCSubset=foo-host', props['description'])
+        self.assertEqual('OpenStack-foo-foo-id', props['name'])
+        self.assertEqual('OpenStack CPCSubset=foo', props['description'])
         self.assertEqual(5, props['ifl-processors'])
         self.assertEqual(2000, props['initial-memory'])
         self.assertEqual(2000, props['maximum-memory'])
