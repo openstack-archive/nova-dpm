@@ -27,7 +27,6 @@ from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
 from nova_dpm import conf
-from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
@@ -48,7 +47,6 @@ DPM_TO_NOVA_STATE = {
 
 CPCSUBSET_NAME = 'cpcsubset_name'
 LOG = logging.getLogger(__name__)
-zhmcclient = client_proxy.import_zhmcclient()
 
 
 def _translate_vm_state(dpm_state):
@@ -99,7 +97,7 @@ class Instance(object):
         return properties
 
     def create(self, properties):
-        partition_manager = zhmcclient.PartitionManager(self.cpc)
+        partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
 
     def attach_nic(self, conf, vif):
@@ -274,7 +272,7 @@ class Instance(object):
 
     def get_partition(self, cpc, instance):
         partition = None
-        partition_manager = zhmcclient.PartitionManager(cpc)
+        partition_manager = cpc.partitions
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
@@ -294,7 +292,7 @@ class InstanceInfo(object):
         self.instance = instance
         self.cpc = cpc
         self.partition = None
-        partition_manager = zhmcclient.PartitionManager(self.cpc)
+        partition_manager = self.cpc.partitions
         partition_lists = partition_manager.list(full_properties=False)
         inst = Instance(self.instance, self.cpc, None)
         for partition in partition_lists:
