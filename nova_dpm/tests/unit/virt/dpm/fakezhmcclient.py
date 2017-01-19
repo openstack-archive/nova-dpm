@@ -180,6 +180,10 @@ class Cpc(BaseResource):
         self._pull_full_properties = True
 
     @property
+    def partitions(self):
+        return PartitionManager(self)
+
+    @property
     def adapters(self):
         return getFakeAdapterManager()
 

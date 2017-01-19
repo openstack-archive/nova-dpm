@@ -33,7 +33,6 @@ from oslo_utils import importutils
 
 LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
-zhmcclient = client_proxy.import_zhmcclient()
 
 dpm_volume_drivers = [
     'fibre_channel=nova_dpm.virt.dpm.volume.'
@@ -197,7 +196,7 @@ class DPMDriver(driver.ComputeDriver):
 
     def list_instances(self):
 
-        partition_manager = zhmcclient.PartitionManager(self._cpc)
+        partition_manager = self._cpc.partitions
         partition_lists = partition_manager.list(full_properties=False)
 
         part_list = []
