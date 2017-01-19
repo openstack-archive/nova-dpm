@@ -231,6 +231,9 @@ class DPMDriver(driver.ComputeDriver):
             block_device_info)
         inst.attachHba(self._conf)
         inst._build_resources(context, instance, block_device_mapping)
+        # TODO (andreas_s): Replace with target WWPN and LUN once cinder
+        # integration is available
+        inst.add_boot_property('boot-device', 'test-operating-system')
 
         inst.launch()
 

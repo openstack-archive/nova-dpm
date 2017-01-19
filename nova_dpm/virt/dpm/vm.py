@@ -69,6 +69,10 @@ class Instance(object):
         self.cpc = cpc
         self.client = client
         self.partition = self.get_partition(self.cpc, self.instance)
+        self._bootproperties = {}
+
+    def add_boot_property(self, property, value):
+        self._bootproperties[property] = value
 
     @property
     def partition_name(self):
@@ -193,8 +197,7 @@ class Instance(object):
         self.instance.vm_state = vm_states.BUILDING
         self.instance.task_state = task_states.SPAWNING
         self.instance.save()
-        bootproperties = self.get_boot_properties()
-        self.partition.update_properties(properties=bootproperties)
+        self.partition.update_properties(properties=self._bootproperties)
         result = self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM is fixed to return correct status on API return
@@ -259,16 +262,6 @@ class Instance(object):
                           "for status check")
                 time.sleep(2)
                 iterations -= 1
-
-    def get_boot_properties(self):
-        LOG.debug('Retrieving boot properties for partition')
-        # TODO(preethipy): update the boot-device to storage-adapter
-        # TODO(preethipy): update the boot-storage-device with valid
-        # HBA uri
-        # TODO(preethipy): update boot-logical-unit-number and
-        # boot-world-wide-port-name
-        bootProperties = {'boot-device': 'test-operating-system'}
-        return bootProperties
 
     def get_partition(self, cpc, instance):
         partition = None
