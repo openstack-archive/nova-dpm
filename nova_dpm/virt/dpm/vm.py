@@ -136,6 +136,7 @@ class Instance(object):
         LOG.debug('Creating vhbas for instance',
                   instance=self.instance)
         mapping = self.createStorageAdapterUris(conf)
+        hba = None
         for adapterPort in mapping.get_adapter_port_mapping():
             adapter_object_id = adapterPort['adapter_id']
             adapter_port = adapterPort['port']
@@ -158,6 +159,7 @@ class Instance(object):
                              'element-uri'],
                          'adapter-port-uri': hba.properties[
                              'adapter-port-uri']})
+        return hba
 
     def createStorageAdapterUris(self, conf):
         LOG.debug('Creating Adapter uris')
