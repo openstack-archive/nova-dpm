@@ -238,12 +238,12 @@ class Instance(object):
         LOG.debug('Partition reboot triggered')
         result = self.partition.stop(True)
         # TODO(preethipy): The below method to be removed once the bug
-        # on DPM is fixed to return correct status on API return
+        # on DPM(701894) is fixed to return correct status on API return
         self._loop_status_update(result, 5, 'stopped')
 
         result = self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
-        # on DPM is fixed to return correct status on API return
+        # on DPM(701894) is fixed to return correct status on API return
         self._loop_status_update(result, 5, 'Active')
 
     def _loop_status_update(self, result, iterations, status):
