@@ -18,11 +18,13 @@ A connection to a z Systems through Dynamic Partition Manager( DPM) APIs.
 Supports DPM APIs for virtualization in z Systems
 """
 
+import nova
 import nova_dpm.conf
 
 from nova import context as context_object
 from nova import exception
 from nova.objects import flavor as flavor_object
+from nova.objects import instance as instance_object
 from nova.virt import driver
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import host as Host
@@ -202,6 +204,22 @@ class DPMDriver(driver.ComputeDriver):
             part_list.append(partition.get_property('name'))
 
         return part_list
+
+    def list_instance_uuids(self):
+        partition_list = vm.cpcsubset_partition_list(self._cpc)
+        context = context_object.get_admin_context()
+        instance_list = (
+            instance_object.InstanceList.get_by_host(
+                context, nova.conf.CONF.host))
+        uuid_list = []
+        for partition in partition_list:
+            for instance in instance_list:
+                inst = vm.Instance(
+                    instance, self._cpc, self._client)
+                if inst.partition_name == partition.get_property(
+                        'name'):
+                    uuid_list.append(instance.uuid)
+        return uuid_list
 
     def get_info(self, instance):
 
