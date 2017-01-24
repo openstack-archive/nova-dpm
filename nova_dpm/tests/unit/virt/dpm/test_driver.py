@@ -20,8 +20,9 @@ from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.tests.unit.virt.dpm import test_host as testhost
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import driver
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as dpmHost
-
+from nova_dpm.virt.dpm import vm
 
 """
 cpcsubset unit testcase
@@ -113,3 +114,61 @@ class DPMdriverTestCase(TestCase):
         self.assertRaises(exception.ValidationError,
                           dpmdriver.init_host,
                           None)
+
+
+class DPMPartitionSpawnTestCase(TestCase):
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'create')
+    @mock.patch.object(vm.PartitionInstance, 'properties')
+    def test_spawn_max_nics(self, mock_prop, mock_create, mock_get_part):
+        dpmdriver = driver.DPMDriver(None)
+        network_info = [x for x in range(0, 13)]
+        self.assertRaises(exceptions.MaxAmountOfInstancePortsExceededError,
+                          dpmdriver.spawn, None, None, None, None, None,
+                          network_info, flavor=mock.Mock())
+
+    @mock.patch.object(vm.PartitionInstance, 'launch')
+    @mock.patch.object(vm.PartitionInstance, 'attachHba')
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'create')
+    @mock.patch.object(vm.PartitionInstance, 'properties')
+    def test_spawn_attach_nic(self, mock_prop, mock_create, mock_get_part,
+                              mock_attachHba, mock_launch):
+        mock_nic = mock.Mock()
+        mock_nic.properties = {"name": "foo-name",
+                               "virtual-switch-uri": "foo-uri",
+                               "device-number": "0001"}
+        mock_nic.get_property = lambda key: {"device-number": "0001"}[key]
+
+        mock_nic2 = mock.Mock()
+        mock_nic2.properties = {"name": "foo-name2",
+                                "virtual-switch-uri": "foo-uri2"}
+        mock_nic2.get_property = lambda key: {"device-number": "0002"}[key]
+
+        mock_part = mock.Mock()
+        mock_part.nics.create.side_effect = [mock_nic, mock_nic2]
+
+        mock_part.get_property =\
+            lambda key: {"boot-os-specific-parameters": "boot-data"}[key]
+
+        mock_get_part.return_value = mock_part
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._conf = {"cpcsubset_name": "foo-name",
+                           "physical_storage_adapter_mappings": "mapping"}
+
+        vif = {"address": "aa:bb:cc:dd:ee:ff",
+               "id": "foo-id",
+               "type": "dpm_vswitch",
+               "details": {"object_id": "oid"}}
+        vif2 = {"address": "11:22:33:44:55:66",
+                "id": "foo-id2",
+                "type": "dpm_vswitch",
+                "details": {"object_id": "oid2"}}
+        network_info = [vif, vif2]
+        dpmdriver.spawn(None, mock.Mock(), None, None, None, network_info,
+                        flavor=mock.Mock())
+        mock_create.assert_called_once()
+        self.assertEqual(2, mock_part.nics.create.call_count)
+        mock_part.update_properties.assert_called_once_with({
+            "boot-os-specific-parameters":
+                "boot-data0001,0,aabbccddeeff;0002,0,112233445566;"})
