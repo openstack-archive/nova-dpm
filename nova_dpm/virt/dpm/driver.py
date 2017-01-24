@@ -22,9 +22,12 @@ import nova_dpm.conf
 
 from nova import context as context_object
 from nova import exception
+from nova.i18n import _
 from nova.objects import flavor as flavor_object
 from nova.virt import driver
 from nova_dpm.virt.dpm import client_proxy
+from nova_dpm.virt.dpm import constants
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
 from nova_dpm.virt.dpm import vm
@@ -209,6 +212,42 @@ class DPMDriver(driver.ComputeDriver):
 
         return info
 
+    def _get_nic_string(self, nic, vif):
+        """Generate the NIC string that must be available from inside the OS
+
+        Passing the string into the operating system is achieved via appending
+        it to the partitions boot-os-specific-parameters property.
+        The value of this property will then be appended to the kernels cmdline
+        and be accessible from within the instance under /proc/cmdline.
+        It is ignored by the Linux Boot process but can be parsed by
+        other userspace tools and scripts.
+
+        This allows the following operations to be done from within the
+        Instance/Partitions Operating System:
+
+        * Replace the z Systems Firmware generated MAC address
+          of the NIC with the one generated from Neutron. The MAC can be
+          removed from this parameter once it is possible to set the correct
+          MAC right on DPM NIC creation.
+
+        * Configure the physical network adapter port to be used.
+          The port number can be removed once Linux is able to get this
+          information via a different channel.
+        """
+        # Format: <dev-no>,<port-no>,<mac>;
+        # <devno>: The DPM device number
+        # <port-no>: The network adapters port that should be usd
+        # <mac>: MAC address without deliminator. This saves 5 additional
+        #        characters in the limited boot-os-specific-parameters property
+        # Example: 0001,1,aabbccddeeff;
+        # TODO(andreas_s): Update <port-no> once provided by Neutron. Till
+        # then default to 0
+        nic_boot_parms = "{devno},0,{mac};".format(**{
+            "devno": nic.get_property("device-number"),
+            "mac": vif["address"].replace(":", "")
+        })
+        return nic_boot_parms
+
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info=None, block_device_info=None,
               flavor=None):
@@ -222,8 +261,26 @@ class DPMDriver(driver.ComputeDriver):
 
         inst = vm.PartitionInstance(instance, self._cpc, flavor)
         inst.create(inst.properties())
+
+        # The creation of NICs is limited in DPM by the partitions
+        # boot-os-specific-parameters property. It is used to pass additional
+        # network configuration data into the partitions Operating System
+        if len(network_info) > constants.MAX_NICS_PER_PARTITION:
+            # TODO(andreas_s): How to handle cleanup?
+            # TODO(andreas_s): Not sure about the naming. Should we use
+            # "NIC" or "Port"?
+            raise exceptions.MaxAmountOfInstancePortsExceededError(_(
+                "Exceeded the maximum number of Ports per partition. A single "
+                "partition can only be attached to {max_ports} Ports, but "
+                "{current_ports} Ports have been requested.").format(
+                max_ports=constants.MAX_NICS_PER_PARTITION,
+                current_ports=len(network_info)
+            ))
+        nic_boot_string = ""
         for vif in network_info:
-            inst.attach_nic(self._conf, vif)
+            nic = inst.attach_nic(self._conf, vif)
+            nic_boot_string += self._get_nic_string(nic, vif)
+        inst.append_to_boot_os_specific_parameters(nic_boot_string)
 
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
