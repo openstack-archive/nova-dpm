@@ -220,7 +220,7 @@ class DPMDriver(driver.ComputeDriver):
                                                instance.instance_type_id))
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
-        inst = vm.PartitionInstance(instance, self._cpc, self._client, flavor)
+        inst = vm.PartitionInstance(instance, self._cpc, flavor)
         inst.create(inst.properties())
         for vif in network_info:
             inst.attach_nic(self._conf, vif)
@@ -234,19 +234,19 @@ class DPMDriver(driver.ComputeDriver):
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
-        inst = vm.PartitionInstance(instance, self._cpc, self._client)
+        inst = vm.PartitionInstance(instance, self._cpc)
         inst.destroy()
 
     def power_off(self, instance, timeout=0, retry_interval=0):
-        inst = vm.PartitionInstance(instance, self._cpc, self._client)
+        inst = vm.PartitionInstance(instance, self._cpc)
         inst.power_off_vm()
 
     def power_on(self, context, instance, network_info,
                  block_device_info=None):
-        inst = vm.PartitionInstance(instance, self._cpc, self._client)
+        inst = vm.PartitionInstance(instance, self._cpc)
         inst.power_on_vm()
 
     def reboot(self, context, instance, network_info, reboot_type,
                block_device_info=None, bad_volumes_callback=None):
-        inst = vm.PartitionInstance(instance, self._cpc, self._client)
+        inst = vm.PartitionInstance(instance, self._cpc)
         inst.reboot_vm()
