@@ -22,9 +22,12 @@ import nova_dpm.conf
 
 from nova import context as context_object
 from nova import exception
+from nova.i18n import _
 from nova.objects import flavor as flavor_object
 from nova.virt import driver
 from nova_dpm.virt.dpm import client_proxy
+from nova_dpm.virt.dpm import constants
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
 from nova_dpm.virt.dpm import vm
@@ -221,7 +224,21 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
 
         inst = vm.PartitionInstance(instance, self._cpc, flavor)
-        inst.create(inst.properties())
+        props = inst.properties()
+        inst.create(props)
+
+        # The creation of NICs is limited in DPM by the partitions
+        # boot-os-specific-parameters property. It is used to pass additional
+        # network configuration data into the partitions Operating System
+        if len(network_info) > constants.MAX_NICS_PER_PARTITION:
+            # TODO(andreas_s): How to handle cleanup?
+            raise exceptions.MaxAmountOfNicsExceededError(_(
+                "Exceeded the maximum number of NICs per partition. A single "
+                "partition can only be attached to {max_nics} NICs, but "
+                "{current_nics} NICs have been requested.").format(
+                max_nics=constants.MAX_NICS_PER_PARTITION,
+                current_nics=len(network_info)
+            ))
         for vif in network_info:
             inst.attach_nic(self._conf, vif)
 

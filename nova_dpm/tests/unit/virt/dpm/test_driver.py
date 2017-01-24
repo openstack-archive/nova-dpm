@@ -20,8 +20,9 @@ from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.tests.unit.virt.dpm import test_host as testhost
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import driver
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as dpmHost
-
+from nova_dpm.virt.dpm import vm
 
 """
 cpcsubset unit testcase
@@ -113,3 +114,16 @@ class DPMdriverTestCase(TestCase):
         self.assertRaises(exception.ValidationError,
                           dpmdriver.init_host,
                           None)
+
+
+class DPMPartitionSpawnTestCase(TestCase):
+    @mock.patch.object(vm.PartitionInstance, '__init__',
+                       side_effect=mock.Mock(return_value=None))
+    @mock.patch.object(vm.PartitionInstance, 'create')
+    @mock.patch.object(vm.PartitionInstance, 'properties')
+    def test_spawn(self, mock_prop, mock_create, mock_init):
+        dpmdriver = driver.DPMDriver(None)
+        network_info = [x for x in range(0, 13)]
+        self.assertRaises(exceptions.MaxAmountOfNicsExceededError,
+                          dpmdriver.spawn, None, None, None, None, None,
+                          network_info, flavor=mock.Mock())
