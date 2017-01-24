@@ -18,6 +18,7 @@ from nova.compute import manager as compute_manager
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
+from nova_dpm.virt.dpm.exceptions import BootOsSpecificParametersError
 from nova_dpm.virt.dpm import vm
 
 
@@ -56,6 +57,15 @@ class VmFunctionTestCase(TestCase):
         for i in range(length):
             self.assertEqual(list[i].get_property('name'),
                              partition_list[i].get_property('name'))
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    def test_get_boot_properties(self, m_get_part):
+        inst = vm.PartitionInstance(None, None, None)
+        inst._boot_os_specific_parameters = "foo"
+        props = inst.get_boot_properties()
+        self.assertEqual("test-operating-system", props["boot-device"])
+        self.assertEqual("foo", props["boot-os-specific-parameters"])
+        self.assertTrue(2, len(props))
 
 
 class InstancePropertiesTestCase(TestCase):
@@ -104,21 +114,20 @@ class VmNicTestCase(TestCase):
 
         self.inst = getMockInstance()
         self.inst.partition.nics = fakezhmcclient.getFakeNicManager()
+        self.vif1 = {
+            'id': 1234, 'type': 'dpm_vswitch', 'address': '12-34-56-78-9A-BC',
+            'details': {'object_id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
 
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_nic(self, mock_debug):
 
-        vif1 = {'id': 1234, 'type': 'dpm_vswitch',
-                'address': '12-34-56-78-9A-BC',
-                'details':
-                    {'object_id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
-
         ret_val = mock.MagicMock()
+        ret_val.get_property.return_value = "0001"
         # Required to satisfy dict[..] operations on mocks
         ret_val .__getitem__.side_effect = dict.__getitem__
         with mock.patch.object(fakezhmcclient.NicManager, 'create',
                                return_value=ret_val) as mock_create:
-            nic_interface = self.inst.attach_nic(self.conf, vif1)
+            nic_interface = self.inst.attach_nic(self.conf, self.vif1)
         self.assertEqual(ret_val, nic_interface)
         self.assertTrue(mock_create.called)
         call_arg_dict = mock_create.mock_calls[0][1][0]
@@ -134,6 +143,35 @@ class VmNicTestCase(TestCase):
         self.assertEqual(
             '/api/virtual-switches/00000000-aaaa-bbbb-cccc-abcdabcdabcd',
             call_arg_dict['virtual-switch-uri'])
+
+    def test__append_nic_to_boot_os_specific_parameters(self):
+        mock_part = mock.Mock()
+        mock_part.get_property.return_value = "foo"
+        with mock.patch.object(vm.PartitionInstance, 'get_partition',
+                               return_value=mock_part):
+            inst = vm.PartitionInstance(None, None, None)
+        mock_nic = mock.Mock()
+        mock_nic.get_property.return_value = "0001"
+        inst._append_nic_to_boot_os_specific_parameters(mock_nic, self.vif1)
+        self.assertEqual("foo0001,12-34-56-78-9A-BC;",
+                         inst._boot_os_specific_parameters)
+
+    def test__append_nic_to_boot_os_specific_parameters_too_long(self):
+        mock_part = mock.Mock()
+        # Defining a large initial boot property. Now adding nic to it
+        # should fail
+        mock_part.get_property.return_value = "x" * 250
+
+        with mock.patch.object(vm.PartitionInstance, 'get_partition',
+                               return_value=mock_part):
+            inst = vm.PartitionInstance(None, None, None)
+        mock_nic = mock.Mock()
+        mock_nic.get_property.return_value = "0001"
+
+        self.assertRaises(
+            BootOsSpecificParametersError,
+            inst._append_nic_to_boot_os_specific_parameters,
+            mock_nic, self.vif1)
 
 
 class VmHBATestCase(TestCase):
