@@ -27,7 +27,7 @@ management platform on z Systems.
 
 
 * Free software: Apache license
-* Documentation: TBD
+* Documentation: http://nova-dpm.readthedocs.io/en/latest/
 * Source: http://git.openstack.org/cgit/openstack/nova-dpm
 * Bugs: http://bugs.launchpad.net/nova-dpm
 
