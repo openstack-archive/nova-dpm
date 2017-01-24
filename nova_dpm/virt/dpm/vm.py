@@ -28,6 +28,8 @@ from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
 from nova_dpm import conf
+from nova_dpm.virt.dpm import constants
+from nova_dpm.virt.dpm.exceptions import BootOsSpecificParametersExceededError
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
@@ -113,6 +115,8 @@ class PartitionInstance(object):
         self.client = client
         self.partition = self.get_partition()
 
+        self._boot_os_specific_parameters = None
+
     @property
     def partition_name(self):
         """This function will create partition name using uuid
@@ -143,6 +147,38 @@ class PartitionInstance(object):
         partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
 
+    def _append_nic_to_boot_os_specific_parameters(self, nic, vif):
+        if not self._boot_os_specific_parameters:
+            # This calls returns an empty string if nothing hs been set yet
+            self._boot_os_specific_parameters =\
+                self.partition.get_property('boot-os-specific-parameters')
+
+        # Append nic information to boot-os-specific-parameters property.
+        # This value of this property will be appended to the kernels cmdline
+        # and be accessible from within the instance under /proc/cmdline
+
+        # Format: <dev-no>,<port-no>,<mac>;
+        # TODO(andreas_s): Update <port-no> once provided by Neutron. Till
+        # then default to 0
+        nic_boot_parms = "{devno},0,{mac};".format(**{
+            "devno": nic.get_property("device-number"),
+            "mac": vif['address'].replace(":", "")
+        })
+
+        new_boot_parms = self._boot_os_specific_parameters + nic_boot_parms
+        if (len(new_boot_parms) >
+                constants.MAX_LEN_BOOT_OS_SPECIFIC_PARAMETERS):
+            raise BootOsSpecificParametersExceededError(_(
+                """"Maximum size of 'boot-os-specific-parameters' attribute
+                exceeded. Cannot provide the required network configuration
+                information for NIC %(nic)s and vif %(vif)s to the Operating
+                System. To avoid this, attach the instance to less
+                networks.""" % {"nic": nic, "vif": vif}))
+        # We only set this parameter if it is valid. It should be up to the
+        # caller to decide whether to proceed without having the NIC
+        # configured in the boot properties
+        self._boot_os_specific_parameters = new_boot_parms
+
     def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
@@ -167,7 +203,14 @@ class PartitionInstance(object):
                                   + dpm_object_id
         }
         LOG.debug("Creating NIC %s", dpm_nic_dict)
+
+        # We first need to create the NIC to have the device number that
+        # should be used. There's no need to undo this after a failure occurred
+        # on adding ot to the boot parameters as deleting the partition
+        # will also delete the NIC.
         nic_interface = self.partition.nics.create(dpm_nic_dict)
+        self._append_nic_to_boot_os_specific_parameters(nic_interface, vif)
+
         LOG.debug("NIC created successfully %(nic_name)s "
                   "with URI %(nic_uri)s"
                   % {'nic_name': nic_interface.properties['name'],
@@ -310,7 +353,9 @@ class PartitionInstance(object):
         # HBA uri
         # TODO(preethipy): update boot-logical-unit-number and
         # boot-world-wide-port-name
-        bootProperties = {'boot-device': 'test-operating-system'}
+        bootProperties = {'boot-device': 'test-operating-system',
+                          'boot-os-specific-parameters':
+                              self._boot_os_specific_parameters}
         return bootProperties
 
     def get_partition(self):
