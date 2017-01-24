@@ -111,7 +111,7 @@ class PartitionInstance(object):
         self.flavor = flavor
         self.cpc = cpc
         self.client = client
-        self.partition = self.get_partition(self.cpc, self.instance)
+        self.partition = self.get_partition()
 
     @property
     def partition_name(self):
@@ -313,9 +313,9 @@ class PartitionInstance(object):
         bootProperties = {'boot-device': 'test-operating-system'}
         return bootProperties
 
-    def get_partition(self, cpc, instance):
+    def get_partition(self):
         partition = None
-        partition_manager = cpc.partitions
+        partition_manager = self.cpc.partitions
         partition_lists = partition_manager.list(
             full_properties=False)
         for part in partition_lists:
