@@ -112,6 +112,8 @@ class PartitionInstance(object):
         self.cpc = cpc
         self.client = client
         self.partition = self.get_partition(self.cpc, self.instance)
+        self._boot_os_specific_parameters = \
+            self.partition.get_property('boot-os-specific-parameters')
 
     @property
     def partition_name(self):
@@ -143,6 +145,15 @@ class PartitionInstance(object):
         partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
 
+    def _append_to_boot_os_specific_parameters(self, content):
+        actual = self.partition.get_property('boot-os-specific-parameters')
+        new = actual + content
+        if len(new) > 64:
+            raise Exception("Maximum size for partition property"
+                            "'boot-os-specific-parameters' exceeded.")
+        self.partition.update_properties(
+            {'boot-os-specific-parameters': new})
+
     def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
@@ -168,6 +179,13 @@ class PartitionInstance(object):
         }
         LOG.debug("Creating NIC %s", dpm_nic_dict)
         nic_interface = self.partition.nics.create(dpm_nic_dict)
+
+        # Append nic information to boot-os-specific-parameters property
+        boot_parms = ("0.0.%(devno)s,%(mac)s;" %
+                      {"devno": nic_interface.get_property('device-number'),
+                       "mac": mac})
+        self._append_to_boot_os_specific_parameters(boot_parms)
+
         LOG.debug("NIC created successfully %(nic_name)s "
                   "with URI %(nic_uri)s"
                   % {'nic_name': nic_interface.properties['name'],
