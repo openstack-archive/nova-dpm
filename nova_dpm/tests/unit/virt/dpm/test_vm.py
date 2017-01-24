@@ -18,6 +18,7 @@ from nova.compute import manager as compute_manager
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
 
 
@@ -56,6 +57,27 @@ class VmFunctionTestCase(TestCase):
         for i in range(length):
             self.assertEqual(list[i].get_property('name'),
                              partition_list[i].get_property('name'))
+
+    def test_set_boot_os_specific_parameters(self):
+        mock_part = mock.Mock()
+        with mock.patch.object(vm.PartitionInstance, 'get_partition',
+                               return_value=mock_part):
+            inst = vm.PartitionInstance(None, None, None)
+
+        inst.set_boot_os_specific_parameters("foo")
+        mock_part.update_properties.assert_called_with(
+            {"boot-os-specific-parameters": "foo"})
+
+    def test_set_boot_os_specific_parameters_exceeded(self):
+        mock_part = mock.Mock()
+        data = "a" * 257
+        with mock.patch.object(vm.PartitionInstance, 'get_partition',
+                               return_value=mock_part):
+            inst = vm.PartitionInstance(None, None, None)
+
+        self.assertRaises(
+            exceptions.BootOsSpecificParametersPropertyExceededError,
+            inst.set_boot_os_specific_parameters, data)
 
 
 class InstancePropertiesTestCase(TestCase):
@@ -103,21 +125,20 @@ class VmNicTestCase(TestCase):
 
         self.inst = getMockInstance()
         self.inst.partition.nics = fakezhmcclient.getFakeNicManager()
+        self.vif1 = {
+            'id': 1234, 'type': 'dpm_vswitch', 'address': '12:34:56:78:9A:BC',
+            'details': {'object_id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
 
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_nic(self, mock_debug):
 
-        vif1 = {'id': 1234, 'type': 'dpm_vswitch',
-                'address': '12-34-56-78-9A-BC',
-                'details':
-                    {'object_id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
-
         ret_val = mock.MagicMock()
+        ret_val.get_property.return_value = "0001"
         # Required to satisfy dict[..] operations on mocks
         ret_val .__getitem__.side_effect = dict.__getitem__
         with mock.patch.object(fakezhmcclient.NicManager, 'create',
                                return_value=ret_val) as mock_create:
-            nic_interface = self.inst.attach_nic(self.conf, vif1)
+            nic_interface = self.inst.attach_nic(self.conf, self.vif1)
         self.assertEqual(ret_val, nic_interface)
         self.assertTrue(mock_create.called)
         call_arg_dict = mock_create.mock_calls[0][1][0]
@@ -126,7 +147,7 @@ class VmNicTestCase(TestCase):
         self.assertIn(str(1234), call_arg_dict['name'])
         # Description
         self.assertTrue(call_arg_dict['description'].startswith('OpenStack'))
-        self.assertIn('mac=12-34-56-78-9A-BC', call_arg_dict['description'])
+        self.assertIn('mac=12:34:56:78:9A:BC', call_arg_dict['description'])
         self.assertIn('CPCSubset=' + self.conf['cpcsubset_name'],
                       call_arg_dict['description'])
         # virtual-switch-uri

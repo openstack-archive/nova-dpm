@@ -28,6 +28,8 @@ from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
 from nova_dpm import conf
+from nova_dpm.virt.dpm import constants
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
@@ -112,6 +114,11 @@ class PartitionInstance(object):
         self.cpc = cpc
         self.partition = self.get_partition()
 
+    @staticmethod
+    def create_object(instance, cpc, flavor=None):
+        """Generator method. Simplifies things in unittests"""
+        return PartitionInstance(instance, cpc, flavor=None)
+
     @property
     def partition_name(self):
         """This function will create partition name using the instance uuid
@@ -141,6 +148,18 @@ class PartitionInstance(object):
     def create(self, properties):
         partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
+
+    def set_boot_os_specific_parameters(self, data):
+        """Set the boot-os-specific-parameters property
+
+        The value of this property will be appended to the kernels cmdline
+        argument.
+        """
+        if len(data) > constants.BOOT_OS_SPECIFIC_PARAMETERS_MAX_LEN:
+            raise exceptions.BootOsSpecificParametersPropertyExceededError()
+        self.partition.update_properties({
+            'boot-os-specific-parameters': data
+        })
 
     def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
