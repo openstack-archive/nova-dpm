@@ -112,6 +112,8 @@ class PartitionInstance(object):
         self.cpc = cpc
         self.partition = self.get_partition()
 
+        self._boot_os_specific_parameters = None
+
     @property
     def partition_name(self):
         """This function will create partition name using uuid
@@ -142,6 +144,39 @@ class PartitionInstance(object):
         partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
 
+    def _append_nic_to_boot_os_specific_parameters(self, nic, vif):
+        """Append nic information to boot-os-specific-parameters property
+
+        This value of this property will be appended to the kernels cmdline
+        and be accessible from within the instance under /proc/cmdline.
+        This allows the following operations to be done from within the
+        Instance/Partitions Operating System:
+
+        * Replace the z Systems Firmware generated MAC address
+          of the NIC with the one generated from Neutron. The MAC can be
+          removed from this parameter once it is possible to set the correct
+          MAC right on DPM NIC creation.
+
+        * Configure the physical network adapter port to be used.
+          The port number can be removed once Linux is able to get this
+          information via a different channel.
+        """
+        if not self._boot_os_specific_parameters:
+            # This calls returns an empty string if nothing has been set yet
+            self._boot_os_specific_parameters = (
+                self.partition.get_property('boot-os-specific-parameters') +
+                " ")
+
+        # Format: <dev-no>,<port-no>,<mac>;
+        # Example: 0001,1,aabbccddeeff;
+        # TODO(andreas_s): Update <port-no> once provided by Neutron. Till
+        # then default to 0
+        nic_boot_parms = "{devno},0,{mac};".format(**{
+            "devno": nic.get_property("device-number"),
+            "mac": vif["address"].replace(":", "")
+        })
+        self._boot_os_specific_parameters += nic_boot_parms
+
     def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
@@ -166,7 +201,10 @@ class PartitionInstance(object):
                                   + dpm_object_id
         }
         LOG.debug("Creating NIC %s", dpm_nic_dict)
+
         nic_interface = self.partition.nics.create(dpm_nic_dict)
+        self._append_nic_to_boot_os_specific_parameters(nic_interface, vif)
+
         LOG.debug("NIC created successfully %(nic_name)s "
                   "with URI %(nic_uri)s"
                   % {'nic_name': nic_interface.properties['name'],
@@ -309,7 +347,9 @@ class PartitionInstance(object):
         # HBA uri
         # TODO(preethipy): update boot-logical-unit-number and
         # boot-world-wide-port-name
-        bootProperties = {'boot-device': 'test-operating-system'}
+        bootProperties = {'boot-device': 'test-operating-system',
+                          'boot-os-specific-parameters':
+                              self._boot_os_specific_parameters}
         return bootProperties
 
     def get_partition(self):
