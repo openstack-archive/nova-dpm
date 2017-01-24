@@ -68,13 +68,13 @@ class InstancePropertiesTestCase(TestCase):
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_partition_name(self, mock_get_part):
         inst = vm.PartitionInstance(
-            self.mock_nova_inst, mock.Mock(), mock.Mock())
+            self.mock_nova_inst, mock.Mock())
         self.assertEqual("OpenStack-foo-foo-id", inst.partition_name)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_partition_description(self, mock_get_part):
         inst = vm.PartitionInstance(
-            self.mock_nova_inst, mock.Mock(), mock.Mock())
+            self.mock_nova_inst, mock.Mock())
         self.assertEqual("OpenStack CPCSubset=foo",
                          inst.partition_description)
 
@@ -85,8 +85,7 @@ class InstancePropertiesTestCase(TestCase):
         mock_flavor.memory_mb = 2000
 
         inst = vm.PartitionInstance(
-            self.mock_nova_inst, mock.Mock(),
-            mock.Mock(), flavor=mock_flavor)
+            self.mock_nova_inst, mock.Mock(), flavor=mock_flavor)
         props = inst.properties()
         self.assertEqual('OpenStack-foo-foo-id', props['name'])
         self.assertEqual('OpenStack CPCSubset=foo', props['description'])

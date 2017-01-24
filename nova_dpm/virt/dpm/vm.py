@@ -106,11 +106,10 @@ def cpcsubset_partition_list(cpc):
 
 
 class PartitionInstance(object):
-    def __init__(self, instance, cpc, client, flavor=None):
+    def __init__(self, instance, cpc, flavor=None):
         self.instance = instance
         self.flavor = flavor
         self.cpc = cpc
-        self.client = client
         self.partition = self.get_partition()
 
     @property
