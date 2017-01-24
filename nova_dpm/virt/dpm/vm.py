@@ -28,6 +28,8 @@ from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
 from nova_dpm import conf
+from nova_dpm.virt.dpm import constants
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
@@ -142,6 +144,20 @@ class PartitionInstance(object):
         partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
 
+    def append_to_boot_os_specific_parameters(self, data):
+        """Append data to boot-os-specific-parameters property
+
+        The value of this property will be appended to the kernels cmdline
+        argument.
+        """
+        # Returns an empty string if not yet set
+        new = self.partition.get_property('boot-os-specific-parameters') + data
+        if len(new) > constants.BOOT_OS_SPECIFIC_PARAMETERS_MAX_LEN:
+            raise exceptions.BootOsSpecificParametersPropertyExceededError()
+        self.partition.update_property(**{
+            'boot-os-specific-parameters': new
+        })
+
     def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
@@ -166,7 +182,9 @@ class PartitionInstance(object):
                                   + dpm_object_id
         }
         LOG.debug("Creating NIC %s", dpm_nic_dict)
+
         nic_interface = self.partition.nics.create(dpm_nic_dict)
+
         LOG.debug("NIC created successfully %(nic_name)s "
                   "with URI %(nic_uri)s"
                   % {'nic_name': nic_interface.properties['name'],
@@ -309,7 +327,9 @@ class PartitionInstance(object):
         # HBA uri
         # TODO(preethipy): update boot-logical-unit-number and
         # boot-world-wide-port-name
-        bootProperties = {'boot-device': 'test-operating-system'}
+        bootProperties = {'boot-device': 'test-operating-system',
+                          'boot-os-specific-parameters':
+                              self._boot_os_specific_parameters}
         return bootProperties
 
     def get_partition(self):
