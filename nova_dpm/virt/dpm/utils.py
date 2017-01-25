@@ -32,11 +32,11 @@ def valide_host_conf(conf, cpc):
         errormsg = (_("max_processors %(config_proc)s configured for "
                       "CpcSubset %(cpcsubset_name)s is greater than the "
                       "available amount of processors %(max_proc)s on "
-                      "CPC uuid %(cpcuuid)s and CPC name %(cpcname)s")
+                      "CPC object-id %(cpcid)s and CPC name %(cpcname)s")
                     % {'config_proc': conf['max_processors'],
                        'cpcsubset_name': conf['cpcsubset_name'],
                        'max_proc': cpc.properties['processor-count-ifl'],
-                       'cpcuuid': conf['cpc_uuid'],
+                       'cpcid': conf['cpc_object_id'],
                        'cpcname': cpc.properties['name']})
         raise exception.ValidationError(errormsg)
     if (conf['max_memory_mb'] > cpc.properties['storage-customer']):
@@ -44,11 +44,11 @@ def valide_host_conf(conf, cpc):
         errormsg = (_("max_memory_mb %(config_mem)s configured for "
                       "CpcSubset %(cpcsubset_name)s is greater than the "
                       "available amount of memory %(max_mem)s on CPC "
-                      "uuid %(cpcuuid)s and CPC name %(cpcname)s")
+                      "object-id %(cpcid)s and CPC name %(cpcname)s")
                     % {'config_mem': conf['max_processors'],
                        'cpcsubset_name': conf['cpcsubset_name'],
                        'max_mem': cpc.properties['processor-count-ifl'],
-                       'cpcuuid': conf['cpc_uuid'],
+                       'cpcid': conf['cpc_object_id'],
                        'cpcname': cpc.properties['name']})
         raise exception.ValidationError(errormsg)
 

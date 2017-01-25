@@ -45,7 +45,7 @@ ALL_DPM_OPTS = [
     Password for connection to the HMC"""),
     cfg.StrOpt('host', default='', required=True, help="""
     Name of the OpenStack hypervisor host"""),
-    cfg.StrOpt('cpc_uuid', help="""
+    cfg.StrOpt('cpc_object_id', help="""
     Object-id of the target CPC"""),
     cfg.IntOpt('max_processors', help="""
     Maximum number of physical IFL processors on the target CPC that can be
