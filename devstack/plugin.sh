@@ -55,7 +55,7 @@ function configure_nova_dpm {
     iniset $NOVA_CONF dpm hmc_username $HMC_USERNAME
     iniset $NOVA_CONF dpm hmc_password $HMC_PASSWORD
     iniset $NOVA_CONF dpm host $HOST
-    iniset $NOVA_CONF dpm cpc_uuid $CPC_UUID
+    iniset $NOVA_CONF dpm cpc_object_id $CPC_OBJECT_ID
     iniset $NOVA_CONF dpm max_processors $MAX_PROC
     iniset $NOVA_CONF dpm max_memory $MAX_MEM
     iniset $NOVA_CONF dpm max_instances $MAX_INSTANCES

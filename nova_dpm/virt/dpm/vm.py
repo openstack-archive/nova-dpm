@@ -114,7 +114,7 @@ class PartitionInstance(object):
 
     @property
     def partition_name(self):
-        """This function will create partition name using uuid
+        """This function will create partition name using the instance uuid
 
         :return: name of partition
         """

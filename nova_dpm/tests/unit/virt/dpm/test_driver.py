@@ -39,7 +39,7 @@ class mockData(object):
         mockconf.hmc_password = "dummy"
         mockconf.hmc = "1.1.1.1"
         mockconf.host = "dummysubset"
-        mockconf.cpc_uuid = "00000000-aaaa-bbbb-cccc-abcdabcdabcd"
+        mockconf.cpc_object_id = "00000000-aaaa-bbbb-cccc-abcdabcdabcd"
         mockconf.max_processors = 5
         mockconf.max_memory = 50
         mockconf.max_instances = 10

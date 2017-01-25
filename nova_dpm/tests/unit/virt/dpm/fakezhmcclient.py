@@ -104,7 +104,7 @@ def getFakeCPC(cpcmanager=None):
 def getFakeCPCconf():
 
     conf = {'cpcsubset_name': "S12subset",
-            'cpc_uuid': "1232132",
+            'cpc_object_id': "1232132",
             'max_processors': 10,
             'max_memory_mb': 200,
             'max_partitions': 10
