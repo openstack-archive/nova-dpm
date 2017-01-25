@@ -74,7 +74,7 @@ class DPMDriver(driver.ComputeDriver):
 
         # retrieve from ncpu service configurationfile
         self._conf = {'cpcsubset_name': CONF.dpm.host,
-                      'cpc_uuid': CONF.dpm.cpc_uuid,
+                      'cpc_object_id': CONF.dpm.cpc_object_id,
                       'max_processors': CONF.dpm.max_processors,
                       'max_memory_mb': CONF.dpm.max_memory,
                       'max_partitions': CONF.dpm.max_instances,
@@ -82,11 +82,11 @@ class DPMDriver(driver.ComputeDriver):
                           CONF.dpm.physical_storage_adapter_mappings}
 
         self._cpc = self._client.cpcs.find(**{
-            "object-id": self._conf['cpc_uuid']})
-        LOG.debug("Matching hypervisor found %(cpcsubset_name)s for UUID "
-                  "%(uuid)s and CPC %(cpcname)s" %
+            "object-id": self._conf['cpc_object_id']})
+        LOG.debug("Matching hypervisor found %(cpcsubset_name)s for object-id "
+                  "%(cpcid)s and CPC %(cpcname)s" %
                   {'cpcsubset_name': self._conf['cpcsubset_name'],
-                   'uuid': self._conf['cpc_uuid'],
+                   'cpcid': self._conf['cpc_object_id'],
                    'cpcname': self._cpc.properties['name']})
 
         utils.valide_host_conf(self._conf, self._cpc)
