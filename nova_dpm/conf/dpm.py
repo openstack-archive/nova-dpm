@@ -18,36 +18,43 @@ from oslo_config import cfg
 dpm_group = cfg.OptGroup('dpm',
                          title='DPM options',
                          help="""
-PR/SM2 (in DPM mode) is a hypervisor. By using PR/SM2 hypervisor we can create
-partition on IBM z Systems or IBM LinuxONE system. A partition
-is a virtual representation of the hardware resources of a
-z Systems or LinuxONE system.
-Hardware Management Console (HMC) is a component of DPM by
-using which we can create partitions.
+The IBM z13 system generation (and IBM LinuxONE) introduced a new
+administrative mode named "Dynamic Partition Manager" (DPM) that allows for
+managing the firmware-based logical partition hypervisor (PR/SM) with the
+dynamic capabilities known from software-based hypervisors. A z13 or LinuxONE
+machine is termed CPC (Central Processor Complex). Its management access point
+is the z Systems HMC (Hardware Management Console) which exposes a Web Services
+API that is used by the Nova driver for DPM and by the Neutron agent for DPM.
+One HMC can manage multiple CPCs.
 
-DPM options are used when the compute_driver is set to use
-DPM (compute_driver=dpm.HMCDriver).
-
+DPM config options for the Nova compute service specify the target CPC, the HMC
+managing it, and limits on the resource usage on the target CPC. These limits
+ensure that only a subset of the target CPC is used for the OpenStack
+hypervisor host. To use the Nova driver for DPM, the [DEFAULT].compute_driver
+config option needs to be set to the value: dpm.DPMDriver
 """)
 
 
 ALL_DPM_OPTS = [
     cfg.StrOpt('hmc', default='', required=True, help="""
-    Hostname or IP address for connection to HMC via zhmcclient"""),
+    Hostname or IP address of the HMC that manages the target CPC"""),
     cfg.StrOpt('hmc_username', default='', required=True, help="""
-    User name for connection to HMC Host."""),
+    User name for connection to the HMC"""),
     cfg.StrOpt('hmc_password', default='', required=True, help="""
-    Password for connection to HMC Host."""),
+    Password for connection to the HMC"""),
     cfg.StrOpt('host', default='', required=True, help="""
-    CpcSubset name"""),
+    Name of the OpenStack hypervisor host"""),
     cfg.StrOpt('cpc_uuid', help="""
-    Uuid of the CPC"""),
+    Uuid of the target CPC"""),
     cfg.IntOpt('max_processors', help="""
-    Maximum number of shared IFL processors available on CpcSubset"""),
+    Maximum number of physical IFL processors on the target CPC that can be
+    used for this OpenStack hypervisor host"""),
     cfg.IntOpt('max_memory', help="""
-    Maximum amount of memory available on CpcSubset"""),
+    Maximum amount of memory (in MiB) on the target CPC that can be used for
+    this OpenStack hypervisor host"""),
     cfg.IntOpt('max_instances', help="""
-    Maximum number of instances that can be created on CpcSubset"""),
+    Maximum number of instances (partitions) that can be created for this
+    OpenStack hypervisor host"""),
     cfg.StrOpt('physical_storage_adapter_mappings', help="""
     Physical storage adapter with port details for hba creation""")
 ]
