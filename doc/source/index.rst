@@ -52,6 +52,7 @@ Contents:
     installation
     usage
     contributing
+    sample_config
 
 Specifications
 ==============
