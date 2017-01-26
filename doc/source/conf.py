@@ -26,8 +26,13 @@ extensions = [
     'sphinx.ext.autodoc',
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
-    'oslosphinx'
+    'oslosphinx',
+    'oslo_config.sphinxconfiggen'
+
 ]
+
+config_generator_config_file = '../../etc/nova/nova-dpm-config-generator.conf'
+sample_config_basename = '_static/nova_dpm'
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
 # text edit cycles.

@@ -59,4 +59,4 @@ def register_opts(conf):
 
 
 def list_opts():
-    return {dpm_group: ALL_DPM_OPTS}
+    return [(dpm_group, ALL_DPM_OPTS)]
