@@ -28,7 +28,8 @@ from nova import exception
 from nova.i18n import _
 from nova.i18n import _LE
 from nova_dpm import conf
-from nova_dpm.virt.dpm.exceptions import BootOsSpecificParametersError
+from nova_dpm.virt.dpm import constants
+from nova_dpm.virt.dpm.exceptions import BootOsSpecificParametersExceededError
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
@@ -148,6 +149,7 @@ class PartitionInstance(object):
 
     def _append_nic_to_boot_os_specific_parameters(self, nic, vif):
         if not self._boot_os_specific_parameters:
+            # This calls returns an empty string if nothing hs been set yet
             self._boot_os_specific_parameters =\
                 self.partition.get_property('boot-os-specific-parameters')
 
@@ -155,20 +157,26 @@ class PartitionInstance(object):
         # This value of this property will be appended to the kernels cmdline
         # and be accessible from within the instance under /proc/cmdline
 
-        # Format: <dev-no>,<mac>[,<port-no>];
-        # TODO(andreas_s): Add <port-no> once provided by Neutron
-        boot_parms = ("%(devno)s,%(mac)s;" %
-                      {"devno": nic.get_property('device-number'),
-                       "mac": vif['address']})
-        if len(boot_parms) + len(self._boot_os_specific_parameters) > 256:
-            raise BootOsSpecificParametersError(""""
-            Maximum size for partition property "
-            'boot-os-specific-parameters' exceeded. Cannot provide the
-            required network configuration information for NIC %(nic)s
-            and vif %(vif)s to the Operating System. To avoid this, attach
-            the instance to less networks.""",
-                                                {"nic": nic, "vif": vif})
-        self._boot_os_specific_parameters += boot_parms
+        # Format: <dev-no>,<port-no>,<mac>;
+        # TODO(andreas_s): Update <port-no> once provided by Neutron
+        nic_boot_parms = "{devno},0,{mac};".format(**{
+            "devno": nic.get_property('device-number'),
+            "mac": vif['address']
+        })
+
+        new_boot_parms = self._boot_os_specific_parameters + nic_boot_parms
+        if (len(new_boot_parms) >
+                constants.MAX_LEN_BOOT_OS_SPECIFIC_PARAMETERS):
+            raise BootOsSpecificParametersExceededError(_(""""
+            Maximum size of 'boot-os-specific-parameters' attribute exceeded.
+            Cannot provide the required network configuration information for
+            NIC {nic} and vif {vif}s to the Operating System. To avoid this,
+            attach the instance to less networks.""".format(
+                **{"nic": nic, "vif": vif})))
+        # We only set this parameter if it is valid. It should be up to the
+        # caller to decide whether to proceed without having the NIC
+        # configured in the boot properties
+        self._boot_os_specific_parameters = new_boot_parms
 
     def attach_nic(self, conf, vif):
         # TODO(preethipy): Implement the listener flow to register for
@@ -196,7 +204,11 @@ class PartitionInstance(object):
         LOG.debug("Creating NIC %s", dpm_nic_dict)
         nic_interface = self.partition.nics.create(dpm_nic_dict)
 
-        self._append_nic_to_boot_os_specific_parameters(nic_interface, vif)
+        try:
+            self._append_nic_to_boot_os_specific_parameters(nic_interface, vif)
+        except BootOsSpecificParametersExceededError:
+            self.partition.nics.
+
 
         LOG.debug("NIC created successfully %(nic_name)s "
                   "with URI %(nic_uri)s"

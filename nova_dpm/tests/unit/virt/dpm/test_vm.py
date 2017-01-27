@@ -18,7 +18,7 @@ from nova.compute import manager as compute_manager
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
-from nova_dpm.virt.dpm.exceptions import BootOsSpecificParametersError
+from nova_dpm.virt.dpm.exceptions import BootOsSpecificParametersExceededError
 from nova_dpm.virt.dpm import vm
 
 
@@ -115,7 +115,7 @@ class VmNicTestCase(TestCase):
         self.inst = getMockInstance()
         self.inst.partition.nics = fakezhmcclient.getFakeNicManager()
         self.vif1 = {
-            'id': 1234, 'type': 'dpm_vswitch', 'address': '12-34-56-78-9A-BC',
+            'id': 1234, 'type': 'dpm_vswitch', 'address': '12:34:56:78:9A:BC',
             'details': {'object_id': '00000000-aaaa-bbbb-cccc-abcdabcdabcd'}}
 
     @mock.patch.object(vm.LOG, 'debug')
@@ -136,13 +136,24 @@ class VmNicTestCase(TestCase):
         self.assertIn(str(1234), call_arg_dict['name'])
         # Description
         self.assertTrue(call_arg_dict['description'].startswith('OpenStack'))
-        self.assertIn('mac=12-34-56-78-9A-BC', call_arg_dict['description'])
+        self.assertIn('mac=12:34:56:78:9A:BC', call_arg_dict['description'])
         self.assertIn('CPCSubset=' + self.conf['cpcsubset_name'],
                       call_arg_dict['description'])
         # virtual-switch-uri
         self.assertEqual(
             '/api/virtual-switches/00000000-aaaa-bbbb-cccc-abcdabcdabcd',
             call_arg_dict['virtual-switch-uri'])
+
+    def test_attach_nic_boot_os_specific_parm_exceeded(self):
+        ret_val = mock.MagicMock()
+        ret_val.get_property.return_value = "0001"
+        # Required to satisfy dict[..] operations on mocks
+        ret_val .__getitem__.side_effect = dict.__getitem__
+        self.inst._boot_os_specific_parameters = "n" * 250
+        with mock.patch.object(fakezhmcclient.NicManager, 'create',
+                               return_value=ret_val):
+            self.assertRaises(BootOsSpecificParametersExceededError,
+                              self.inst.attach_nic, self.conf, self.vif1)
 
     def test__append_nic_to_boot_os_specific_parameters(self):
         mock_part = mock.Mock()
@@ -153,7 +164,7 @@ class VmNicTestCase(TestCase):
         mock_nic = mock.Mock()
         mock_nic.get_property.return_value = "0001"
         inst._append_nic_to_boot_os_specific_parameters(mock_nic, self.vif1)
-        self.assertEqual("foo0001,12-34-56-78-9A-BC;",
+        self.assertEqual("foo0001,0,12:34:56:78:9A:BC;",
                          inst._boot_os_specific_parameters)
 
     def test__append_nic_to_boot_os_specific_parameters_too_long(self):
@@ -169,7 +180,7 @@ class VmNicTestCase(TestCase):
         mock_nic.get_property.return_value = "0001"
 
         self.assertRaises(
-            BootOsSpecificParametersError,
+            BootOsSpecificParametersExceededError,
             inst._append_nic_to_boot_os_specific_parameters,
             mock_nic, self.vif1)
 

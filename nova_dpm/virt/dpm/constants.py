@@ -12,18 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-from nova.exception import NovaException
-from nova.i18n import _
-
-
-class BootOsSpecificParametersExceededError(NovaException):
-    """Length of boot-os-specficic-parameters would exceed
-
-    This exception indicates that adding the given data to a
-    partitions 'boot-os-specific-parameters' property would fail as the
-    properties max length would be exceeded.
-
-    """
-    msg_fmt = _("Maximum size of 'boot-os-specific-parameters' attribute "
-                "exceeded.")
+MAX_LEN_BOOT_OS_SPECIFIC_PARAMETERS = 256
