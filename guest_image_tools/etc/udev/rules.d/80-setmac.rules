@@ -1,0 +1,4 @@
+# React when an eth devices has been added
+# %p is the device-path, e.g. /devices/qeth/0.0.0001/net/enc1
+# TODO(andreas_s): Only react on qeth devices
+SUBSYSTEM=="net", ACTION=="add", RUN+="/usr/bin/setmac.sh %p"
