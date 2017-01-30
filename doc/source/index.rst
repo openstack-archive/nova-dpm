@@ -61,6 +61,7 @@ Using the driver
 
     installation
     configuration
+    guest_image_tools
 
 Contributing to the project
 ===========================
