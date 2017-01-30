@@ -18,6 +18,12 @@ develop-eggs
 lib
 lib64
 
+# Exclude those directories, as they contain the DPM Guest Image Tools
+# Don't ignore those directories, as they contain the DPM Guest Image Tools.
+# '!' reverts the matching on 'bin' and 'lib' under guest_image_tools/usr/"
+!guest_image_tools/usr/bin
+!guest_image_tools/usr/lib
+
 # Installer logs
 pip-log.txt
 
