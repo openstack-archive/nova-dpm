@@ -70,6 +70,7 @@ Using the nova-dpm driver
     installation
     configuration
     support-matrix
+    guest_image_tools
 
 Contributing to the nova-dpm project
 ====================================
