@@ -52,6 +52,17 @@ Contents:
     installation
     usage
     contributing
+    devref
+
+
+Release Notes
+=============
+
+.. toctree::
+   :maxdepth: 1
+
+   releasenotes/source/unreleased
+
 
 Specifications
 ==============
