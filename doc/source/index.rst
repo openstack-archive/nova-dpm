@@ -52,6 +52,7 @@ Contents:
     installation
     usage
     contributing
+    guest_image_tools
 
 Specifications
 ==============
