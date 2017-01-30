@@ -27,8 +27,8 @@ extensions = [
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
     'oslosphinx',
-    'oslo_config.sphinxconfiggen'
-
+    'oslo_config.sphinxconfiggen',
+    'reno.sphinxext',
 ]
 
 config_generator_config_file = '../../etc/nova/nova-dpm-config-generator.conf'
