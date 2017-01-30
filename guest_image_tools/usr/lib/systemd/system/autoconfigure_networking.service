@@ -1,0 +1,13 @@
+[Unit]
+Description=Autoconfigure Network Interfaces (pre-networking)
+DefaultDependencies=no
+Before=cloud-init-local.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/autoconfigure_networking.sh
+RemainAfterExit=yes
+# Output needs to appear in instance console output
+StandardOutput=journal+console
+[Install]
+WantedBy=multi-user.target

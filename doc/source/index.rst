@@ -55,6 +55,7 @@ Contents:
     contributing
     sample_config
     devref
+    guest_image_tools
 
 
 Release Notes
