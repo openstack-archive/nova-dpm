@@ -1,0 +1,16 @@
+[Unit]
+Description=Autoconfigure Network Interfaces (pre-networking)
+Before=cloud-init-local.service
+# before that the channels are not available for grouping
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/autoconfigure_networking.sh
+RemainAfterExit=yes
+#TimeoutSec=10
+
+# Output needs to appear in instance console output
+#StandardOutput=journal+console
+[Install]
+WantedBy=multi-user.target
+
