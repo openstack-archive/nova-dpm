@@ -16,6 +16,7 @@
 
 import os
 import sys
+import pbr.version
 
 sys.path.insert(0, os.path.abspath('../..'))
 # -- General configuration ----------------------------------------------------
@@ -27,8 +28,8 @@ extensions = [
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
     'oslosphinx',
-    'oslo_config.sphinxconfiggen'
-
+    'oslo_config.sphinxconfiggen',
+    'reno.sphinxext',
 ]
 
 config_generator_config_file = '../../etc/nova/nova-dpm-config-generator.conf'
