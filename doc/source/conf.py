@@ -16,6 +16,7 @@
 
 import os
 import sys
+import pbr.version
 
 sys.path.insert(0, os.path.abspath('../..'))
 # -- General configuration ----------------------------------------------------
@@ -27,8 +28,8 @@ extensions = [
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
     'oslosphinx',
-    'oslo_config.sphinxconfiggen'
-
+    'oslo_config.sphinxconfiggen',
+    'reno.sphinxext',
 ]
 
 config_generator_config_file = '../../etc/nova/nova-dpm-config-generator.conf'
@@ -47,6 +48,12 @@ master_doc = 'index'
 # General information about the project.
 project = u'nova-dpm'
 copyright = u'2016, OpenStack Foundation'
+
+version_info = pbr.version.VersionInfo('nova-dpm')
+# The short X.Y version.
+version = version_info.release_string()
+# The full version, including alpha/beta/rc tags.
+release = version_info.version_string()
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
@@ -81,3 +88,6 @@ latex_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 #intersphinx_mapping = {'http://docs.python.org/': None}
+
+# -- Options for Internationalization output ------------------------------
+locale_dirs = ['locale/']
