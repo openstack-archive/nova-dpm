@@ -18,6 +18,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('./'))
 # -- General configuration ----------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -26,7 +28,8 @@ extensions = [
     'sphinx.ext.autodoc',
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
-    'oslosphinx'
+    'oslosphinx',
+    'ext.support_matrix',
 ]
 
 # autodoc generation is a bit aggressive and a nuisance when doing heavy
@@ -59,7 +62,7 @@ pygments_style = 'sphinx'
 # Sphinx are currently 'default' and 'sphinxdoc'.
 # html_theme_path = ["."]
 # html_theme = '_theme'
-# html_static_path = ['static']
+html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = '%sdoc' % project

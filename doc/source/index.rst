@@ -49,6 +49,7 @@ Contents:
     :maxdepth: 2
 
     readme
+    support-matrix
     installation
     usage
     contributing
