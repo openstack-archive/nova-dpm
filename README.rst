@@ -1,33 +1,37 @@
-===============================
-nova-dpm
-===============================
+==========================
+openstack/nova-dpm Project
+==========================
 
-OpenStack Nova driver and agent for IBM z Systems PR/SM hypervisor in DPM mode
+About this project
+------------------
 
-On IBM z Systems, certain workloads run better in a logical partition than
-in a virtual machine of a software hypervisor such as KVM or z/VM.
+This project provides a Nova virtualization driver for the PR/SM hypervisor of
+IBM z Systems and IBM LinuxOne machines that are in the DPM (Dynamic Partition
+Manager) administrative mode.
 
-The IBM z13 system (and IBM LinuxONE) introduced a new administrative mode
-named "Dynamic Partition Manager" (DPM) that allows for managing the
-firmware-based logical partition hypervisor (PR/SM) with the dynamic
-capabilities known from software-based hypervisors.
+The DPM mode enables dynamic capabilities of the firmware-based PR/SM
+hypervisor that are usually known from software-based hypervisors, such as
+creation, deletion and modification of partitions (i.e. virtual machines) and
+virtual devices within these partitions, and dynamic assignment of these
+virtual devices to physical I/O adapters.
 
-These new dynamic capabilities provided by the DPM mode enables PR/SM to
-act as a hypervisor managed by OpenStack using Nova.
+The z/VM and KVM hypervisors on z Systems and LinuxONE machines are supported
+by separate Nova virtualization drivers:
 
-This project supports adding the PR/SM hypervisor in DPM mode as a
-Nova hypervisor platform, by implementing a new Nova driver.
+* KVM is supported by the standard libvirt/KVM driver in the
+  `openstack/nova <http://git.openstack.org/cgit/openstack/nova>`_
+  project.
 
-The other hypervisors on z Systems such as z/VM and KVM are already
-supported by OpenStack via Nova drivers. These drivers will continue to be
-supported. Adding support for PR/SM DPM allows addressing customers that
-need or want to run their workloads in logical partitions, and provides the
-advantage for them of using OpenStack as a uniform, standard, cloud
-management platform on z Systems.
+* z/VM is supported by the z/VM driver in the
+  `openstack/nova-zvm-virt-driver <http://git.openstack.org/cgit/openstack/nova-zvm-virt-driver>`_
+  project.
 
+Links
+-----
 
-* Free software: Apache license
-* Documentation: http://nova-dpm.readthedocs.io/en/latest/
-* Source: http://git.openstack.org/cgit/openstack/nova-dpm
-* Bugs: http://bugs.launchpad.net/nova-dpm
-
+* Documentation: `<http://nova-dpm.readthedocs.io/en/latest/>`_
+* Source: `<http://git.openstack.org/cgit/openstack/nova-dpm>`_
+* Github shadow: `<https://github.com/openstack/nova-dpm>`_
+* Bugs: `<http://bugs.launchpad.net/nova-dpm>`_
+* Gerrit: `<https://review.openstack.org/#/q/project:openstack/nova-dpm>`_
+* License: Apache 2.0 license

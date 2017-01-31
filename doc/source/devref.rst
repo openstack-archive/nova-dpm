@@ -1,3 +1,5 @@
+.. _`developer guide`:
+
 ===============
 Developer Guide
 ===============
