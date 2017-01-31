@@ -1,6 +1,8 @@
-=============================
-Nova-dpm Ocata Specifications
-=============================
+=================================
+Nova-dpm specifications for Ocata
+=================================
+
+**TODO:** Figure out what to do with this page and its child pages.
 
 Template:
 
@@ -9,7 +11,7 @@ Template:
 
    Specification Template (Ocata release) <template>
 
-Ocata implemented specs:
+Specs implemented in Ocata:
 
 .. toctree::
    :glob:
@@ -17,7 +19,7 @@ Ocata implemented specs:
 
    implemented/*
 
-Ocata approved (but not implemented) specs:
+Specs approved (but not implemented) in Ocata:
 
 .. toctree::
    :glob:
