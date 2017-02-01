@@ -27,8 +27,14 @@ value `dpm.DPMDriver`.
 """
 
 ALL_DPM_OPTS = [
-    cfg.StrOpt('host', default='', required=True, help="""
-    Name of the OpenStack hypervisor host"""),
+    cfg.StrOpt('hmc', default='', required=True, help="""
+    Hostname or IP address for connection to HMC via zhmcclient"""),
+    cfg.StrOpt('hmc_username', default='', required=True, help="""
+    User name for connection to HMC Host."""),
+    cfg.StrOpt('hmc_password', default='', required=True, help="""
+    Password for connection to HMC Host."""),
+    cfg.StrOpt('cpc_uuid', help="""
+    Uuid of the CPC"""),
     cfg.IntOpt('max_processors', help="""
     Maximum number of shared physical IFL processors on the target CPC that can
     be used for this OpenStack hypervisor host"""),
