@@ -30,33 +30,18 @@ cpcsubset unit testcase
 CONF = nova_dpm.conf.CONF
 
 
-class mockData(object):
-    def __init__(self):
-        return
-
-    def populateMockConf(self, mockconf):
-        mockconf.hmc_username = "dummyuser"
-        mockconf.hmc_password = "dummy"
-        mockconf.hmc = "1.1.1.1"
-        mockconf.host = "dummysubset"
-        mockconf.cpc_uuid = "00000000-aaaa-bbbb-cccc-abcdabcdabcd"
-        mockconf.max_processors = 5
-        mockconf.max_memory = 50
-        mockconf.max_instances = 10
-        return mockconf
-
-
 class DPMdriverTestCase(TestCase):
 
     def setUp(self):
         super(DPMdriverTestCase, self).setUp()
         client_proxy.zhmcclient = fakezhmcclient
+        self.flags(group="dpm", max_processors=5)
+        self.flags(group="dpm", max_memory=50)
 
     @mock.patch.object(driver.LOG, 'debug')
-    @mock.patch.object(CONF, 'dpm')
-    def test_host(self, mockdpmconf, mock_warning):
-        mockdpmconf = mockData().populateMockConf(mockdpmconf)
-
+    def test_host(self, mock_warning):
+        self.flags(group="dpm", hmc="1.1.1.1")
+        self.flags(group="dpm", hmc_username="dummyuser")
         dummyvirtapi = None
         dpmdriver = driver.DPMDriver(dummyvirtapi)
 
@@ -72,13 +57,10 @@ class DPMdriverTestCase(TestCase):
         self.assertTrue(assertlogs)
 
     @mock.patch.object(driver.LOG, 'debug')
-    @mock.patch.object(CONF, 'dpm')
     @mock.patch.object(dpmHost, 'Host', return_value=testhost.fakeHost())
-    def test_init_host(self, mockhost, mockdpmconf, mock_warning):
+    def test_init_host(self, mockhost, mock_warning):
         dummyvirtapi = None
         dpmdriver = driver.DPMDriver(dummyvirtapi)
-
-        mockdpmconf = mockData().populateMockConf(mockdpmconf)
 
         dpmdriver.init_host(None)
         host_properties = dpmdriver.get_available_resource(None)
@@ -87,11 +69,8 @@ class DPMdriverTestCase(TestCase):
                          'S12subset')
 
     @mock.patch.object(driver.LOG, 'debug')
-    @mock.patch.object(CONF, 'dpm')
-    def test_invalid_mem_config(self, mockdpmconf, mock_warning):
-        mock_dpmconf = mockData().populateMockConf(mockdpmconf)
-
-        mock_dpmconf.max_memory = 1000
+    def test_invalid_mem_config(self, mock_warning):
+        self.flags(group="dpm", max_memory=1000)
 
         dummyvirtapi = None
         dpmdriver = driver.DPMDriver(dummyvirtapi)
@@ -101,11 +80,8 @@ class DPMdriverTestCase(TestCase):
                           None)
 
     @mock.patch.object(driver.LOG, 'debug')
-    @mock.patch.object(CONF, 'dpm')
-    def test_invalid_proc_config(self, mockdpmconf, mock_warning):
-        mock_dpmconf = mockData().populateMockConf(mockdpmconf)
-
-        mock_dpmconf.max_processors = 50
+    def test_invalid_proc_config(self, mock_warning):
+        self.flags(group="dpm", max_processors=50)
 
         dummyvirtapi = None
         dpmdriver = driver.DPMDriver(dummyvirtapi)
