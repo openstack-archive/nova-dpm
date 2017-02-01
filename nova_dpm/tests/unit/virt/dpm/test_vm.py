@@ -43,13 +43,13 @@ class VmFunctionTestCase(TestCase):
         self.invalid_name = 'OpenStack-Instance-6511ee0f'
         self.cpc = fakezhmcclient.getFakeCPC()
 
-    @mock.patch.object(vm.CONF, 'host', 'foo')
     def test_is_valid_partition_name(self):
+        self.flags(host='foo')
         self.assertTrue(vm.is_valid_partition_name(self.valid_name))
         self.assertFalse(vm.is_valid_partition_name(self.invalid_name))
 
-    @mock.patch.object(vm.CONF, 'host', 'foo')
     def test_partition_list(self):
+        self.flags(host='foo')
         partition_list = vm.cpcsubset_partition_list(self.cpc)
         list = self.cpc.partitions.list()
         length = len(list)
