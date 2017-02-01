@@ -38,8 +38,6 @@ ALL_DPM_OPTS = [
     User name for connection to HMC Host."""),
     cfg.StrOpt('hmc_password', default='', required=True, help="""
     Password for connection to HMC Host."""),
-    cfg.StrOpt('host', default='', required=True, help="""
-    CpcSubset name"""),
     cfg.StrOpt('cpc_uuid', help="""
     Uuid of the CPC"""),
     cfg.IntOpt('max_processors', help="""
