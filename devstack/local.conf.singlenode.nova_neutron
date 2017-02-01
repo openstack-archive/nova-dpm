@@ -27,7 +27,6 @@ host = foo
 max_instances = 10
 max_memory = 5000
 max_processors = 2
-host = foo
 cpc_object_id = <cpc-object-id>
 hmc_password = <password>
 hmc_username = <user>

@@ -73,7 +73,7 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("init_host")
 
         # retrieve from ncpu service configurationfile
-        self._conf = {'cpcsubset_name': CONF.dpm.host,
+        self._conf = {'cpcsubset_name': CONF.host,
                       'cpc_object_id': CONF.dpm.cpc_object_id,
                       'max_processors': CONF.dpm.max_processors,
                       'max_memory_mb': CONF.dpm.max_memory,
