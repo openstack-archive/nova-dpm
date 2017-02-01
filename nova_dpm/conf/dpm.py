@@ -27,8 +27,6 @@ value `dpm.DPMDriver`.
 """
 
 ALL_DPM_OPTS = [
-    cfg.StrOpt('host', default='', required=True, help="""
-    Name of the OpenStack hypervisor host"""),
     cfg.IntOpt('max_processors', help="""
     Maximum number of shared physical IFL processors on the target CPC that can
     be used for this OpenStack hypervisor host"""),
