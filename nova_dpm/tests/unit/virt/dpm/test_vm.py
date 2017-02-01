@@ -163,3 +163,22 @@ class VmHBATestCase(TestCase):
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_hba(self, mock_debug):
         self.inst.attachHba(self.conf)
+
+
+class InstancePartitionLifecycleTestCase(TestCase):
+
+    @mock.patch.object(vm.PartitionInstance, "_loop_status_update")
+    def test_launch(self, mock_loop_stat_upd):
+        mock_part = mock.Mock()
+        mock_inst = mock.Mock()
+        with mock.patch.object(vm.PartitionInstance, "get_partition",
+                               return_value=mock_part):
+            part_inst = vm.PartitionInstance(mock_inst, None, None)
+        part_inst._boot_os_specific_parameters = "foo"
+        part_inst.launch()
+        self.assertEqual("building", mock_inst.vm_state)
+        self.assertEqual("spawning", mock_inst.task_state)
+        mock_inst.save.assert_called_once()
+        mock_part.update_properties.assert_called_once_with(
+            properties={'boot-device': 'test-operating-system'})
+        mock_part.start.assert_called_once_with(True)
