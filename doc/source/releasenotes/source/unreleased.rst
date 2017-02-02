@@ -5,5 +5,4 @@
 Current Series Release Notes
 ============================
 
-.. release-notes::
-   :relnotessubdir: releasenotes
+TODO: show release notes here
