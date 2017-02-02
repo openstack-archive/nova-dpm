@@ -54,6 +54,17 @@ Contents:
     usage
     contributing
     sample_config
+    devref
+
+
+Release Notes
+=============
+
+.. toctree::
+   :maxdepth: 1
+
+   releasenotes/source/unreleased
+
 
 Specifications
 ==============
