@@ -31,7 +31,3 @@ management platform on z Systems.
 * Source: http://git.openstack.org/cgit/openstack/nova-dpm
 * Bugs: http://bugs.launchpad.net/nova-dpm
 
-Features
---------
-
-* TODO
