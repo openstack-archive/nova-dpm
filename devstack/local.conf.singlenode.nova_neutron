@@ -33,11 +33,10 @@ hmc_password = <password>
 hmc_username = <user>
 hmc = <ip>
 
-[[post-config|$NEUTRON_CONF]]
+[[post-config|/$Q_PLUGIN_CONF_FILE]]
 [DEFAULT]
 host = foo
 
-[[post-config|/$Q_PLUGIN_CONF_FILE]]
 [dpm]
 hmc_password = <password>
 hmc_username = <user>
