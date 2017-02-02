@@ -12,20 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os_dpm.config import config as os_dpm_conf
 from oslo_config import cfg
 
 
-dpm_group = cfg.OptGroup('dpm',
-                         title='DPM options',
-                         help="""
-The IBM z13 system generation (and IBM LinuxONE) introduced a new
-administrative mode named "Dynamic Partition Manager" (DPM) that allows for
-managing the firmware-based logical partition hypervisor (PR/SM) with the
-dynamic capabilities known from software-based hypervisors. A z13 or LinuxONE
-machine is termed CPC (Central Processor Complex). Its management access point
-is the z Systems HMC (Hardware Management Console) which exposes a Web Services
-API that is used by the Nova driver for DPM and by the Neutron agent for DPM.
-One HMC can manage multiple CPCs.
+os_dpm_conf.DPM_GROUP.help += """
 
 DPM config options for the Nova compute service (one for each OpenStack
 hypervisor host) specify the target CPC, the HMC managing it, and limits on the
@@ -33,20 +24,11 @@ resource usage on the target CPC. These limits ensure that only a subset of the
 target CPC is used for the OpenStack hypervisor host. To use the Nova driver
 for DPM, the `[DEFAULT].compute_driver` config option needs to be set to the
 value `dpm.DPMDriver`.
-""")
-
+"""
 
 ALL_DPM_OPTS = [
-    cfg.StrOpt('hmc', default='', required=True, help="""
-    Hostname or IP address of the HMC that manages the target CPC"""),
-    cfg.StrOpt('hmc_username', default='', required=True, help="""
-    User name for connection to the HMC"""),
-    cfg.StrOpt('hmc_password', default='', required=True, help="""
-    Password for connection to the HMC"""),
     cfg.StrOpt('host', default='', required=True, help="""
     Name of the OpenStack hypervisor host"""),
-    cfg.StrOpt('cpc_object_id', help="""
-    Object-id of the target CPC"""),
     cfg.IntOpt('max_processors', help="""
     Maximum number of shared physical IFL processors on the target CPC that can
     be used for this OpenStack hypervisor host"""),
@@ -62,9 +44,10 @@ ALL_DPM_OPTS = [
 
 
 def register_opts(conf):
-    conf.register_group(dpm_group)
-    conf.register_opts(ALL_DPM_OPTS, group=dpm_group)
+    os_dpm_conf.register_opts()
+    conf.register_opts(ALL_DPM_OPTS, group=os_dpm_conf.DPM_GROUP)
 
 
 def list_opts():
-    return [(dpm_group, ALL_DPM_OPTS)]
+    return [(os_dpm_conf.DPM_GROUP,
+             ALL_DPM_OPTS + os_dpm_conf.COMMON_DPM_OPTS)]
