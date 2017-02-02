@@ -12,32 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os_dpm.config import config as os_dpm_conf
 from oslo_config import cfg
 
 
-dpm_group = cfg.OptGroup('dpm',
-                         title='DPM options',
-                         help="""
-PR/SM2 (in DPM mode) is a hypervisor. By using PR/SM2 hypervisor we can create
-partition on IBM z Systems or IBM LinuxONE system. A partition
-is a virtual representation of the hardware resources of a
-z Systems or LinuxONE system.
-Hardware Management Console (HMC) is a component of DPM by
-using which we can create partitions.
+os_dpm_conf.DPM_GROUP.help += """
 
 DPM options are used when the compute_driver is set to use
-DPM (compute_driver=dpm.HMCDriver).
-
-""")
-
+DPM (compute_driver=dpm.HMCDriver)."""
 
 ALL_DPM_OPTS = [
-    cfg.StrOpt('hmc', default='', required=True, help="""
-    Hostname or IP address for connection to HMC via zhmcclient"""),
-    cfg.StrOpt('hmc_username', default='', required=True, help="""
-    User name for connection to HMC Host."""),
-    cfg.StrOpt('hmc_password', default='', required=True, help="""
-    Password for connection to HMC Host."""),
     cfg.StrOpt('host', default='', required=True, help="""
     CpcSubset name"""),
     cfg.StrOpt('cpc_uuid', help="""
@@ -54,9 +38,10 @@ ALL_DPM_OPTS = [
 
 
 def register_opts(conf):
-    conf.register_group(dpm_group)
-    conf.register_opts(ALL_DPM_OPTS, group=dpm_group)
+    os_dpm_conf.register_opts()
+    conf.register_opts(ALL_DPM_OPTS, group=os_dpm_conf.DPM_GROUP)
 
 
 def list_opts():
-    return [(dpm_group, ALL_DPM_OPTS)]
+    return [(os_dpm_conf.DPM_GROUP,
+             ALL_DPM_OPTS + os_dpm_conf.COMMON_DPM_OPTS)]
