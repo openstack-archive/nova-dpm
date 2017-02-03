@@ -1,0 +1,45 @@
+[[local|localrc]]
+ADMIN_PASSWORD=openstack
+MYSQL_PASSWORD=$ADMIN_PASSWORD
+RABBIT_PASSWORD=$ADMIN_PASSWORD
+SERVICE_PASSWORD=$ADMIN_PASSWORD
+SERVICE_TOKEN=$ADMIN_PASSWORD
+
+LOGFILE=$DEST/logs/stack.sh.log
+SCREEN_LOGDIR=$DEST/logs/screen
+
+# Disable Neutron services that are not supported on a single node
+# running neutron-dpm agent
+disable_service q-l3 q-dhcp q-meta
+
+# Configure Neutron DPM Agent
+enable_plugin networking-dpm http://git.openstack.org/openstack/networking-dpm
+Q_AGENT=dpm
+
+# Configure Nova DPM Driver
+enable_plugin nova-dpm http://git.openstack.org/openstack/nova-dpm
+
+
+[[post-config|$NOVA_CONF]]
+[DEFAULT]
+host = foo
+[dpm]
+max_instances = <max-allowed-instances-count>
+max_memory = <max-available-memory>
+max_processors = <max-avaialable-processor>
+cpc_object_id = <cpc-object-id>
+hmc_password = <password>
+hmc_username = <user>
+hmc = <ip>
+physical_storage_adapter_mappings = "<storage-adapter-id>:<port-element-id>"
+
+[[post-config|/$Q_PLUGIN_CONF_FILE]]
+[DEFAULT]
+host = foo
+
+[dpm]
+hmc_password = <password>
+hmc_username = <user>
+hmc = <ip>
+cpc_object_id = <cpc-object-id>
+physical_adapter_mappings = "public:<adapter-id>:<port-element-id>"
