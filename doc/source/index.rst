@@ -58,7 +58,7 @@ Overview
 .. toctree::
     :maxdepth: 1
 
-    releasenotes/source/unreleased
+    history
     topology
 
 Using the nova-dpm driver
