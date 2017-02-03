@@ -31,6 +31,7 @@ cpc_object_id = <cpc-object-id>
 hmc_password = <password>
 hmc_username = <user>
 hmc = <ip>
+physical_storage_adapter_mappings = "<storage-adapter-id>:<port-element-id>"
 
 [[post-config|/$Q_PLUGIN_CONF_FILE]]
 [DEFAULT]
