@@ -19,6 +19,10 @@ Q_AGENT=dpm
 # Configure Nova DPM Driver
 enable_plugin nova-dpm http://git.openstack.org/openstack/nova-dpm
 
+HMC=<hmc-ip>
+HMC_USERNAME=<hmc-username>
+HMC_PASSWORD=<hmc-password>
+CPC_OBJECT_ID=<cpc-object-id>
 
 [[post-config|$NOVA_CONF]]
 [DEFAULT]
@@ -27,18 +31,18 @@ host = foo
 max_instances = <max-allowed-instances-count>
 max_memory = <max-available-memory>
 max_processors = <max-avaialable-processor>
-cpc_object_id = <cpc-object-id>
-hmc_password = <password>
-hmc_username = <user>
-hmc = <ip>
+cpc_object_id = $CPC_OBJECT_ID
+hmc_password = $HMC_PASSWORD
+hmc_username = $HMC_USERNAME
+hmc = $HMC
 
 [[post-config|/$Q_PLUGIN_CONF_FILE]]
 [DEFAULT]
 host = foo
 
 [dpm]
-hmc_password = <password>
-hmc_username = <user>
-hmc = <ip>
-cpc_object_id = <cpc-object-id>
+cpc_object_id = $CPC_OBJECT_ID
+hmc_password = $HMC_PASSWORD
+hmc_username = $HMC_USERNAME
+hmc = $HMC
 physical_adapter_mappings = "public:<adapter-id>:<port-element-id>"
