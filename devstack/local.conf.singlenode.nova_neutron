@@ -45,4 +45,4 @@ cpc_object_id = $CPC_OBJECT_ID
 hmc_password = $HMC_PASSWORD
 hmc_username = $HMC_USERNAME
 hmc = $HMC
-physical_adapter_mappings = "public:<adapter-id>:<port-element-id>"
+physical_network_adapter_mappings = "public:<adapter-id>:<port-element-id>"
