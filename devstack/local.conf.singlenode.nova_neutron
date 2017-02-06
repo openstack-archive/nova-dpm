@@ -8,6 +8,9 @@ SERVICE_TOKEN=$ADMIN_PASSWORD
 LOGFILE=$DEST/logs/stack.sh.log
 SCREEN_LOGDIR=$DEST/logs/screen
 
+# Set to True to install the latest zhmcclient from source
+INSTALL_ZHMCCLIENT=TRUE
+
 # Disable Neutron services that are not supported on a single node
 # running neutron-dpm agent
 disable_service q-l3 q-dhcp q-meta
