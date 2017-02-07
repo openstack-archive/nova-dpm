@@ -276,59 +276,61 @@ class DPMDriver(driver.ComputeDriver):
         for vif in network_info:
             inst.attach_nic(self._conf, vif)
 
-        hba_uri = inst.get_boot_hba_uri(self._conf)
+        boot_volume_mapping = self._get_boot_volume_bdm(block_device_info)
 
-        LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
-                  % {'uri': hba_uri, 'name': instance.hostname})
+        self.do_boot(boot_volume_mapping, inst)
 
-        target_wwpn, lun = self.get_fc_boot_props(
-            block_device_info, inst)
 
-        inst.set_boot_properties(target_wwpn, lun, hba_uri)
-        inst.launch()
-
-    def get_fc_boot_props(self, block_device_info, inst):
-
-        # block_device_mapping is a list of mapped block devices.
-        # In dpm case we are mapping only one device
-        # So block_device_mapping contains one item in the list
-        # i.e. block_device_mapping[0]
-
-        block_device_mapping = driver.block_device_info_get_mapping(
+    def _get_boot_volume_bdm(self, block_device_info):
+        # block_device_mappings is a list of block_device_mappings
+        # (one list item per Volume).
+        block_device_mappings = driver.block_device_info_get_mapping(
             block_device_info)
+        # We pick the first volume as boot volume.
+        boot_block_device_mapping = block_device_mappings[0]
+        LOG.debug("Using Volume with block device mapping %(bdm)s "
+                  "for boot."
+                  % {'bdm': str(boot_block_device_mapping)})
+        return boot_block_device_mapping
 
-        LOG.debug("Block device mapping %(block_device_map)s"
-                  % {'block_device_map': str(block_device_mapping)})
+    def do_boot(self, boot_volume_mapping, inst):
 
-        wwpns = inst.get_partition_wwpns()
-
-        if not wwpns:
-            raise Exception(
-                'No initiator WWPNs found for instance %(instance)s'
-                % {'instance': inst.instance})
-
-        # In this release our consideration
-        # is we will use one wwpn to connect with
-        # volume. So will use first item in the list
-        partition_wwpn = wwpns[0]
-
-        mapped_block_device = block_device_mapping[0]
-
-        host_wwpns = (mapped_block_device['connection_info']
-                      ['connector']['wwpns'])
-
-        if partition_wwpn not in host_wwpns:
-            raise Exception('Partition WWPN not found from cinder')
-
-        target_wwpns = (mapped_block_device['connection_info']['data']
-                        ['initiator_target_map'][partition_wwpn])
-        # target_wwpns is a list of wwpns which will be accessible
-        # from host wwpn. So we can use any of the target wwpn in the
-        # list. Default we are using first target wwpn target_wwpns[0]
-        target_wwpn = target_wwpns[0]
-        lun = str(mapped_block_device['connection_info']
+        hbas = inst.partition.hbas.list()
+        lun = str(boot_volume_mapping['connection_info']
                   ['data']['target_lun'])
-        return target_wwpn, lun
+
+        for hba in hbas:
+            boot_hba = hba
+            boot_hba_uri = boot_hba.get_property("element-uri")
+            boot_host_wwpn = boot_hba.get_property("wwpn")
+            LOG.debug("Trying HBA %(uri)s with WWPN %(wwpn)s as boot hba." %
+                      {"uri": boot_hba_uri, "wwpn": boot_host_wwpn})
+
+            # target_wwpns is a list of (target) WWPNs belonging to the storage
+            # subsystem where paths to our hosts boot WWPN exist.
+            target_wwpns = boot_volume_mapping['connection_info']['data']
+            ['initiator_target_map'].get(boot_host_wwpn, [])
+
+            if not target_wwpns:
+                LOG.debug('No target WWPNs found for host WWPN %(wwpn)s '
+                          'in block device mapping provided by Cinder.'
+                          'Continue with next hba.' %
+                          {'wwpn': boot_host_wwpn})
+                continue
+
+            # We can use any of the target WWPNs in the list. As multipathing is
+            # not supported by the zLinux boot process, we are using
+            # the first target WWPN in the list
+            for target_wwpn in target_wwpns:
+                LOG.debug("Trying target WWPN %(wwpn)s for boot." %
+                          {"wwpn": target_wwpn})
+                inst.set_boot_properties(target_wwpn, lun, boot_hba_uri)
+                inst.launch()
+                # TODO(andreas_s): test if boot successful, if so return
+                # else continue
+            LOG.debug("No target wwpn was working. Trying next hba.")
+
+
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):

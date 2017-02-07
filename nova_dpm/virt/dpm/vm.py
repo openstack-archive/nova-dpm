@@ -231,27 +231,14 @@ class PartitionInstance(object):
         LOG.debug('Get Hba properties')
         return self.partition.get_property('hba-uris')
 
-    def get_boot_hba_uri(self, conf):
-        hbas = self.get_hba_uris()
+    def get_boot_hba(self):
 
-        adapter_uuid, port = (
-            PhysicalAdapterModel.parse_config_line(
-                # As because we are using multiple
-                # storage in configuration. So
-                # we will use one i.e first adapter
-                # in the list
-                conf['physical_storage_adapter_mappings'][0]))
-
-        hba_uri = None
-
-        for hba in hbas:
-            if hba.find(adapter_uuid):
-                hba_uri = str(hba)
-                break
-
-        if not hba_uri:
+        hbas = self.partition.hbas.list()
+        if not hbas:
             raise Exception('No HBA found')
-        return hba_uri
+        # As multipathing is not supported by the zLinux boot process,
+        # we just pick the first HBA for boot
+        return hbas[0]
 
     def get_partition_wwpns(self):
         LOG.debug('Get Partition wwpns')
