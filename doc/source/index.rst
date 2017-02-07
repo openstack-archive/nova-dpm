@@ -71,6 +71,7 @@ Contributing to the project
     contributing
     devref
     specs/ocata/index
+    image/rhel7_image
 
 Links
 =====
