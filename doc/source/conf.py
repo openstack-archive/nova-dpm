@@ -51,6 +51,13 @@ master_doc = 'index'
 project = u'nova-dpm'
 copyright = u'2016, OpenStack Foundation'
 
+# Version information
+import nova_dpm.version
+# The short X.Y version.
+version = nova_dpm.version.version_info.version_string()
+# The full version, including alpha/beta/rc tags.
+release = nova_dpm.version.version_info.release_string()
+
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = True
 
