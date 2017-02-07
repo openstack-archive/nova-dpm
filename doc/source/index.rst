@@ -72,6 +72,15 @@ Contributing to the project
     devref
     specs/ocata/index
 
+
+Getting a DPM Image
+===================
+
+.. toctree::
+    :maxdepth: 2
+
+    image/rhel7_image
+
 Links
 =====
 
