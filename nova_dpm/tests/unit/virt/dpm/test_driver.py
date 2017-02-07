@@ -169,9 +169,27 @@ class DPMdriverTestCase(TestCase):
                                mock_get_partition):
         dummy_virt_api = None
         dpm_driver = driver.DPMDriver(dummy_virt_api)
+        dpm_driver.init_host(None)
         target_wwpn, lun = dpm_driver.get_fc_boot_props(
             mock.Mock(), mock.Mock())
         self.assertEqual(target_wwpn, '500507680B214AC1')
+        self.assertEqual(lun, '0')
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance,
+                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
+    @mock.patch.object(driv, 'block_device_info_get_mapping',
+                       return_value=BLOCK_DEVICE)
+    def test_get_fc_boot_props_ignore_list(self, mock_block_device,
+                                           mock_get_partition_wwpns,
+                                           mock_get_partition):
+        self.flags(group="dpm", target_wwpn_ignore_list=["500507680B214AC1"])
+        dummy_virt_api = None
+        dpm_driver = driver.DPMDriver(dummy_virt_api)
+        dpm_driver.init_host(None)
+        target_wwpn, lun = dpm_driver.get_fc_boot_props(
+            mock.Mock(), mock.Mock())
+        self.assertEqual(target_wwpn, '')
         self.assertEqual(lun, '0')
 
     @mock.patch.object(flavor_object.Flavor, 'get_by_id')
