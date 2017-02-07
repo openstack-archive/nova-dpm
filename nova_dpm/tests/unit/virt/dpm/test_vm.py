@@ -15,6 +15,7 @@
 import mock
 
 from nova.compute import manager as compute_manager
+from nova import exception
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
@@ -56,6 +57,17 @@ class VmFunctionTestCase(TestCase):
         for i in range(length):
             self.assertEqual(list[i].get_property('name'),
                              partition_list[i].get_property('name'))
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition',
+                       return_value=None)
+    def test_partition_destroy_partition_none(self, mock_get_part):
+        mock_nova_inst = mock.Mock()
+        mock_nova_inst.hostname = 'foo'
+        mock_nova_inst.uuid = 'foo-id'
+        inst = vm.PartitionInstance(
+            mock_nova_inst, mock.Mock(), mock.Mock())
+        self.assertRaises(exception.InstanceNotFound,
+                          inst.destroy)
 
 
 class InstancePropertiesTestCase(TestCase):
