@@ -299,8 +299,11 @@ class PartitionInstance(object):
                              'status': self.partition.properties['status']})
                 raise exception.InstanceInvalidState(errormsg)
         else:
-            errormsg = (_("Partition - %(partition)s does not exist") %
-                        {'partition': self.partition.properties['name']})
+            errormsg = (_("Partition corresponding to the instance "
+                          "%(instance)s and instance uuid %(uuid)s "
+                          "does not exist") %
+                        {'instance': self.instance.hostname,
+                         'uuid': self.instance.uuid})
             raise exception.InstanceNotFound(errormsg)
 
     def power_on_vm(self):
