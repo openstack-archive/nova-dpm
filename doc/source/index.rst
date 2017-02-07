@@ -62,6 +62,16 @@ Using the driver
     installation
     configuration
 
+
+Creating DPM Images
+===================
+
+.. toctree::
+    :maxdepth: 2
+
+    image/rhel7_image
+
+
 Contributing to the project
 ===========================
 
@@ -71,6 +81,8 @@ Contributing to the project
     contributing
     devref
     specs/ocata/index
+
+
 
 Links
 =====
