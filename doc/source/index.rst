@@ -55,7 +55,7 @@ Contents:
     contributing
     sample_config
     devref
-
+    image
 
 Release Notes
 =============
