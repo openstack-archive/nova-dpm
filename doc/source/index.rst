@@ -81,4 +81,4 @@ Contributing to the nova-dpm project
     contributing
     devref
     specs/ocata/index
-
+    image/image
