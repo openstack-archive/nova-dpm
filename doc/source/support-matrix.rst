@@ -1,4 +1,4 @@
-.. `feature support matrix`:
+.. _feature support matrix:
 
 ======================
 Feature Support Matrix
