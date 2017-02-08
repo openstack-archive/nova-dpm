@@ -79,7 +79,9 @@ class DPMDriver(driver.ComputeDriver):
                       'max_memory_mb': CONF.dpm.max_memory,
                       'max_partitions': CONF.dpm.max_instances,
                       'physical_storage_adapter_mappings':
-                          CONF.dpm.physical_storage_adapter_mappings}
+                          CONF.dpm.physical_storage_adapter_mappings,
+                      'target_wwpn_ignore_list':
+                          CONF.dpm.target_wwpn_ignore_list}
 
         self._cpc = self._client.cpcs.find(**{
             "object-id": self._conf['cpc_object_id']})
@@ -320,15 +322,34 @@ class DPMDriver(driver.ComputeDriver):
         if partition_wwpn not in host_wwpns:
             raise Exception('Partition WWPN not found from cinder')
 
-        target_wwpns = (mapped_block_device['connection_info']['data']
-                        ['initiator_target_map'][partition_wwpn])
-        # target_wwpns is a list of wwpns which will be accessible
-        # from host wwpn. So we can use any of the target wwpn in the
-        # list. Default we are using first target wwpn target_wwpns[0]
-        target_wwpn = target_wwpns[0]
+        # There is a list of target WWPNs which can be configured that
+        # has to be ignored. The storewize driver as of today returns
+        # complete set of Target WWPNS both supported and unsupported
+        # (nas/file module connected)out of which we need to filter
+        # out those mentioned as target_wwpn_ignore_list
+        target_wwpn = self._fetch_valid_target_wwpn(mapped_block_device,
+                                                    partition_wwpn)
         lun = str(mapped_block_device['connection_info']
                   ['data']['target_lun'])
         return target_wwpn, lun
+
+    def _fetch_valid_target_wwpn(self, mapped_block_device, partition_wwpn):
+        LOG.debug("_fetch_valid_target_wwpn")
+        list_target_wwpns = (mapped_block_device['connection_info']['data']
+                             ['initiator_target_map'][partition_wwpn])
+
+        target_wwpns = [wwpn for wwpn in list_target_wwpns
+                        if wwpn not in self._conf['target_wwpn_ignore_list']]
+
+        # target_wwpns is a list of wwpns which will be accessible
+        # from host wwpn. So we can use any of the target wwpn in the
+        # list.
+        target_wwpn = (target_wwpns[0]
+                       if len(target_wwpns) > 0 else '')
+
+        LOG.debug("Returning valid TargetWWPN %(target_wwpn)s" %
+                  {'target_wwpn': target_wwpn})
+        return target_wwpn
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):

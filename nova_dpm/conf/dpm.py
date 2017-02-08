@@ -37,7 +37,10 @@ ALL_DPM_OPTS = [
     Maximum number of instances (partitions) that can be created for this
     OpenStack hypervisor host"""),
     cfg.MultiStrOpt('physical_storage_adapter_mappings', help="""
-    Physical storage adapter with port details for hba creation""")
+    Physical storage adapter with port details for hba creation"""),
+    cfg.ListOpt('target_wwpn_ignore_list', default='', help="""
+    list of target/remote wwpns can be used for example to exclude NAS/file
+    WWPNs returned by the V7000 Unified.""")
 ]
 
 
