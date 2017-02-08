@@ -19,6 +19,12 @@ disable_service q-l3 q-dhcp q-meta
 enable_plugin networking-dpm http://git.openstack.org/openstack/networking-dpm
 Q_AGENT=dpm
 
+USE_SUBNETPOOL=False
+PHYSICAL_NETWORK=provider
+IP_VERSION=4
+IPV4_ADDRS_SAFE_TO_USE=<subnet-cidr>
+NETWORK_GATEWAY=<gateway-ip>
+
 # Configure Nova DPM Driver
 enable_plugin nova-dpm http://git.openstack.org/openstack/nova-dpm
 
