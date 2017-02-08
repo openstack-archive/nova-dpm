@@ -129,6 +129,7 @@ def getFakePartition():
                           partition_props)
     partition_props['initial-memory'] = 0
     partition_props['ifl-processors'] = 0
+    partition_props['boot-os-specific-parameters'] = "foo"
     return partition
 
 
