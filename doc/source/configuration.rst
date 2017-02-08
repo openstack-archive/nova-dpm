@@ -1,4 +1,4 @@
-.. _`configuration`:
+.. _configuration:
 
 =============
 Configuration
