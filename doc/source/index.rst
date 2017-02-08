@@ -43,15 +43,6 @@ by separate Nova virtualization drivers:
   `openstack/nova-zvm-virt-driver <http://git.openstack.org/cgit/openstack/nova-zvm-virt-driver>`_
   project.
 
-Links
-=====
-
-* Documentation: `<http://nova-dpm.readthedocs.io/en/latest/>`_
-* Source: `<http://git.openstack.org/cgit/openstack/nova-dpm>`_
-* Github shadow: `<https://github.com/openstack/nova-dpm>`_
-* Bugs: `<http://bugs.launchpad.net/nova-dpm>`_
-* Gerrit: `<https://review.openstack.org/#/q/project:openstack/nova-dpm>`_
-
 Overview
 ========
 
@@ -60,25 +51,32 @@ Overview
 
     releasenotes/source/unreleased
     topology
+    support-matrix
 
-Using the nova-dpm driver
-=========================
+Using the driver
+================
 
 .. toctree::
     :maxdepth: 1
 
     installation
     configuration
-    support-matrix
 
-Contributing to the nova-dpm project
-====================================
+Contributing to the project
+===========================
 
 .. toctree::
-    :glob:
     :maxdepth: 1
 
     contributing
     devref
     specs/ocata/index
 
+Links
+=====
+
+* Documentation: `<http://nova-dpm.readthedocs.io/en/latest/>`_
+* Source: `<http://git.openstack.org/cgit/openstack/nova-dpm>`_
+* Github shadow: `<https://github.com/openstack/nova-dpm>`_
+* Bugs: `<http://bugs.launchpad.net/nova-dpm>`_
+* Gerrit: `<https://review.openstack.org/#/q/project:openstack/nova-dpm>`_
