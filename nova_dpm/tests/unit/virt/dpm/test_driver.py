@@ -50,6 +50,12 @@ BLOCK_DEVICE = [{
             'target_lun': 0}}}]
 
 
+def getMockNovaInstanceForPartion():
+    mock_nova_inst = mock.Mock()
+    mock_nova_inst.uuid = fakezhmcclient.INSTANCE_NAME1
+    return mock_nova_inst
+
+
 class DPMdriverTestCase(TestCase):
 
     def setUp(self):
@@ -274,3 +280,71 @@ class DPMPartitionSpawnNicTestCase(TestCase):
             "boot-os-specific-parameters":
                 "0001,0,aabbccddeeff;0002,0,112233445566;"})
         self.assertIn(call, mock_part.update_properties.mock_calls)
+
+    def test_get_available_nodes(self):
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._host = testhost.fakeHost()
+        nodes = dpmdriver.get_available_nodes()
+        self.assertEqual(nodes, ['S12subset'])
+
+    def test_node_is_available(self):
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._host = testhost.fakeHost()
+        self.assertTrue(dpmdriver.node_is_available('S12subset'))
+
+    @mock.patch.object(vm, "cpcsubset_partition_list",
+                       return_value=fakezhmcclient.
+                       get_fake_partition_list())
+    def test_list_instances(self, mock_partition_list):
+        dpmdriver = driver.DPMDriver(None)
+        instancelist = []
+        for partition in fakezhmcclient.get_fake_partition_list():
+            instancelist.append(partition.get_property('name'))
+
+        self.assertEqual(instancelist, dpmdriver.list_instances())
+
+    @mock.patch.object(vm, "CONF")
+    def test_get_info(self, mock_conf):
+        mock_conf.host = "foo"
+
+        mock_partition_instance_info = mock.Mock(vm.PartitionInstanceInfo)
+        mock_partition_instance_info.return_value =\
+            vm.PartitionInstanceInfo(getMockNovaInstanceForPartion(),
+                                     fakezhmcclient.getFakeCPC())
+
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._cpc = fakezhmcclient.getFakeCPC()
+        partitionInfo = dpmdriver.get_info(getMockNovaInstanceForPartion())
+        self.assertEqual(partitionInfo.mem, 512)
+        self.assertEqual(partitionInfo.num_cpu, 1)
+
+    @mock.patch.object(vm.PartitionInstance, 'destroy')
+    def test_destroy(self, mock_destroy):
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._cpc = fakezhmcclient.getFakeCPC()
+        dpmdriver.destroy(mock.Mock, getMockNovaInstanceForPartion(),
+                          mock.Mock)
+        mock_destroy.assert_called_once()
+
+    @mock.patch.object(vm.PartitionInstance, 'power_off_vm')
+    def test_power_off(self, mock_power_off_vm):
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._cpc = fakezhmcclient.getFakeCPC()
+        dpmdriver.power_off(getMockNovaInstanceForPartion())
+        mock_power_off_vm.assert_called_once()
+
+    @mock.patch.object(vm.PartitionInstance, 'power_on_vm')
+    def test_power_on(self, mock_power_on_vm):
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._cpc = fakezhmcclient.getFakeCPC()
+        dpmdriver.power_on(mock.Mock, getMockNovaInstanceForPartion(),
+                           mock.Mock)
+        mock_power_on_vm.assert_called_once()
+
+    @mock.patch.object(vm.PartitionInstance, 'reboot_vm')
+    def test_reboot(self, mock_reboot):
+        dpmdriver = driver.DPMDriver(None)
+        dpmdriver._cpc = fakezhmcclient.getFakeCPC()
+        dpmdriver.reboot(mock.Mock, getMockNovaInstanceForPartion(), mock.Mock,
+                         mock.Mock)
+        mock_reboot.assert_called_once()

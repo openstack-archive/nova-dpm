@@ -19,18 +19,22 @@
 # DummyPartition1, DummyPartition2, DummyPartition3
 
 # Data for Fake partition1
+
+INSTANCE_NAME1 = "6511ee0f-0d64-4392-b9e0-cdbea10a17c4"
 PARTITION_NAME1 = "OpenStack-foo-6511ee0f-0d64-4392-b9e0-cdbea10a17c4"
 PARTITION_URI1 = "/api/partitions/00000000-aaba-bbbb-cccc-abcdabcdabcd"
 PARTITION_CP_PROCESSOR1 = 1
 PARTITION_INITIAL_MEMORY1 = 512
 
 # Data for Fake partition2
+INSTANCE_NAME2 = "6511ee0f-0d64-4392-b9e0-cdbea10a17c5"
 PARTITION_NAME2 = "OpenStack-foo-6511ee0f-0d64-4392-b9e0-cdbea10a17c5"
 PARTITION_URI2 = "/api/partitions/00000000-aaba-bcbb-cccc-abcdabcdabcd"
 PARTITION_CP_PROCESSOR2 = 2
 PARTITION_INITIAL_MEMORY2 = 1024
 
 # Data for Fake partition3
+INSTANCE_NAME3 = "6511ee0f-0d64-4392-b9e0-cdbea10a17c6"
 PARTITION_NAME3 = "OpenStack-foo-6511ee0f-0d64-4392-b9e0-cdbea10a17c6"
 PARTITION_URI3 = "/api/partitions/00000000-aaba-bbbb-cdcc-abcdabcdabcd"
 PARTITION_CP_PROCESSOR3 = 1
@@ -125,11 +129,12 @@ def getFakePartition():
     partition_props['description'] = "OpenStack CPCSubset=foo"
     partition_props['object-uri'] = "/api/partitions/" \
                                     "00000000-aaaa-bbbb-cccc-abcdabcdabcd"
-    partition = Partition(getdummyCpcmgr(), partition_props['object-uri'],
-                          partition_props)
     partition_props['initial-memory'] = 0
     partition_props['ifl-processors'] = 0
     partition_props['boot-os-specific-parameters'] = "foo"
+    partition_props['state'] = "Active"
+    partition = Partition(getdummyCpcmgr(), partition_props['object-uri'],
+                          partition_props)
     return partition
 
 
