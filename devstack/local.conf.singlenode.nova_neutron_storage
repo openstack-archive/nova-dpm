@@ -11,19 +11,30 @@ SCREEN_LOGDIR=$DEST/logs/screen
 # Set to True to install the latest zhmcclient from source
 INSTALL_ZHMCCLIENT=TRUE
 
-# Disable Neutron services that are not supported on a single node
-# running neutron-dpm agent
-disable_service q-l3 q-dhcp q-meta
-
 # Configure Neutron DPM Agent
 enable_plugin networking-dpm http://git.openstack.org/openstack/networking-dpm
-Q_AGENT=dpm
+enable_service q-dpm-agt
+PUBLIC_INTERFACE=<interface-used-for-dhcp>
 
-USE_SUBNETPOOL=False
-PHYSICAL_NETWORK=provider
+# Use IPv4 only
 IP_VERSION=4
+
+# The Subnet that should be used in CIDR format. Make sure that this is unique!
+# Using the same Subnet on different devstack installations causes IP
+# conflicts! Make also sure you do not use a subnet that is already used by
+# other infrastructure (like CI). Possible Subnets
+# IPV4_ADDRS_SAFE_TO_USE=192.168.221.0/24
+# IPV4_ADDRS_SAFE_TO_USE=192.168.223.0/24
+# IPV4_ADDRS_SAFE_TO_USE=192.168.224.0/24
+# ...
 IPV4_ADDRS_SAFE_TO_USE=<subnet-cidr>
+
+# Usually the first IP address in your subnet. E.g. 192.168.221.1
 NETWORK_GATEWAY=<gateway-ip>
+
+# The name of the physcial network that should be used. It must match the name
+# given in the physical_network_adapter_mappings.
+PHYSICAL_NETWORK=provider
 
 # Configure Nova DPM Driver
 enable_plugin nova-dpm http://git.openstack.org/openstack/nova-dpm
@@ -46,7 +57,7 @@ hmc_username = $HMC_USERNAME
 hmc = $HMC
 physical_storage_adapter_mappings = "<storage-adapter-id>:<port-element-id>"
 
-[[post-config|/$Q_PLUGIN_CONF_FILE]]
+[[post-config|/$DPM_AGENT_CONF]]
 [DEFAULT]
 host = foo
 
