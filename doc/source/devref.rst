@@ -44,3 +44,18 @@ To build the release notes::
 
 More information about *reno* can be found at:
 http://docs.openstack.org/developer/reno/index.html
+
+
+Release Process
+===============
+
+Below is a shortened version of the official description how stable
+branches and releases are handled you find at
+https://docs.openstack.org/project-team-guide/stable-branches.html
+
+tagging
+stable branches
+   what happens with changes in gerrit
+release candidate
+how to backport
+allowed backports
