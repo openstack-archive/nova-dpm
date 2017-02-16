@@ -29,7 +29,6 @@ extensions = [
     'sphinx.ext.autodoc',
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
-    'oslosphinx',
     'oslo_config.sphinxconfiggen',
     'reno.sphinxext',
 ]
@@ -74,6 +73,7 @@ pygments_style = 'sphinx'
 # Sphinx are currently 'default' and 'sphinxdoc'.
 # html_theme_path = ["."]
 # html_theme = '_theme'
+html_theme = 'classic'
 html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
