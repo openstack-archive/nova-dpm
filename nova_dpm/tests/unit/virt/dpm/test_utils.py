@@ -55,7 +55,7 @@ def create_session_1():
                         'properties': {
                             # object-id is auto-generated
                             # object-uri is auto-generated
-                            'name': 'partition_1',
+                            'name': 'OpenStack-fake-mini-1',
                             'description': 'Partition #1 in CPC #2',
                         },
                     },
