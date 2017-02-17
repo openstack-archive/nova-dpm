@@ -22,6 +22,7 @@ from nova.test import TestCase
 from nova.virt import driver as basedriver
 from nova_dpm.tests.unit.virt.dpm import test_utils as utils
 from nova_dpm.virt.dpm import driver
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
 from nova_dpm.virt.dpm.volume import fibrechannel
 
@@ -177,3 +178,60 @@ class DPMdriverVolumeTestCase(TestCase):
         self.assertRaises(exception.VolumeDriverNotFound,
                           self.dpmdriver.detach_volume,
                           connection_info, None, None)
+
+
+class DPMDriverInstanceTestCase(TestCase):
+
+    def setUp(self):
+        super(DPMDriverInstanceTestCase, self).setUp()
+        requests.packages.urllib3.disable_warnings()
+        self.session = utils.create_session_1()
+        self.client = zhmcclient.Client(self.session)
+        self.dpmdriver = driver.DPMDriver(None)
+        self.dpmdriver._client = self.client
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance, 'create')
+    @mock.patch.object(vm.PartitionInstance, 'properties')
+    def test_spawn_max_nics(self, mock_prop, mock_create, mock_get_part):
+        dpmdriver = driver.DPMDriver(None)
+        network_info = [x for x in range(0, 13)]
+        self.assertRaises(exceptions.MaxAmountOfInstancePortsExceededError,
+                          dpmdriver.spawn, None, None, None, None, None,
+                          network_info, flavor=mock.Mock())
+
+    @mock.patch.object(driver.DPMDriver, 'get_fc_boot_props',
+                       return_value=(None, None))
+    @mock.patch.object(vm.PartitionInstance, 'get_boot_hba_uri')
+    @mock.patch.object(vm.PartitionInstance, 'launch')
+    @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
+    @mock.patch.object(vm.PartitionInstance, 'properties')
+    @mock.patch.object(driver.DPMDriver, '_get_nic_string_for_guest_os')
+    def test_spawn_attach_nic(self, mock_prop, mock_attachHba, mock_launch,
+                              mock_hba_uri, mock_get_bprops, mock_nic_string):
+
+        cpc = self.client.cpcs.find(**{"object-id": "2"})
+        self.dpmdriver._cpc = cpc
+        self.dpmdriver._conf = {"cpcsubset_name": "foo-name",
+                                "physical_storage_adapter_mappings": "mapping"}
+
+        mock_instance = mock.Mock()
+        mock_instance.uuid = "1"
+
+        vif = {"address": "aa:bb:cc:dd:ee:ff",
+               "id": "foo-id",
+               "type": "dpm_vswitch",
+               "details": {"object_id": "oid"}}
+        vif2 = {"address": "11:22:33:44:55:66",
+                "id": "foo-id2",
+                "type": "dpm_vswitch",
+                "details": {"object_id": "oid2"}}
+        network_info = [vif, vif2]
+        self.dpmdriver.spawn(None, mock_instance, None, None, None,
+                             network_info, flavor=mock.Mock())
+
+        partition = cpc.partitions.find(**{
+            "object-id": "1"})
+        nics = partition.nics.list()
+        self.assertEqual(nics[0].name, "OpenStack_Port_foo-id")
+        self.assertEqual(nics[1].name, "OpenStack_Port_foo-id2")
