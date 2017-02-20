@@ -180,7 +180,7 @@ function device_exists {
   local dev_bus_id="$1"
 
   # Check if device is already configured
-  path="/sys/bus/ccwgroup/devices/$dev_bus_id"
+  path="$ROOT_DIR/sys/bus/ccwgroup/devices/$dev_bus_id"
   if ! [ -d "$path" ]; then
      return 1
   fi
@@ -189,15 +189,22 @@ function device_exists {
 function configure_device {
   # $1 = the device bus id
   local dev_bus_id="$1"
+  local port="$2"
+
+  # Required for testing where znetconf is expected in a certain path
+  if ! [ -z "$ROOT_DIR" ]; then
+    local root_dir_prefix=$ROOT_DIR/
+  fi
 
   # TODO(andreas_s): Do not depend on znetconf
   # Errors of the following command are written to stderr, and therefore
   # show up in the systemd units journal
-  znetconf -a $dev_bus_id -o portno=$port,layer2=1
+  local cmd="znetconf -a $dev_bus_id -o portno=$port,layer2=1"
+  eval "$root_dir_prefix$cmd"
   return "$?"
 }
 
 function get_cmdline {
   #Example: "some stuff nics=0001,0,aabbccddeeff;abcd,1,001122334455;"
-  echo $(cat /proc/cmdline)
+  echo $(cat "$ROOT_DIR/proc/cmdline")
 }
