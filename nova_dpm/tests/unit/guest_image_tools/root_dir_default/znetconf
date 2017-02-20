@@ -1,0 +1,6 @@
+#! /bin/bash
+
+# znetconf -a $dev_bus_id -o portno=$port,layer2=1
+if ! [[ "$@" == "-a 0.0.0001 -o portno=1,layer2=1" ]]; then
+  exit 1
+fi
