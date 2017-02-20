@@ -1,0 +1,19 @@
+#! /bin/bash
+
+# $ip_cmd link set $if_name address $mac
+echo "foo"
+if ! [[ "$1" == "link" ]]; then
+  exit 1
+fi
+
+if ! [[ "$2" == "set" ]]; then
+  exit 1
+fi
+
+# TODO: Check if_name
+
+if ! [[ "$4" == "address" ]]; then
+  exit 1
+fi
+
+# TODO: check_mac
