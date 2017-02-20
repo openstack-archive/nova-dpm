@@ -25,12 +25,7 @@
 set -e
 source $(dirname "$0")/dpm_guest_image_tools_common
 
-# Matches MAC in format: xxxxxxxxxxxx
-REGEX_MAC="[0-9A-Fa-f]{12}"
-REGEX_EXTRACT_DEVNO="qeth/0\.0\.([0-9A-Fa-f]{4})/net"
-REGEX_EXTRACT_IFNAME="/net/(.{1,15})"
 LOG_PREFIX=$(basename "$0")
-
 
 # e.g. /devices/qeth/0.0.0001/net/enc1
 DEV_PATH="$1"

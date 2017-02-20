@@ -21,7 +21,6 @@ REGEX_MAC="[0-9A-Fa-f]{12}"
 REGEX_EXTRACT_DEVNO="qeth/0\.0\.([0-9A-Fa-f]{4})/net"
 REGEX_EXTRACT_IFNAME="/net/(.{1,15})"
 
-
 function log {
   # $1 = message to log
 
