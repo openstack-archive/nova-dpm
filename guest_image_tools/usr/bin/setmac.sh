@@ -167,6 +167,19 @@ function get_cmdline {
   echo $(cat /proc/cmdline)
 }
 
+# Check if script runs in testmode
+if [[ "$1" == "test" ]];then
+  # $1 = "test" if script should run in testmode
+  # $2 = The function to be called
+  # $3,4... = the parameters for the function
+  func="$2"
+  # Remove the first 2 arguments from $@
+  shift 2
+  # Call function with arguments passed in as $3,4,...
+  $func "$@"
+  exit $?
+fi
+
 # e.g. /devices/qeth/0.0.0001/net/enc1
 DEV_PATH="$1"
 CMDLINE=$(get_cmdline)
