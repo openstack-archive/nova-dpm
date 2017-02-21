@@ -21,13 +21,11 @@ LOG = logging.getLogger(__name__)
 
 def valide_host_conf(conf, cpc):
     LOG.debug('valide_host_conf')
-    if (cpc.dpm_enabled):
-        cpc.pull_full_properties()
-    else:
+    if not cpc.dpm_enabled:
         # TODO(preethipy): Exception infrastructure to be finalized
         raise Exception("Host not in DPM mode")
 
-    if (conf['max_processors'] > cpc.properties['processor-count-ifl']):
+    if (conf['max_processors'] > cpc.get_property('processor-count-ifl')):
         # TODO(preethipy): Exception infrastructure to be finalized
         errormsg = (_("max_processors %(config_proc)s configured for "
                       "CpcSubset %(cpcsubset_name)s is greater than the "
@@ -39,7 +37,8 @@ def valide_host_conf(conf, cpc):
                        'cpcid': conf['cpc_object_id'],
                        'cpcname': cpc.properties['name']})
         raise exception.ValidationError(errormsg)
-    if (conf['max_memory_mb'] > cpc.properties['storage-customer']):
+
+    if (conf['max_memory_mb'] > cpc.get_property('storage-customer')):
         # TODO(preethipy): Exception infrastructure to be finalized
         errormsg = (_("max_memory_mb %(config_mem)s configured for "
                       "CpcSubset %(cpcsubset_name)s is greater than the "
