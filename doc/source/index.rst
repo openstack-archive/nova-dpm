@@ -49,7 +49,7 @@ Overview
 .. toctree::
     :maxdepth: 2
 
-    releasenotes/source/unreleased
+    history
     topology
     support-matrix
 
