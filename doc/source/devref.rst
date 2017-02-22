@@ -195,7 +195,7 @@ The short version of the technical side of creating a backport::
 
    $ git checkout -t origin/stable/ocata
    $ git cherry-pick -x $master_commit_id
-   $ git review stable/ocate
+   $ git review stable/ocata
 
 New stable branch
 -----------------
