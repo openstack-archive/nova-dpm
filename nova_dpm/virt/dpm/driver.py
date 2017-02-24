@@ -69,6 +69,8 @@ class DPMDriver(driver.ComputeDriver):
         self._fc_wwnns = None
         self._fc_wwpns = None
 
+        self.deleted_instance_wwpns_mapping = {}
+
         self.volume_drivers = self._get_volume_drivers()
 
     def init_host(self, host):
@@ -184,9 +186,32 @@ class DPMDriver(driver.ComputeDriver):
         representing the Instance and discovers the instances LUNs
         to see which storage paths are active.
         """
-        inst = vm.PartitionInstance(instance, self._cpc)
         props = {}
-        props['wwpns'] = inst.get_partition_wwpns()
+        # 'get_volume_connector' will be invoked during creation
+        # of the partition and during deletion of the partition.
+        # But 'wwpns' we can access only when partition is available.
+        # During spawn flow 'get_volume_connector' function will be called
+        # before 'spawn' function so to get 'wwpns' we first creating
+        # the partition using 'prep_for_spawn' function so that
+        # we can access 'wwpns'.(i.e - else part)
+        # But during deletion 'get_volume_connector' will be called
+        # after 'destroy' function which will delete the partition so
+        # after that we can not get the 'wwpns'
+        # In order to get 'wwpns' after 'destroy' function we are
+        # saving 'wwpns' before deleting partition in 'destroy' function
+        # in 'deleted_instance_wwpns_mapping' variable and using these 'wwpns'
+        # in 'get_volume_connector'(i.e - if part)
+        # after using these 'wwpns' we are removing these 'wwpns' from
+        # 'deleted_instance_wwpns_mapping' variable because
+        # we are not going to use these 'wwpns' any more after this.
+        if instance.uuid in self.deleted_instance_wwpns_mapping:
+            props['wwpns'] = self.deleted_instance_wwpns_mapping[
+                instance.uuid]
+            self.deleted_instance_wwpns_mapping.pop(instance.uuid)
+        else:
+            inst = vm.PartitionInstance(instance, self._cpc)
+            props['wwpns'] = inst.get_partition_wwpns()
+
         props['host'] = instance.uuid
 
         return props
@@ -409,6 +434,11 @@ class DPMDriver(driver.ComputeDriver):
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
         inst = vm.PartitionInstance(instance, self._cpc)
+        # Need to save wwpns before deletion of the partition
+        # Because after driver.destroy function driver.get_volume_connector
+        # will be called which required hbas wwpns of partition.
+        self.deleted_instance_wwpns_mapping[
+            instance.uuid] = inst.get_partition_wwpns()
         inst.destroy()
 
     def power_off(self, instance, timeout=0, retry_interval=0):
