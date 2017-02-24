@@ -69,6 +69,8 @@ class DPMDriver(driver.ComputeDriver):
         self._fc_wwnns = None
         self._fc_wwpns = None
 
+        self.instance_wwpns_mapping = {}
+
         self.volume_drivers = self._get_volume_drivers()
 
     def init_host(self, host):
@@ -186,7 +188,12 @@ class DPMDriver(driver.ComputeDriver):
         """
         inst = vm.PartitionInstance(instance, self._cpc)
         props = {}
-        props['wwpns'] = inst.get_partition_wwpns()
+        if instance.uuid in self.instance_wwpns_mapping:
+            props['wwpns'] = self.instance_wwpns_mapping[instance.uuid]
+            self.instance_wwpns_mapping.pop(instance.uuid)
+        else:
+            props['wwpns'] = inst.get_partition_wwpns()
+
         props['host'] = instance.uuid
 
         return props
@@ -409,6 +416,8 @@ class DPMDriver(driver.ComputeDriver):
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
         inst = vm.PartitionInstance(instance, self._cpc)
+        self.instance_wwpns_mapping[
+            instance.uuid] = inst.get_partition_wwpns()
         inst.destroy()
 
     def power_off(self, instance, timeout=0, retry_interval=0):
