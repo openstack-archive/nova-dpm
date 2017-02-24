@@ -41,7 +41,17 @@ function log {
    echo "$LOG_PREFIX: $1"
 }
 
+
+function ensure_ccwgroup_module {
+  if ! [ -d "/sys/bus/ccwgroup" ]; then
+      log "Loading ccwgroup kernel module..."
+      modprobe ccwgroup
+  fi
+}
+
+
 log "Start"
+ensure_ccwgroup_module
 
 # Default return code
 rc=0
