@@ -160,3 +160,17 @@ class TestDPMGuestImageTools(base.BaseTestCase):
         self.env = dict()
         self._test_function("_change_root", ["/foo/bar"])
         self._assert(0, "/foo/bar")
+
+    def test_ensure_ccwgroup_module_already_loaded(self):
+        # As /sys/bus/ccwgroup exists, modprobe is not being called. It does
+        # not even exist in the default root dir, therefore a call would result
+        # in a test failure
+        self._test_function("ensure_ccwgroup_module", [])
+        self._assert(0)
+
+    def test_ensure_ccwgroup_module_good(self):
+        # change the root dir as the directory /sys/bus/ccwgroup already
+        # exists in the default root dir
+        self.env = dict(os.environ, ROOT_DIR=base_path + "/root_dir_modprobe")
+        self._test_function("ensure_ccwgroup_module", [])
+        self._assert(0)

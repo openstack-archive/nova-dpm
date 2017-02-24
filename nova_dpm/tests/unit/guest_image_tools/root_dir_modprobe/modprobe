@@ -1,0 +1,6 @@
+#! /bin/bash
+
+# modprobe ccwgroup
+if ! [[ "$@" == "ccwgroup" ]]; then
+  exit 1
+fi

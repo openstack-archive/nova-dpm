@@ -41,6 +41,7 @@ REGEX="($REGEX_DEV_NO),([0-1])(,$REGEX_MAC)?;"
 CMDLINE=$(get_cmdline)
 
 log "Start"
+ensure_ccwgroup_module
 
 # Default return code
 rc=0
