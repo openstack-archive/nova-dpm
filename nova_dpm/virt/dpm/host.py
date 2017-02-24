@@ -30,7 +30,6 @@ IBM = 'IBM'
 HOST = 'host'
 CPC_SOCKETS = 0  # TODO(preethipy): Update with relevant value
 CPC_THREADS = 1  # TODO(preethipy): Update with relevant value
-HYPERVISOR_VERSION = 1000  # TODO(preethipy): Update with
 # relevant value
 
 
@@ -67,7 +66,7 @@ class Host(object):
             "local_gb_used": 0,  # TODO(preethipy): Update with relevant value
             "cpu_info": self._get_cpu_info(self._conf["max_processors"]),
             "hypervisor_type": PRSM_HYPERVISOR,
-            "hypervisor_version": HYPERVISOR_VERSION,
+            "hypervisor_version": self._get_version_in_int,  # required int
             "numa_topology": None,
             "hypervisor_hostname": self._conf['cpcsubset_name'],
             "cpc_name": self._cpc.properties['name'],
@@ -122,3 +121,11 @@ class Host(object):
             memory_used += partition.get_property('initial-memory')
 
         return memory_used
+
+    def _get_version_in_int(self):
+        version = self._cpc.get_property('se-version')
+        # version is in this format e.g - '2.13.1'
+        # But hypervisor_version should be in integer format
+        # So we will extract first value that is '2' in case of '2.13.1'
+        val = version.split('.')
+        return val[0]
