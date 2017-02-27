@@ -19,6 +19,7 @@ from nova import exception
 from nova.objects import flavor as flavor_object
 from nova.test import TestCase
 from nova.virt import driver as driv
+from nova_dpm.tests.unit.virt.dpm import fakeutils
 from nova_dpm.tests.unit.virt.dpm import fakezhmcclient
 from nova_dpm.tests.unit.virt.dpm import test_host as testhost
 from nova_dpm.virt.dpm import client_proxy
@@ -32,6 +33,7 @@ from nova_dpm.virt.dpm.volume import fibrechannel
 cpcsubset unit testcase
 """
 
+nova_dpm.conf.CONF = fakeutils.getFakeCPCconf()
 CONF = nova_dpm.conf.CONF
 
 PARTITION_WWPN = 'C05076FFEB8000D6'
@@ -303,9 +305,7 @@ class DPMPartitionSpawnNicTestCase(TestCase):
 
         self.assertEqual(instancelist, dpmdriver.list_instances())
 
-    @mock.patch.object(vm, "CONF")
-    def test_get_info(self, mock_conf):
-        mock_conf.host = "foo"
+    def test_get_info(self):
 
         mock_partition_instance_info = mock.Mock(vm.PartitionInstanceInfo)
         mock_partition_instance_info.return_value =\
@@ -319,7 +319,8 @@ class DPMPartitionSpawnNicTestCase(TestCase):
         self.assertEqual(partitionInfo.num_cpu, 1)
 
     @mock.patch.object(vm.PartitionInstance, 'destroy')
-    def test_destroy(self, mock_destroy):
+    @mock.patch.object(vm.PartitionInstance, 'get_partition_wwpns')
+    def test_destroy(self, mock_destroy, mock_wwpns):
         dpmdriver = driver.DPMDriver(None)
         dpmdriver._cpc = fakezhmcclient.getFakeCPC()
         dpmdriver.destroy(mock.Mock, getMockNovaInstanceForPartion(),

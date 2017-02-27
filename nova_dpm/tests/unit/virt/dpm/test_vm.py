@@ -28,6 +28,9 @@ vm unit testcase
 """
 
 
+vm.CONF = fakeutils.getFakeCPCconf()
+
+
 def getMockInstance():
     session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
     client = fakezhmcclient.Client(session)
@@ -41,17 +44,16 @@ class VmFunctionTestCase(TestCase):
     def setUp(self):
         super(VmFunctionTestCase, self).setUp()
         self.valid_name = (
-            'OpenStack-foo-6511ee0f-0d64-4392-b9e0-cdbea10a17c3')
+            'OpenStack-'
+            + vm.CONF.host + '-6511ee0f-0d64-4392-b9e0-cdbea10a17c3')
         self.invalid_name = 'OpenStack-Instance-6511ee0f'
         self.cpc = fakezhmcclient.getFakeCPC()
 
     def test_is_valid_partition_name(self):
-        self.flags(host='foo')
         self.assertTrue(vm.is_valid_partition_name(self.valid_name))
         self.assertFalse(vm.is_valid_partition_name(self.invalid_name))
 
     def test_partition_list(self):
-        self.flags(host='foo')
         partition_list = vm.cpcsubset_partition_list(self.cpc)
         list = self.cpc.partitions.list()
         length = len(list)
@@ -97,19 +99,19 @@ class InstancePropertiesTestCase(TestCase):
         super(InstancePropertiesTestCase, self).setUp()
         self.mock_nova_inst = mock.Mock()
         self.mock_nova_inst.uuid = 'foo-id'
-        vm.CONF.set_override("host", "foo")
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_partition_name(self, mock_get_part):
         inst = vm.PartitionInstance(
             self.mock_nova_inst, mock.Mock())
-        self.assertEqual("OpenStack-foo-foo-id", inst.partition_name)
+        self.assertEqual("OpenStack-" + vm.CONF.host + "-foo-id",
+                         inst.partition_name)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_partition_description(self, mock_get_part):
         inst = vm.PartitionInstance(
             self.mock_nova_inst, mock.Mock())
-        self.assertEqual("OpenStack CPCSubset=foo",
+        self.assertEqual("OpenStack CPCSubset=" + vm.CONF.host,
                          inst.partition_description)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
@@ -121,8 +123,10 @@ class InstancePropertiesTestCase(TestCase):
         inst = vm.PartitionInstance(
             self.mock_nova_inst, mock.Mock(), flavor=mock_flavor)
         props = inst.properties()
-        self.assertEqual('OpenStack-foo-foo-id', props['name'])
-        self.assertEqual('OpenStack CPCSubset=foo', props['description'])
+        self.assertEqual('OpenStack-'
+                         + vm.CONF.host + '-foo-id', props['name'])
+        self.assertEqual('OpenStack CPCSubset=' + vm.CONF.host,
+                         props['description'])
         self.assertEqual(5, props['ifl-processors'])
         self.assertEqual(2000, props['initial-memory'])
         self.assertEqual(2000, props['maximum-memory'])
@@ -133,7 +137,6 @@ class VmNicTestCase(TestCase):
     def setUp(self):
         super(VmNicTestCase, self).setUp()
         vm.zhmcclient = fakezhmcclient
-        self.conf = fakeutils.getFakeCPCconf()
 
         self.inst = getMockInstance()
         self.inst.partition.nics = fakezhmcclient.getFakeNicManager()
@@ -150,7 +153,7 @@ class VmNicTestCase(TestCase):
         ret_val .__getitem__.side_effect = dict.__getitem__
         with mock.patch.object(fakezhmcclient.NicManager, 'create',
                                return_value=ret_val) as mock_create:
-            nic_interface = self.inst.attach_nic(self.conf, self.vif1)
+            nic_interface = self.inst.attach_nic(self.vif1)
         self.assertEqual(ret_val, nic_interface)
         self.assertTrue(mock_create.called)
         call_arg_dict = mock_create.mock_calls[0][1][0]
@@ -160,7 +163,7 @@ class VmNicTestCase(TestCase):
         # Description
         self.assertTrue(call_arg_dict['description'].startswith('OpenStack'))
         self.assertIn('mac=12:34:56:78:9A:BC', call_arg_dict['description'])
-        self.assertIn('CPCSubset=' + self.conf['cpcsubset_name'],
+        self.assertIn('CPCSubset=' + vm.CONF.host,
                       call_arg_dict['description'])
         # virtual-switch-uri
         self.assertEqual(
@@ -173,7 +176,6 @@ class VmHBATestCase(TestCase):
     def setUp(self):
         super(VmHBATestCase, self).setUp()
         vm.zhmcclient = fakezhmcclient
-        self.conf = fakeutils.getFakeCPCconf()
 
         self.inst = getMockInstance()
 
@@ -193,7 +195,7 @@ class VmHBATestCase(TestCase):
 
     @mock.patch.object(vm.LOG, 'debug')
     def test_attach_hba(self, mock_debug):
-        self.inst.attach_hbas(self.conf)
+        self.inst.attach_hbas()
 
 
 class InstancePartitionLifecycleTestCase(TestCase):
