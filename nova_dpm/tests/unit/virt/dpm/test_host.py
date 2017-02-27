@@ -26,15 +26,17 @@ cpcsubset unit testcase
 """
 
 
+host.CONF = fakeutils.getFakeCPCconf()
+
+
 def fakeHost():
 
     session = fakezhmcclient.Session("hostip", "dummyhost", "dummyhost")
     client = fakezhmcclient.Client(session)
     cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
     cpc = fakezhmcclient.getFakeCPC(cpcmanager)
-    conf = fakezhmcclient.getFakeCPCconf()
 
-    host1 = host.Host(conf, cpc, client)
+    host1 = host.Host(cpc, client)
     return host1
 
 
@@ -68,12 +70,11 @@ class HostTestCase(TestCase):
         self._client = fakezhmcclient.Client(self._session)
         self._cpcmanager = fakezhmcclient.getCpcmgrForClient(self._client)
         self._cpc = fakezhmcclient.getFakeCPC(self._cpcmanager)
-        self._conf = fakeutils.getFakeCPCconf()
-        self.host_obj = host.Host(self._conf, self._cpc, self._client)
+        self.host_obj = host.Host(self._cpc, self._client)
 
     @mock.patch.object(host.LOG, 'debug')
     def test_host(self, mock_warning):
-        host.Host(self._conf, self._cpc, self._client)
+        host.Host(self._cpc, self._client)
 
         expected_arg = "Host initializing done"
         assertlogs = False
@@ -91,9 +92,7 @@ class HostTestCase(TestCase):
 
         cpcmanager = fakezhmcclient.getCpcmgrForClient(client)
         cpc = fakezhmcclient.getFakeCPC(cpcmanager)
-        conf = fakeutils.getFakeCPCconf()
-
-        host1 = host.Host(conf, cpc, client)
+        host1 = host.Host(cpc, client)
         host_properties = host1.properties
         self.assertEqual(host_properties['hypervisor_hostname'],
                          'S12subset')

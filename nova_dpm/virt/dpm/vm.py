@@ -161,7 +161,7 @@ class PartitionInstance(object):
             'boot-os-specific-parameters': data
         })
 
-    def attach_nic(self, conf, vif):
+    def attach_nic(self, vif):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
@@ -180,7 +180,7 @@ class PartitionInstance(object):
             "name": "OpenStack_Port_" + str(port_id),
             "description": "OpenStack mac=" + mac +
                            ", CPCSubset=" +
-                           conf[CPCSUBSET_NAME],
+                           CONF.host,
             "virtual-switch-uri": "/api/virtual-switches/"
                                   + dpm_object_id
         }
@@ -193,10 +193,10 @@ class PartitionInstance(object):
                          'virtual-switch-uri']})
         return nic_interface
 
-    def attach_hbas(self, conf):
+    def attach_hbas(self):
         LOG.debug('Creating vhbas for instance',
                   instance=self.instance)
-        mapping = self.get_adapter_port_mappings(conf)
+        mapping = self.get_adapter_port_mappings()
         for adapterPort in mapping.get_adapter_port_mapping():
             adapter_object_id = adapterPort['adapter_id']
             adapter_port = adapterPort['port']
@@ -204,7 +204,7 @@ class PartitionInstance(object):
                 "name": "OpenStack_Port_" + adapter_object_id +
                         "_" + str(adapter_port),
                 "description": "OpenStack CPCSubset= " +
-                               conf[CPCSUBSET_NAME],
+                               CONF.host,
                 "adapter-port-uri": "/api/adapters/"
                                     + adapter_object_id +
                                     "/storage-ports/" +
@@ -220,9 +220,9 @@ class PartitionInstance(object):
                          'adapter-port-uri': hba.properties[
                              'adapter-port-uri']})
 
-    def get_adapter_port_mappings(self, conf):
+    def get_adapter_port_mappings(self):
         LOG.debug('Creating Adapter uris')
-        interface_mappings = conf['physical_storage_adapter_mappings']
+        interface_mappings = CONF.dpm.physical_storage_adapter_mappings
         mapping = PhysicalAdapterModel(self.cpc)
         for entry in interface_mappings:
             adapter_uuid, port = (
@@ -250,7 +250,7 @@ class PartitionInstance(object):
         LOG.debug('Get Hba properties')
         return self.partition.get_property('hba-uris')
 
-    def get_boot_hba_uri(self, conf):
+    def get_boot_hba_uri(self):
         hbas = self.get_hba_uris()
 
         adapter_uuid, port = (
@@ -259,7 +259,7 @@ class PartitionInstance(object):
                 # storage in configuration. So
                 # we will use one i.e first adapter
                 # in the list
-                conf['physical_storage_adapter_mappings'][0]))
+                CONF.dpm.physical_storage_adapter_mappings[0]))
 
         hba_uri = None
 

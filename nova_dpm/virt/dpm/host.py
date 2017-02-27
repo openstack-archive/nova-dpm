@@ -17,6 +17,8 @@
 Host will have the handle to the CPCSubsetMgr which will retrieve cpcsubsets
 """
 
+import nova_dpm.conf
+
 from nova.objects import fields as obj_fields
 from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
@@ -24,6 +26,7 @@ from oslo_serialization import jsonutils
 
 
 LOG = logging.getLogger(__name__)
+CONF = nova_dpm.conf.CONF
 PRSM_HYPERVISOR = 'PRSM'
 S390_ARCH = 's390x'
 IBM = 'IBM'
@@ -36,12 +39,11 @@ HYPERVISOR_VERSION = 1000  # TODO(preethipy): Update with
 
 class Host(object):
 
-    def __init__(self, conf, cpc, client):
+    def __init__(self, cpc, client):
 
         LOG.debug('Host initializing for cpcsubset %(cpcsubset_name)s'
-                  % {'cpcsubset_name': conf['cpcsubset_name']})
+                  % {'cpcsubset_name': CONF.host})
 
-        self._conf = conf
         self._client = client
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
@@ -59,17 +61,17 @@ class Host(object):
     def _get_host_poperties(self):
         LOG.debug('_get_host_properties')
         dict_mo = {
-            "memory_mb": self._conf["max_memory_mb"],
-            "vcpus": self._conf["max_processors"],
+            "memory_mb": CONF.dpm.max_memory,
+            "vcpus": CONF.dpm.max_processors,
             'vcpus_used': self._get_proc_used(),
             "local_gb": 1024,  # TODO(preethipy): Update with relevant value
             "memory_mb_used": self._get_mem_used(),
             "local_gb_used": 0,  # TODO(preethipy): Update with relevant value
-            "cpu_info": self._get_cpu_info(self._conf["max_processors"]),
+            "cpu_info": self._get_cpu_info(CONF.dpm.max_processors),
             "hypervisor_type": PRSM_HYPERVISOR,
             "hypervisor_version": HYPERVISOR_VERSION,
             "numa_topology": None,
-            "hypervisor_hostname": self._conf['cpcsubset_name'],
+            "hypervisor_hostname": CONF.host,
             "cpc_name": self._cpc.properties['name'],
             "disk_available_least": 1024,  # TODO(preethipy): Update with
             # relevant value

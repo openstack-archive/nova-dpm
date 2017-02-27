@@ -15,14 +15,7 @@
 
 def getFakeCPCconf():
 
-    conf = {'cpcsubset_name': "S12subset",
-            'cpc_object_id': "1232132",
-            'max_processors': 10,
-            'max_memory_mb': 200,
-            'max_partitions': 10,
-            'physical_storage_adapter_mappings':
-                ["439da232-b18d-11e6-9c12-42f2e9ef1641:0"]
-            }
+    conf = CONF()
     return conf
 
 
@@ -49,3 +42,17 @@ class PartitionInstance(object):
     @property
     def uuid(self):
         return self.properties['uuid']
+
+
+class DPM(object):
+    cpc_object_id = "1232132"
+    max_processors = 10
+    max_memory = 200
+    max_partitions = 10
+    physical_storage_adapter_mappings = [
+        "439da232-b18d-11e6-9c12-42f2e9ef1641:0"]
+
+
+class CONF(object):
+    host = "S12subset"
+    dpm = DPM()
