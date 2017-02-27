@@ -77,27 +77,16 @@ class DPMDriver(driver.ComputeDriver):
         """Driver initialization of the hypervisor node"""
         LOG.debug("init_host")
 
-        # retrieve from ncpu service configurationfile
-        self._conf = {'cpcsubset_name': CONF.host,
-                      'cpc_object_id': CONF.dpm.cpc_object_id,
-                      'max_processors': CONF.dpm.max_processors,
-                      'max_memory_mb': CONF.dpm.max_memory,
-                      'max_partitions': CONF.dpm.max_instances,
-                      'physical_storage_adapter_mappings':
-                          CONF.dpm.physical_storage_adapter_mappings,
-                      'target_wwpn_ignore_list':
-                          CONF.dpm.target_wwpn_ignore_list}
-
         self._cpc = self._client.cpcs.find(**{
-            "object-id": self._conf['cpc_object_id']})
+            "object-id": CONF.dpm.cpc_object_id})
         LOG.debug("Matching hypervisor found %(cpcsubset_name)s for object-id "
                   "%(cpcid)s and CPC %(cpcname)s" %
-                  {'cpcsubset_name': self._conf['cpcsubset_name'],
-                   'cpcid': self._conf['cpc_object_id'],
+                  {'cpcsubset_name': CONF.host,
+                   'cpcid': CONF.dpm.cpc_object_id,
                    'cpcname': self._cpc.properties['name']})
 
-        utils.valide_host_conf(self._conf, self._cpc)
-        self._host = Host.Host(self._conf, self._cpc, self._client)
+        utils.valide_host_conf(self._cpc)
+        self._host = Host.Host(self._cpc, self._client)
 
     def get_available_resource(self, nodename):
         """Retrieve resource information.
@@ -329,7 +318,7 @@ class DPMDriver(driver.ComputeDriver):
         inst = vm.PartitionInstance(instance, self._cpc, flavor)
         inst.create(inst.properties())
 
-        inst.attach_hbas(self._conf)
+        inst.attach_hbas()
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, network_info=None, block_device_info=None,
@@ -353,11 +342,11 @@ class DPMDriver(driver.ComputeDriver):
             ))
         nic_boot_string = ""
         for vif in network_info:
-            nic = inst.attach_nic(self._conf, vif)
+            nic = inst.attach_nic(vif)
             nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
         inst.set_boot_os_specific_parameters(nic_boot_string)
 
-        hba_uri = inst.get_boot_hba_uri(self._conf)
+        hba_uri = inst.get_boot_hba_uri()
 
         LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
                   % {'uri': hba_uri, 'name': instance.hostname})
@@ -418,7 +407,7 @@ class DPMDriver(driver.ComputeDriver):
                              ['initiator_target_map'][partition_wwpn])
 
         target_wwpns = [wwpn for wwpn in list_target_wwpns
-                        if wwpn not in self._conf['target_wwpn_ignore_list']]
+                        if wwpn not in CONF.dpm.target_wwpn_ignore_list]
 
         # target_wwpns is a list of wwpns which will be accessible
         # from host wwpn. So we can use any of the target wwpn in the
