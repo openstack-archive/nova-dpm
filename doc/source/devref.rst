@@ -54,6 +54,52 @@ Release Management
    https://docs.openstack.org/project-team-guide/release-management.html
    Reading the section below doesn't replace reading the official docs.
 
+Getting Started
+---------------
+
+First release candidate
++++++++++++++++++++++++
+
+* Checkout the master branch
+* Create a tag ``<version>.0rc1``, e.g. ``1.0.0.0rc1``. For more details, see
+  :ref:`tag_releases`.
+* Push the tag along :ref:`tag_releases`.
+* Create a stable branch ``stable/<release>``, e.g. ``stable/ocata``. For more
+  details, see :ref:`new_stable_branch`.
+* Update the launchpad project
+
+  * Create a Milestone for the release candidate along
+    :ref:`create_milestone`.
+  * Release the milestone along :ref:`release_milestone`.
+  * Change the Focus of development along :ref:`focus_of_development`.
+* Make the documentation for the new stable branch available on RTD along
+  :ref:`rtd_branch`.
+
+Follow up release candidates
+++++++++++++++++++++++++++++
+
+* Checkout the ``stable/<release>`` branch
+* Create a tag ``<version>.0rc2``, e.g. ``1.0.0.0rc2``. For more details, see
+  :ref:`tag_releases`.
+* Push the tag along :ref:`tag_releases`.
+* Update the launchpad project
+
+  * Create a Milestone for the release candidate along
+    :ref:`create_milestone`.
+  * Release the milestone along :ref:`release_milestone`.
+
+Release
++++++++
+
+* Checkout the ``stable/<release>`` branch::
+
+    git fetch
+    git checkout -t stable/<release>
+
+* Create a tag ``<version>`` e.g. ``1.0.0`` with the description *<release>
+  release*. For more details, see :ref:`tag_releases`.
+* Push the tag along :ref:`tag_releases`.
+
 Model
 -----
 
@@ -95,6 +141,7 @@ When creating a new full release, the usual order of action is:
    don't use the ``openstack/releases`` repository to create releases and
    stable branches. See `New stable branch`_ for the HOW-TO.
 
+.. _tag_releases:
 
 Tag releases
 ------------
@@ -197,6 +244,8 @@ The short version of the technical side of creating a backport::
    $ git cherry-pick -x $master_commit_id
    $ git review stable/ocata
 
+.. _new_stable_branch:
+
 New stable branch
 -----------------
 
@@ -223,3 +272,170 @@ the stable branch in *Gerrit* based on that:
 
 After this is done, every open change in Gerrit which uses ``master`` as
 target branch will be (if it will merge) part of the next release.
+
+
+Launchpad
+=========
+
+Create a new Series with milestones
+-----------------------------------
+
+#. Go to https://launchpad.net/nova-dpm/+addseries to register a new
+   release series using
+
+   * name: ``<release>``, e.g. ``pike``
+   * description: ``Development series for the Pike release <version>.``, e.g.
+     ``Development series for the Pike release 2.0.0.``
+
+#. Create the milestones for the new release along :ref:`create_milestone`.
+   Information about the milestones can be found at
+   https://releases.openstack.org/<release>/schedule.html . E.g.
+   https://releases.openstack.org/pike/schedule.html for the 'Pike' release.
+
+   Do this for all 3 milestones.
+
+.. _create_milestone:
+
+Create a Milestone for a Series
+-------------------------------
+
+Go to https://launchpad.net/nova-dpm/<release> and click on
+   "Create milestone". Provide the following information
+
+   * name
+
+     * Milestone: ``<release>-<milestone>``, e.g. ``pike-1``
+     * Release candidate: ``<release>-rc<candidate>``, e.g. ``pike-rc1``
+   * code name
+
+     * Milestone: ``<short-release><milestone>``, e.g. ``p1``
+     * Release candidate: ``RC<candidate>``, e.g. ``RC1``
+   * date targeted
+
+.. _release_milestone:
+
+Release a Milestone
+-------------------
+
+#. Open the Milestone using
+   https://launchpad.net/nova-dpm/+milestone/ocata-rc1/+addrelease.
+
+#. Specify the release date
+
+.. _focus_of_development:
+
+Change focus of development
+---------------------------
+
+Go to the projects edit page https://launchpad.net/nova-dpm/+edit. Set
+'Development focus' to the upcoming release series.
+
+Read The Docs (RTD)
+===================
+
+.. _rtd_branch:
+
+Activate/deactivate docs for a branch or tag
+--------------------------------------------
+
+To create documentation for the stable stable branch, go to
+https://readthedocs.org/projects/nova-dpm/versions/.
+Edit the version you want to change and tick or untick "Active". Exit with
+"Save".
+
+.. note::
+  The strategy is to provide documentation for stable branches only (over
+  release tags). Doing so, the backported documentation is available without
+  having a new release required.
+
+Requirements
+============
+
+This chapter describes how requirements are handled. The most important
+requirements are the library ``os-dpm`` and the ``zhmcclient``.
+
+Each project specifies its requirements using the ``requirements.txt`` and
+``test-requirements.txt`` files.
+
+In addition to that, requirements are also managed OpenStack wide
+in the requirements repository https://github.com/openstack/requirements.
+The following files are of importance
+
+* global-requirements.txt
+
+  Specifies a requirement and its minimum version. All requirements that
+  are listed in a projects ``requirements.txt`` file must be listed in this
+  file as well. There's a Jenkins job ensuring that the version in the projects
+  ``requirements.txt`` always matches the exact version listed in this file.
+
+  .. note::
+     Exact really means exact, including white spaces and so on!
+
+  This file has to be updated manually.
+
+
+* upper-constraints.txt
+
+  This file specifies the upper version limit for a package.
+  For each requirement listed in ``global-requirements.txt`` a corresponding
+  entry must exist in this file. In addition an upper constraint for
+  all indirect requirements must be specified in this file as well
+  (e.g. zhmccclient uses ``click-spinner``. An upper constraint must be
+  specified for ``click-spinner`` as well, although no entry in
+  ``global-requirements.txt`` exists).
+
+  This file is being updated by the OpenStack Proposal Bot.
+
+  * OpenStack libraries: The release job will trigger the Bot directly
+  * External libraries: Bot is triggered on a daily bases (except if the
+    branch is frozen due to a pending release)
+
+  Also manual updates can be proposed.
+
+* projects.txt
+
+  The OpenStack Proposal Bot proposes changes made to *global-requirements*
+  to the listed projects ``requirements.txt`` and ``test-requirements.txt``
+  file.
+
+How to use a new version of a package?
+--------------------------------------
+
+The new version must be specified in ``upper-constraints.txt`` of the
+requirements repository. Usually the OpenStack Proposal Bot takes care about
+that. Alternatively a patch can be submitted manually.
+
+TBD: When is the OpenStack Proposal Bot being triggered for OpenStack
+libraries vs. external libraries.
+
+How to increase the minimum version for a package?
+--------------------------------------------------
+
+Propose a patch to the ``global-requirements.txt`` file of the requirements
+repository. The OpenStack Proposal Bot will propose a change to your project
+once that patch is merged.
+
+If also the version in ``upper-constraints.txt`` should be bumped, do both with
+the same commit.
+
+.. note::
+   The OpenStack Proposal Bot proposes changes made to *global-requirements*
+   only to projects listed in ``projects.txt`` of the requirements repo.
+
+How to avoid that a new version of a package gets applied to a project?
+-----------------------------------------------------------------------
+
+The upper constraint cannot be controlled on a project basis.
+
+The only way to mark a invalid version is to propose a change to the
+``global-requirements.txt`` file of the requirements repository to exclude
+the invalid version.
+
+.. note::
+  If you plan to use that version in the future do not propose an update
+  to ``global-requirements.txt``. Rather focus on fixing the issue with the
+  new version in your project right now!
+
+.. note::
+  On a version bump, the unittests of the main projects are run to ensure
+  those are not breaking. But this is only for the major projects.
