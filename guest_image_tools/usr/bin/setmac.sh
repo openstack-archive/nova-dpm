@@ -117,6 +117,8 @@ function is_locally_administered_mac {
   fi
 }
 
+
+ROOT_DIR=${ROOT_DIR:-"/"}
 function get_ip_cmd {
   # Determines the path of the ip cmd
   # Returns: Path to ip cmd
@@ -125,7 +127,8 @@ function get_ip_cmd {
   # the ip command. Also the 'which' command is not working. As different
   # distros install it to different locations, we need to try out which
   # path is working.
-  local paths=("/usr/sbin/ip" "/sbin/ip")
+
+  local paths=("$ROOT_DIR/usr/sbin/ip" "$ROOT_DIR/sbin/ip")
 
   for path in "${paths[@]}"; do
     if [[ -x $path ]]; then

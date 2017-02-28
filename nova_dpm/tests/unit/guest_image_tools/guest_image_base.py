@@ -24,8 +24,10 @@ from subprocess import Popen
 class GuestImageBaseTestCase(base.BaseTestCase):
 
     def _execute_command(self, cmd):
-        proc = Popen(cmd, stdout=PIPE, encoding='utf-8')
+        proc = Popen(cmd, stdout=PIPE)
         stdout, stderr = proc.communicate()
+        # convert stdout from byte to unicode. Required for python 3
+        stdout = stdout.decode("utf-8")
         stdout = stdout.strip("\n")
         rc = proc.returncode
         return rc, stdout, stderr
