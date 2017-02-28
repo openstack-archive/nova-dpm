@@ -28,6 +28,9 @@ REGEX_EXTRACT_DEVNO="qeth/0\.0\.([0-9A-Fa-f]{4})/net"
 REGEX_EXTRACT_IFNAME="/net/(.{1,15})"
 LOG_PREFIX=$(basename "$0")
 
+# Allow tests to define a different folder for the root directory
+ROOT_DIR=${ROOT_DIR:-}
+
 
 function log {
   # $1 = message to log
@@ -117,6 +120,7 @@ function is_locally_administered_mac {
   fi
 }
 
+
 function get_ip_cmd {
   # Determines the path of the ip cmd
   # Returns: Path to ip cmd
@@ -125,11 +129,13 @@ function get_ip_cmd {
   # the ip command. Also the 'which' command is not working. As different
   # distros install it to different locations, we need to try out which
   # path is working.
+
   local paths=("/usr/sbin/ip" "/sbin/ip")
 
   for path in "${paths[@]}"; do
-    if [[ -x $path ]]; then
-       echo "$path"
+    local full_path=$ROOT_DIR$path
+    if [[ -x $full_path ]]; then
+       echo $full_path
        return 0
      fi
   done
