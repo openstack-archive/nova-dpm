@@ -14,6 +14,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+
 from nova_dpm.tests.unit.guest_image_tools.guest_image_base import\
     GuestImageBaseTestCase
 
@@ -26,7 +28,8 @@ class TestSetMac(GuestImageBaseTestCase):
         :param func_name: The function of setmac.sh to be called
         :param args: List of arguments to be passed into the function
         """
-        setmac_path = "guest_image_tools/usr/bin/setmac.sh"
+        setmac_path =\
+            "nova_dpm/tests/unit/guest_image_tools/setmac_test_wrapper.sh"
         cmd = [setmac_path, "test", func_name] + args
         self.rc, self.stdout, self.stderr = self._execute_command(cmd)
 
@@ -85,3 +88,13 @@ class TestSetMac(GuestImageBaseTestCase):
         for mac in local_macs:
             self._setmac_test("is_locally_administered_mac", [mac])
             self._assert(1)
+
+    def test_get_ip_cmd(self):
+        test_root_dir =\
+            os.path.dirname(os.path.realpath(__file__)) + "/test_root_dir"
+        self._setmac_test("get_ip_cmd", [])
+        self._assert(0, test_root_dir + "/sbin/ip")
+
+    def test_set_mac(self):
+        self._setmac_test("set_mac", ["eth0", "0a0000000000"])
+        self._assert(0)
