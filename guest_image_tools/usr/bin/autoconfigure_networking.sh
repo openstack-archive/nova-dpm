@@ -23,10 +23,14 @@
 
 # Exit on error
 set -e
+source $(dirname "$0")/dpm_guest_image_tools_common
 
 LOG_PREFIX=$(basename "$0")
-REGEX_DEV_NO="[0-9A-Fa-f]{4}"
-REGEX_MAC="[0-9A-Fa-f]{12}"
+# This script usually gets called by systemd. Systemd takes care of writing
+# stdout and stderr into the journal. Using "echo" here ensures, that
+# all the messages show up under the corresponding systemd unit and not as
+# separate entity.
+LOG_TARGET="stdout"
 
 # Regex to match
 # <devno>,<port>;
@@ -34,44 +38,7 @@ REGEX_MAC="[0-9A-Fa-f]{12}"
 REGEX="($REGEX_DEV_NO),([0-1])(,$REGEX_MAC)?;"
 
 #CMDLINE="some stuff 0001,1,000000000011;0004,;0007,0; more stuff"
-CMDLINE=$(cat /proc/cmdline)
-
-function log {
-   # $1 = message to log
-   # This script usually gets called by systemd. Systemd takes care of writing
-   # stdout and stderr into the journal. Using "echo" here ensures, that
-   # all the messages show up under the corresponding systemd unit.
-   echo "$LOG_PREFIX: $1"
-}
-
-function get_device_bus_id {
-  # $1 = the device number
-  # returns the corresponding device_bus_id
-
-  echo "0.0.$1"
-}
-
-function device_exists {
-  # $1 = the device bus id
-  local dev_bus_id="$1"
-
-  # Check if device is already configured
-  path="/sys/bus/ccwgroup/devices/$dev_bus_id"
-  if ! [ -d "$path" ]; then
-     return 1
-  fi
-}
-
-function configure_device {
-  # $1 = the device bus id
-  local dev_bus_id="$1"
-
-  # TODO(andreas_s): Do not depend on znetconf
-  # Errors of the following command are written to stderr, and therefore
-  # show up in the systemd units journal
-  znetconf -a $dev_bus_id -o portno=$port,layer2=1
-  return "$?"
-}
+CMDLINE=$(get_cmdline)
 
 log "Start"
 
