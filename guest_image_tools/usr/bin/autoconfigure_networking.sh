@@ -21,6 +21,9 @@
 # or
 #     <devno>,<port>,<mac>;
 
+# Exit on error
+set -e
+
 LOG_PREFIX=$(basename "$0")
 REGEX_DEV_NO="[0-9A-Fa-f]{4}"
 REGEX_MAC="[0-9A-Fa-f]{12}"
