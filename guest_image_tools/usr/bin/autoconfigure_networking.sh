@@ -44,6 +44,41 @@ function log {
    echo "$LOG_PREFIX: $1"
 }
 
+function get_device_bus_id {
+  # $1 = the device number
+  # returns the corresponding device_bus_id
+
+  echo "0.0.$dev_no"
+}
+
+function device_exists {
+  # $1 = the device bus id
+  local dev_bus_id="$1"
+
+  # Check if device is already configured
+  path="/sys/bus/ccwgroup/devices/$dev_bus_id"
+  if ! [ -d "$path" ]; then
+     return 1
+  fi
+}
+
+function configure_device {
+  # $1 = the device bus id
+  local dev_bus_id="$1"
+
+  # Check if device is already configured
+  if device_exists "$dev_bus_id"; then
+     log "Interface for $dev_bus_id already configured. Skipping."
+     return 0
+  fi
+
+  # TODO(andreas_s): Do not depend on znetconf
+  # Errors of the following command are written to stderr, and therefore
+  # show up in the systemd units journal
+  znetconf -a $dev_bus_id -o portno=$port,layer2=1
+  return "$?"
+}
+
 log "Start"
 
 # Default return code
@@ -54,30 +89,16 @@ rc=0
 # allow matching the next value
 while [[ $CMDLINE =~ $REGEX ]]; do
   dev_no="${BASH_REMATCH[1]}"
-  dev_bus_id="0.0.$dev_no"
-  log "Configuring dev_bus_id $dev_bus_id."
+  port_no="${BASH_REMATCH[2]}"
 
   # remove current match from variable, to allow next match in next iteration
   CMDLINE=${CMDLINE#*"${dev_no}"}
 
+  dev_bus_id=$(get_device_bus_id "$dev_no")
 
-  # Check if device is already configured
-  path="/sys/bus/ccwgroup/devices/$dev_bus_id"
-  if [ -d "$path" ]; then
-     log "Interface for $dev_bus_id already configured. Skipping."
-     continue
-  fi
-
-  # Determine port
-  port="${BASH_REMATCH[2]}"
-  log "Port $port used for dev_bus_id $dev_bus_id."
-
-  # TODO(andreas_s): Do not depend on znetconf
-  # Errors of the following command are written to stderr, and therefore
-  # show up in the systemd units journal
-  znetconf -a $dev_bus_id -o portno=$port,layer2=1
-  if [[ $? != 0 ]]; then
-       rc=1
+  log "Configuring dev_bus_id $dev_bus_id with port $port_no."
+  if ! configure_device "$dev_bus_id"; then
+    rc=1
   fi
 
 done
