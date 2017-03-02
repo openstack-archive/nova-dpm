@@ -27,7 +27,6 @@ from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as dpmHost
 from nova_dpm.virt.dpm import vm
-from nova_dpm.virt.dpm.volume import fibrechannel
 
 """
 cpcsubset unit testcase
@@ -117,55 +116,6 @@ class DPMdriverTestCase(TestCase):
         self.assertRaises(exception.ValidationError,
                           dpmdriver.init_host,
                           None)
-
-    def test_get_volume_drivers(self):
-        dummyvirtapi = None
-        dpmdriver = driver.DPMDriver(dummyvirtapi)
-        driver_reg = dpmdriver._get_volume_drivers()
-        self.assertTrue(isinstance(driver_reg['fibre_channel'],
-                                   fibrechannel.DpmFibreChannelVolumeDriver))
-
-    @mock.patch.object(fibrechannel.DpmFibreChannelVolumeDriver,
-                       'connect_volume')
-    def test_attach_volume(self, mock_connect_volume):
-        dummyvirtapi = None
-        dpmdriver = driver.DPMDriver(dummyvirtapi)
-
-        connection_info = {'driver_volume_type': 'fibre_channel'}
-
-        dpmdriver.attach_volume(None, connection_info, None, None)
-        mock_connect_volume.assert_called_once()
-
-    @mock.patch.object(fibrechannel.DpmFibreChannelVolumeDriver,
-                       'disconnect_volume')
-    def test_detach_volume(self, mock_disconnect_volume):
-        dummyvirtapi = None
-        dpmdriver = driver.DPMDriver(dummyvirtapi)
-
-        connection_info = {'driver_volume_type': 'fibre_channel'}
-
-        dpmdriver.detach_volume(connection_info, None, None)
-        mock_disconnect_volume.assert_called_once()
-
-    def test_attach_volume_Exception(self):
-        dummyvirtapi = None
-        dpmdriver = driver.DPMDriver(dummyvirtapi)
-
-        connection_info = {'driver_volume_type': 'Dummy_channel'}
-
-        self.assertRaises(exception.VolumeDriverNotFound,
-                          dpmdriver.attach_volume, None,
-                          connection_info, None, None)
-
-    def test_detach_volume_Exception(self):
-        dummyvirtapi = None
-        dpmdriver = driver.DPMDriver(dummyvirtapi)
-
-        connection_info = {'driver_volume_type': 'Dummy_channel'}
-
-        self.assertRaises(exception.VolumeDriverNotFound,
-                          dpmdriver.detach_volume,
-                          connection_info, None, None)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance,

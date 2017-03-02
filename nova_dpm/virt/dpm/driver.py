@@ -21,7 +21,6 @@ Supports DPM APIs for virtualization in z Systems
 import nova_dpm.conf
 
 from nova import context as context_object
-from nova import exception
 from nova.i18n import _
 from nova.objects import flavor as flavor_object
 from nova.virt import driver
@@ -32,15 +31,9 @@ from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
 from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
-from oslo_utils import importutils
 
 LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
-
-dpm_volume_drivers = [
-    'fibre_channel=nova_dpm.virt.dpm.volume.'
-    'fibrechannel.DpmFibreChannelVolumeDriver',
-]
 
 
 class DPMDriver(driver.ComputeDriver):
@@ -65,13 +58,7 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("HMC details %(zhmc)s %(userid)s"
                   % {'zhmc': zhmc, 'userid': userid})
 
-        self._initiator = None
-        self._fc_wwnns = None
-        self._fc_wwpns = None
-
         self.deleted_instance_wwpns_mapping = {}
-
-        self.volume_drivers = self._get_volume_drivers()
 
     def init_host(self, host):
         """Driver initialization of the hypervisor node"""
@@ -131,36 +118,6 @@ class DPMDriver(driver.ComputeDriver):
         # Refresh and check again.
         return nodename in self.get_available_nodes(refresh=True)
 
-    def attach_volume(self, context, connection_info, instance, mountpoint,
-                      disk_bus=None, device_type=None, encryption=None):
-
-        # There currently is no need for disk_info. I just left it in
-        # in case we need it in the future
-        disk_info = {}
-        self._connect_volume(connection_info, disk_info)
-
-    def detach_volume(self, connection_info, instance, mountpoint,
-                      encryption=None):
-
-        # There currently is no need for disk_dev. I just left it in
-        # in case we need it in the future
-        disk_dev = {}
-        self._disconnect_volume(connection_info, disk_dev)
-
-    def _get_volume_drivers(self):
-        driver_registry = dict()
-        for driver_str in dpm_volume_drivers:
-            driver_type, _sep, driver = driver_str.partition('=')
-            driver_class = importutils.import_class(driver)
-            driver_registry[driver_type] = driver_class(self._host)
-        return driver_registry
-
-    def _get_volume_driver(self, connection_info):
-        driver_type = connection_info.get('driver_volume_type')
-        if driver_type not in self.volume_drivers:
-            raise exception.VolumeDriverNotFound(driver_type=driver_type)
-        return self.volume_drivers[driver_type]
-
     def get_volume_connector(self, instance):
         """Get connector information for the instance for attaching to volumes.
 
@@ -203,14 +160,6 @@ class DPMDriver(driver.ComputeDriver):
         props['host'] = instance.uuid
 
         return props
-
-    def _connect_volume(self, connection_info, disk_info):
-        vol_driver = self._get_volume_driver(connection_info)
-        vol_driver.connect_volume(connection_info, disk_info)
-
-    def _disconnect_volume(self, connection_info, disk_dev):
-        vol_driver = self._get_volume_driver(connection_info)
-        vol_driver.disconnect_volume(connection_info, disk_dev)
 
     def list_instances(self):
 
