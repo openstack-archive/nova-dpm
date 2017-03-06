@@ -2,6 +2,7 @@
 Description=Autoconfigure Network Interfaces (pre-networking)
 DefaultDependencies=no
 Before=cloud-init-local.service
+After=local-fs-pre.target
 
 [Service]
 Type=oneshot
