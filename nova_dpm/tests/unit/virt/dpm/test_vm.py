@@ -49,18 +49,6 @@ class VmFunctionTestCase(TestCase):
         self.invalid_name = 'OpenStack-Instance-6511ee0f'
         self.cpc = fakezhmcclient.getFakeCPC()
 
-    def test_is_valid_partition_name(self):
-        self.assertTrue(vm.is_valid_partition_name(self.valid_name))
-        self.assertFalse(vm.is_valid_partition_name(self.invalid_name))
-
-    def test_partition_list(self):
-        partition_list = vm.cpcsubset_partition_list(self.cpc)
-        list = self.cpc.partitions.list()
-        length = len(list)
-        for i in range(length):
-            self.assertEqual(list[i].get_property('name'),
-                             partition_list[i].get_property('name'))
-
     @mock.patch.object(vm.PartitionInstance, 'get_partition',
                        return_value=None)
     def test_partition_destroy_partition_none(self, mock_get_part):
