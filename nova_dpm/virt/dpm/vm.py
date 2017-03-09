@@ -222,11 +222,9 @@ class PartitionInstance(object):
 
     def get_adapter_port_mappings(self):
         LOG.debug('Creating Adapter uris')
-        interface_mappings = CONF.dpm.physical_storage_adapter_mappings
         mapping = PhysicalAdapterModel(self.cpc)
-        for entry in interface_mappings:
-            adapter_uuid, port = (
-                PhysicalAdapterModel.parse_config_line(entry))
+        for entry in CONF.dpm.physical_storage_adapter_mappings:
+            adapter_uuid, port = entry
             adapter = mapping._get_adapter(adapter_uuid)
             mapping._validate_adapter_type(adapter)
             mapping._add_adapter_port(adapter_uuid, port)
@@ -252,15 +250,8 @@ class PartitionInstance(object):
 
     def get_boot_hba_uri(self):
         hbas = self.get_hba_uris()
-
-        adapter_uuid, port = (
-            PhysicalAdapterModel.parse_config_line(
-                # As because we are using multiple
-                # storage in configuration. So
-                # we will use one i.e first adapter
-                # in the list
-                CONF.dpm.physical_storage_adapter_mappings[0]))
-
+        # Using the first adapter in the config option for boot
+        adapter_uuid, port = CONF.dpm.physical_storage_adapter_mappings[0]
         hba_uri = None
 
         for hba in hbas:
@@ -489,14 +480,3 @@ class PhysicalAdapterModel(object):
         :return: list of adapter_port dict
         """
         return self._adapter_ports
-
-    @staticmethod
-    def parse_config_line(line):
-        result = line.split(":")
-        adapter_id = result[0]
-        # If no port-element-id was defined, default to 0
-        # result[1] can also be '' - handled by 'and result[1]'
-        port = int(result[1] if len(result) == 2 and result[1] else 0)
-        LOG.debug('Adapter ID: %(adapterid)s and Port: %(port)s'
-                  % {"adapterid": str(adapter_id), "port": str(port)})
-        return adapter_id, port
