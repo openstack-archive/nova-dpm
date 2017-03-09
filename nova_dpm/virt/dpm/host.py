@@ -39,12 +39,11 @@ HYPERVISOR_VERSION = 1000  # TODO(preethipy): Update with
 
 class Host(object):
 
-    def __init__(self, cpc, client):
+    def __init__(self, cpc):
 
         LOG.debug('Host initializing for cpcsubset %(cpcsubset_name)s'
                   % {'cpcsubset_name': CONF.host})
 
-        self._client = client
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
         # to be populated
