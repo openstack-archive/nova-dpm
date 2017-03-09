@@ -62,21 +62,18 @@ class DPMdriverInitHostTestCase(TestCase):
         self.flags(group="dpm", max_memory=512)
         self.dpmdriver.init_host(None)
 
-    @mock.patch.object(driver.LOG, 'debug')
-    def test_get_available_resource(self, mock_warning):
+    def test_get_available_resource(self):
         host_properties = self.dpmdriver.get_available_resource(None)
         self.assertEqual('cpc_2', host_properties['cpc_name'])
 
-    @mock.patch.object(driver.LOG, 'debug')
-    def test_invalid_mem_config(self, mock_warning):
+    def test_invalid_mem_config(self):
         self.flags(group="dpm", max_memory=2000)
 
         self.assertRaises(exception.ValidationError,
                           self.dpmdriver.init_host,
                           None)
 
-    @mock.patch.object(driver.LOG, 'debug')
-    def test_invalid_proc_config(self, mock_warning):
+    def test_invalid_proc_config(self):
         self.flags(group="dpm", max_processors=50)
 
         self.assertRaises(exception.ValidationError,
@@ -211,9 +208,8 @@ class DPMDriverInstanceTestCase(TestCase):
 
         cpc = self.client.cpcs.find(**{"object-id": "2"})
         self.dpmdriver._cpc = cpc
-        vm.CONF = mock.Mock()
-        vm.CONF.host = "fake-mini"
-        vm.CONF.dpm.physical_storage_adapter_mappings = "mapping"
+        self.flags(host="fake-mini")
+        self.flags(group="dpm", physical_storage_adapter_mappings="mapping")
 
         mock_instance = mock.Mock()
         mock_instance.uuid = "1"
