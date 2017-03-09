@@ -209,7 +209,6 @@ class DPMDriverInstanceTestCase(TestCase):
         cpc = self.client.cpcs.find(**{"object-id": "2"})
         self.dpmdriver._cpc = cpc
         self.flags(host="fake-mini")
-        self.flags(group="dpm", physical_storage_adapter_mappings="mapping")
 
         mock_instance = mock.Mock()
         mock_instance.uuid = "1"

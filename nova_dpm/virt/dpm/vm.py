@@ -222,11 +222,9 @@ class PartitionInstance(object):
 
     def get_adapter_port_mappings(self):
         LOG.debug('Creating Adapter uris')
-        interface_mappings = CONF.dpm.physical_storage_adapter_mappings
         mapping = PhysicalAdapterModel(self.cpc)
-        for entry in interface_mappings:
-            adapter_uuid, port = (
-                PhysicalAdapterModel.parse_config_line(entry))
+        for entry in CONF.dpm.physical_storage_adapter_mappings:
+            adapter_uuid, port = entry
             adapter = mapping._get_adapter(adapter_uuid)
             mapping._validate_adapter_type(adapter)
             mapping._add_adapter_port(adapter_uuid, port)

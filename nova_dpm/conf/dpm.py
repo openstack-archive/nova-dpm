@@ -15,6 +15,7 @@
 from os_dpm.config import config as os_dpm_conf
 from oslo_config import cfg
 
+from nova_dpm.conf.cfg import MultiStorageAdapterMappingOpt
 
 os_dpm_conf.DPM_GROUP.help += """
 
@@ -36,7 +37,7 @@ ALL_DPM_OPTS = [
     cfg.IntOpt('max_instances', help="""
     Maximum number of instances (partitions) that can be created for this
     OpenStack hypervisor host"""),
-    cfg.MultiStrOpt('physical_storage_adapter_mappings', help="""
+    MultiStorageAdapterMappingOpt('physical_storage_adapter_mappings', help="""
     Physical storage adapter with port details for hba creation"""),
     cfg.ListOpt('target_wwpn_ignore_list', default='', help="""
     list of target/remote wwpns can be used for example to exclude NAS/file
