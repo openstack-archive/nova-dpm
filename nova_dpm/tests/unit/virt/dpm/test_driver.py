@@ -67,7 +67,7 @@ class DPMdriverInitHostTestCase(TestCase):
         self.assertEqual('cpc_2', host_properties['cpc_name'])
 
     def test_invalid_mem_config(self):
-        self.flags(group="dpm", max_memory=2000)
+        self.flags(group="dpm", max_memory=3000)
 
         self.assertRaises(exception.ValidationError,
                           self.dpmdriver.init_host,
