@@ -20,6 +20,7 @@ from nova import exception
 from nova.objects import flavor as flavor_object
 from nova.test import TestCase
 from nova.virt import driver as basedriver
+from nova_dpm.tests.unit.config.test_types import VALID_DPM_OBJECT_ID
 from nova_dpm.tests.unit.virt.dpm import test_utils as utils
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import exceptions
@@ -209,7 +210,6 @@ class DPMDriverInstanceTestCase(TestCase):
         cpc = self.client.cpcs.find(**{"object-id": "2"})
         self.dpmdriver._cpc = cpc
         self.flags(host="fake-mini")
-        self.flags(group="dpm", physical_storage_adapter_mappings="mapping")
 
         mock_instance = mock.Mock()
         mock_instance.uuid = "1"
