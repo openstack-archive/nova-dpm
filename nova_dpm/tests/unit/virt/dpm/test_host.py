@@ -27,12 +27,12 @@ class HostTestCase(TestCase):
         super(HostTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
         self.session = utils.create_session_1()
-        self.client = zhmcclient.Client(self.session)
-        self.cpc = self.client.cpcs.find(**{"name": "cpc_2"})
+        client = zhmcclient.Client(self.session)
+        self.cpc = client.cpcs.find(**{"name": "cpc_2"})
         self.flags(host=utils.HOST)
         self.flags(group="dpm", max_processors=3)
         self.flags(group="dpm", max_memory=2048)
-        self.host = host.Host(self.cpc, self.client)
+        self.host = host.Host(self.cpc)
 
     def test_host_properties(self):
 
