@@ -15,6 +15,36 @@
 
 import zhmcclient_mock
 
+HOST = 'foo'
+PARTITION1 = {
+    'name': "OpenStack-" + HOST + "-6511ee0f-0d64-4392-b9e0-cdbea10a17c4",
+    'ifl-processors': 1,
+    'initial-memory': 512
+}
+
+PARTITION2 = {
+    'name': "OpenStack-" + HOST + "-6511ee0f-0d64-4392-b9e0-cdbea10a4444",
+    'ifl-processors': 2,
+    'initial-memory': 1024
+}
+
+PARTITION3 = {
+    'name': "OpenStack-" + HOST + "-6511ee0f-0d64-4392-b9e0-cdbea10accc4",
+    'ifl-processors': 1,
+    'initial-memory': 512
+}
+
+# Maximum processor used by any of the partition is 2
+# i.e - PARTITION2 is having max processor among above partitions
+MAX_PROC_USED = max(PARTITION1['ifl-processors'],
+                    PARTITION2['ifl-processors'],
+                    PARTITION3['ifl-processors'])
+
+# Total memory used by partitions created by openstack
+TOTAL_MEM_USED = (PARTITION1['initial-memory']
+                  + PARTITION2['initial-memory']
+                  + PARTITION3['initial-memory'])
+
 
 def create_session_1():
     session = zhmcclient_mock.FakedSession('fake-host', 'fake-hmc',
@@ -48,7 +78,7 @@ def create_session_1():
                     'dpm-enabled': True,
                     'description': 'CPC #2',
                     'processor-count-ifl': 10,
-                    'storage-customer': 1024,
+                    'storage-customer': 2048,
                 },
                 'partitions': [
                     {
@@ -58,6 +88,15 @@ def create_session_1():
                             'name': 'OpenStack-fake-mini-1',
                             'description': 'Partition #1 in CPC #2',
                         },
+                    },
+                    {
+                        'properties': PARTITION1
+                    },
+                    {
+                        'properties': PARTITION2
+                    },
+                    {
+                        'properties': PARTITION3
                     },
                 ],
                 'adapters': [
