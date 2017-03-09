@@ -46,19 +46,11 @@ class Host(object):
 
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
-        # to be populated
-        self._properties = None
 
         LOG.debug('Host initializing done')
 
     @property
     def properties(self):
-        LOG.debug('properties')
-        self._properties = self._get_host_poperties()
-        return self._properties
-
-    def _get_host_poperties(self):
-        LOG.debug('_get_host_properties')
         dict_mo = {
             "memory_mb": CONF.dpm.max_memory,
             "vcpus": CONF.dpm.max_processors,
