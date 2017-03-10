@@ -128,6 +128,15 @@ class DPMdriverInitHostTestCase(TestCase):
     def test_get_volume_connector(self, mock_get_partition):
         self.dpmdriver.get_volume_connector(mock.Mock())
 
+    def test_get_available_nodes(self):
+        self.flags(host="fake-mini")
+        nodes = self.dpmdriver.get_available_nodes()
+        self.assertEqual(nodes, ['fake-mini'])
+
+    def test_node_is_available(self):
+        self.flags(host="fake-mini")
+        self.assertTrue(self.dpmdriver.node_is_available('fake-mini'))
+
 
 class DPMdriverVolumeTestCase(TestCase):
 
@@ -231,3 +240,23 @@ class DPMDriverInstanceTestCase(TestCase):
         nics = partition.nics.list()
         self.assertEqual(nics[0].name, "OpenStack_Port_foo-id")
         self.assertEqual(nics[1].name, "OpenStack_Port_foo-id2")
+
+    def test_list_instances(self):
+        self.flags(host="fakemini")
+        cpc = self.client.cpcs.find(**{"object-id": "3"})
+        self.dpmdriver._cpc = cpc
+        self.assertTrue(
+            'OpenStack-fakemini-38400000-8cf0-11bd-b23e-10b96e4ef00d'
+            in self.dpmdriver.list_instances())
+
+    def test_get_info(self):
+        self.flags(host="fakemini")
+        cpc = self.client.cpcs.find(**{"object-id": "3"})
+        self.dpmdriver._cpc = cpc
+
+        mock_instance = mock.Mock()
+        mock_instance.uuid = "38400000-8cf0-11bd-b23e-10b96e4ef00d"
+
+        partitionInfo = self.dpmdriver.get_info(mock_instance)
+        self.assertEqual(partitionInfo.mem, 512)
+        self.assertEqual(partitionInfo.num_cpu, 1)

@@ -121,6 +121,65 @@ def create_session_1():
                     },
                 ],
             },
+            {
+                'properties': {
+                    # object-id is auto-generated
+                    # object-uri is auto-generated
+                    'name': 'cpc_3',
+                    'dpm-enabled': True,
+                    'description': 'CPC #3',
+                    'processor-count-ifl': 10,
+                    'storage-customer': 1024,
+                },
+                'partitions': [
+                    {
+                        'properties': {
+                            # object-id is auto-generated
+                            # object-uri is auto-generated
+                            'name':
+                                'OpenStack-fakemini-38400000-'
+                                '8cf0-11bd-b23e-10b96e4ef00d',
+                            'description': 'Partition #1 in CPC #2',
+                            'initial-memory': 512,
+                            'ifl-processors': 1,
+                        },
+
+                        'hbas': [
+                            {
+                                'properties': {
+                                    'name': 'hba1',
+                                    'wwpn': '0x5565656565656565',
+                                    'adapter-port-uri':
+                                        '/api/cpcs/3/adapters/3',
+                                    'hba-uris': 'test-hba',
+                                }
+                            },
+                        ],
+                    },
+
+                ],
+                'adapters': [
+                    {
+                        'properties': {
+                            # object-id is auto-generated
+                            # object-uri is auto-generated
+                            'name': 'osa_1',
+                            'description': 'OSA #1 in CPC #3',
+                            'type': 'osd',
+                        },
+                        'ports': [
+                            {
+                                'properties': {
+                                    # element-id is auto-generated
+                                    # element-uri is auto-generated
+                                    'name': 'osa_1_port_1',
+                                    'description': 'Port #1 of OSA #1',
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
         ],
     })
     return session
