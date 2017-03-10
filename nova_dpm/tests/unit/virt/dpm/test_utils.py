@@ -120,6 +120,25 @@ def create_session_1():
                             },
                         ],
                     },
+                    {
+                        'properties': {
+                            # object-id is auto-generated
+                            # object-uri is auto-generated
+                            'name': 'fcp_1',
+                            'description': 'FCP #1 in CPC #2',
+                            'type': 'fcp',
+                        },
+                        'ports': [
+                            {
+                                'properties': {
+                                    # element-id is auto-generated
+                                    # element-uri is auto-generated
+                                    'name': 'fcp_1_port_1',
+                                    'description': 'Port #1 of FCP #1',
+                                },
+                            },
+                        ],
+                    },
                 ],
             },
             {
