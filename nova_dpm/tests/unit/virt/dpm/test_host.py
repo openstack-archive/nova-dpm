@@ -45,6 +45,7 @@ class HostTestCase(TestCase):
         self.assertEqual(utils.MAX_PROC_USED, host_properties['vcpus_used'])
         self.assertEqual(utils.TOTAL_MEM_USED,
                          host_properties['memory_mb_used'])
+        self.assertEqual(2013001, host_properties['hypervisor_version'])
         self.assertEqual('PRSM', host_properties['hypervisor_type'])
         cpu_info = host_properties['cpu_info']
         cpu_info_dict = json.loads(cpu_info)
@@ -58,3 +59,7 @@ class HostTestCase(TestCase):
     def test_mem_used(self):
         memory_used = self.host._get_mem_used()
         self.assertEqual(utils.TOTAL_MEM_USED, memory_used)
+
+    def test_get_version_in_int(self):
+        version = self.host._get_version_in_int()
+        self.assertEqual(2013001, version)

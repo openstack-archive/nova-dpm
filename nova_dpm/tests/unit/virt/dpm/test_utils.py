@@ -79,6 +79,7 @@ def create_session_1():
                     'description': 'CPC #2',
                     'processor-count-ifl': 10,
                     'storage-customer': 2048,
+                    'se-version': '2.13.1'
                 },
                 'partitions': [
                     {
