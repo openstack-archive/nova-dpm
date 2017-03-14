@@ -260,3 +260,15 @@ class DPMDriverInstanceTestCase(TestCase):
         partitionInfo = self.dpmdriver.get_info(mock_instance)
         self.assertEqual(partitionInfo.mem, 512)
         self.assertEqual(partitionInfo.num_cpu, 1)
+
+    @mock.patch.object(vm.PartitionInstance, '_loop_status_update')
+    def test_destroy(self, mock_loop_status):
+        self.flags(host="fakemini")
+        cpc = self.client.cpcs.find(**{"object-id": "3"})
+
+        mock_instance = mock.Mock()
+        mock_instance.uuid = "38400000-8cf0-11bd-b23e-10b96e4ef00d"
+
+        self.dpmdriver._cpc = cpc
+        self.dpmdriver.destroy(mock.Mock, mock_instance,
+                               mock.Mock)
