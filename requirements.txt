@@ -4,4 +4,4 @@
 
 pbr>=2.0.0 # Apache-2.0
 os-dpm>=1.0.0 # Apache-2.0
-zhmcclient>=0.9.0 # Apache 2.0 License
+zhmcclient>=0.11.0 # Apache 2.0 License
