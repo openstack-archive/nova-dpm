@@ -310,6 +310,8 @@ class PartitionInstance(object):
             # on DPM is fixed to return correct status on API return
             self._loop_status_update(result, 5, 'stopped')
             if (self.partition.properties['status'] == 'stopped'):
+                self.instance.vm_state = vm_states.STOPPED
+                self.instance.save()
                 self.partition.delete()
             else:
                 errormsg = (_("Partition - %(partition)s status "
