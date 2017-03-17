@@ -71,7 +71,7 @@ Creating DPM Images
     :maxdepth: 2
 
     image/rhel7/rhel7_image
-
+    image/ubuntu/ubuntu
 
 Contributing to the project
 ===========================
