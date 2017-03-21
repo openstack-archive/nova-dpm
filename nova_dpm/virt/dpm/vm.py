@@ -26,7 +26,6 @@ from nova.compute import task_states
 from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
-from nova.i18n import _LE
 from nova_dpm import conf
 from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
@@ -466,9 +465,9 @@ class PhysicalAdapterModel(object):
             # whole list of items is retrieved
             return self._cpc.adapters.find(**{'object-id': adapter_id})
         except NotFound:
-            LOG.error(_LE("Configured adapter %s could not be "
-                          "found. Please update the agent "
-                          "configuration. Agent terminated!"),
+            LOG.error("Configured adapter %s could not be "
+                      "found. Please update the agent "
+                      "configuration. Agent terminated!",
                       adapter_id)
             sys.exit(1)
 
@@ -476,7 +475,7 @@ class PhysicalAdapterModel(object):
     def _validate_adapter_type(adapter):
         adapt_type = adapter.get_property('type')
         if adapt_type not in ['fcp']:
-            LOG.error(_LE("Configured adapter %s is not an fcp "),
+            LOG.error("Configured adapter %s is not an fcp ",
                       adapter)
             sys.exit(1)
 
