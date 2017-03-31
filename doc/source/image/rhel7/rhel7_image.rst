@@ -171,11 +171,11 @@ Test-It
 +++++++
 
 Run it once to see if things are working
-   
+
  `cloud-init --init`
 
  .. note::
-     
+
         This might take a few minutes, as cloud-init tries to access various network datasources, which
         probably are not available in your image build environment.But they should be available in your
         OpenStack cloud. For debugging you might need to set "datasource_list: [ ConfigDrive, None ]" in cloud.cfg.
@@ -195,6 +195,8 @@ Add DPM-Guest Tools
       cp nova-dpm/dpm_guest_tools/usr/bin/autoconfigure_networking.sh  /usr/bin/autoconfigure_networking.sh
 
       cp nova-dpm/dpm_guest_tools/usr/lib/systemd/system/autoconfigure_networking.service  /usr/lib/systemd/system/autoconfigure_networking.service
+
+      cp nova-dpm/dpm_guest_tools/usr/bin/dpm_guest_image_tools_common  /usr/bin/
 
       cp nova-dpm/dpm_guest_tools/usr/bin/setmac.sh  /usr/bin/setmac.sh
 
