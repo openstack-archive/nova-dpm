@@ -60,8 +60,8 @@ class DPMDriver(driver.ComputeDriver):
         userid = CONF.dpm.hmc_username
         password = CONF.dpm.hmc_password
 
-        self._client = client_proxy.get_client_for_sesion(zhmc, userid,
-                                                          password)
+        self._client = client_proxy.get_client_for_session(zhmc, userid,
+                                                           password)
         LOG.debug("HMC details %(zhmc)s %(userid)s"
                   % {'zhmc': zhmc, 'userid': userid})
 
