@@ -47,8 +47,8 @@ def import_zhmcclient():
     return zhmcclient
 
 
-def get_client_for_sesion(zhmc, userid, password):
-    LOG.debug("get_client_for_sesion")
+def get_client_for_session(zhmc, userid, password):
+    LOG.debug("get_client_for_session")
     zhmcclient = import_zhmcclient()
     session = zhmcclient.Session(zhmc, userid, password)
     return zhmcclient.Client(session)
