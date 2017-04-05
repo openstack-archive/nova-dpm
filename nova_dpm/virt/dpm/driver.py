@@ -65,10 +65,6 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("HMC details %(zhmc)s %(userid)s"
                   % {'zhmc': zhmc, 'userid': userid})
 
-        self._initiator = None
-        self._fc_wwnns = None
-        self._fc_wwpns = None
-
         self.deleted_instance_wwpns_mapping = {}
 
         self.volume_drivers = self._get_volume_drivers()
