@@ -57,6 +57,18 @@ Release Management
 Getting Started
 ---------------
 
+Milestone release
++++++++++++++++++
+
+* Checkout the master branch
+* Create a tag ``<version>.0b<milestone>``, e.g. ``1.0.0.0b1`` for the first
+  milestone of the Ocata release. For more details, see :ref:`tag_releases`.
+* Push the tag along :ref:`tag_releases`.
+* Update the launchpad project
+
+  * Release the corresponding milestone along :ref:`release_milestone`.
+
+
 First release candidate
 +++++++++++++++++++++++
 
