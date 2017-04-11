@@ -140,7 +140,7 @@ def create_session_1():
                             'name':
                                 'OpenStack-fakemini-38400000-'
                                 '8cf0-11bd-b23e-10b96e4ef00d',
-                            'description': 'Partition #1 in CPC #2',
+                            'description': 'Partition #1 in CPC #3',
                             'initial-memory': 512,
                             'ifl-processors': 1,
                         },
