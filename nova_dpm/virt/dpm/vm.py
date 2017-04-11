@@ -36,8 +36,6 @@ from zhmcclient._exceptions import NotFound
 CONF = conf.CONF
 OPENSTACK_PREFIX = 'OpenStack'
 CPCSUBSET_PREFIX = 'CPCSubset='
-UUID_PATTERN = re.compile(
-    r'^[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}$', re.IGNORECASE)
 
 
 DPM_TO_NOVA_STATE = {
@@ -77,12 +75,13 @@ def is_valid_partition_name(name):
     :param name: name of partition
     :return: bool
     """
-    split_name = name.split('-', 2)
-    if len(split_name) > 2:
-        if split_name[0] == OPENSTACK_PREFIX:
-            if split_name[1] == CONF.host:
-                if UUID_PATTERN.match(split_name[2]):
-                    return True
+    PARTITION_NAME_REGX = (
+        re.compile(OPENSTACK_PREFIX +
+                   "-" +
+                   CONF.host +
+                   "-[\da-f]{8}-([\da-f]{4}-){3}[\da-f]{12}"))
+    if PARTITION_NAME_REGX.match(name):
+        return True
     return False
 
 
