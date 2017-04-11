@@ -77,12 +77,13 @@ def is_valid_partition_name(name):
     :param name: name of partition
     :return: bool
     """
-    split_name = name.split('-', 2)
-    if len(split_name) > 2:
-        if split_name[0] == OPENSTACK_PREFIX:
-            if split_name[1] == CONF.host:
-                if UUID_PATTERN.match(split_name[2]):
-                    return True
+    split_name = name.rsplit('-', 5)
+    length = len(split_name[0].split('-'))
+    uuid_split = name.split('-', length)
+    if len(uuid_split) > length:
+        if split_name[0] == OPENSTACK_PREFIX + '-' + CONF.host:
+            if UUID_PATTERN.match(uuid_split[length]):
+                return True
     return False
 
 
