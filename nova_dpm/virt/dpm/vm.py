@@ -367,13 +367,8 @@ class PartitionInstance(object):
         return bootProperties
 
     def get_partition(self):
-        partition = None
-        partition_manager = self.cpc.partitions
-        partition_lists = partition_manager.list(
-            full_properties=False)
-        for part in partition_lists:
-            if part.properties['name'] == self.partition_name:
-                partition = part
+        partition = self.cpc.partitions.find(**{
+            "name": self.partition_name})
         return partition
 
 
