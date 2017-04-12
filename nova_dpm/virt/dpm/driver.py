@@ -62,8 +62,7 @@ class DPMDriver(driver.ComputeDriver):
 
         self._client = client_proxy.get_client_for_session(zhmc, userid,
                                                            password)
-        LOG.debug("HMC details %(zhmc)s %(userid)s"
-                  % {'zhmc': zhmc, 'userid': userid})
+        LOG.debug("HMC details %s %s", zhmc, userid)
 
         self.deleted_instance_wwpns_mapping = {}
 
@@ -75,11 +74,9 @@ class DPMDriver(driver.ComputeDriver):
 
         self._cpc = self._client.cpcs.find(**{
             "object-id": CONF.dpm.cpc_object_id})
-        LOG.debug("Matching hypervisor found %(cpcsubset_name)s for object-id "
-                  "%(cpcid)s and CPC %(cpcname)s" %
-                  {'cpcsubset_name': CONF.host,
-                   'cpcid': CONF.dpm.cpc_object_id,
-                   'cpcname': self._cpc.properties['name']})
+        LOG.debug("Matching hypervisor found %s for object-id %s and CPC %s",
+                  CONF.host, CONF.dpm.cpc_object_id,
+                  self._cpc.properties['name'])
 
         utils.valide_host_conf(self._cpc)
         self._host = Host.Host(self._cpc)
@@ -111,9 +108,8 @@ class DPMDriver(driver.ComputeDriver):
         """
         # TODO(preethipy): Refresh parameter should be handled to fetch
         # updated nodenames
-        LOG.debug("get_available_nodes return node %(cpcsubset_name)s" %
-                  {'cpcsubset_name': self._host.properties[
-                      "hypervisor_hostname"]})
+        LOG.debug("get_available_nodes returns node %s",
+                  self._host.properties["hypervisor_hostname"])
         nodenames = [self._host.properties["hypervisor_hostname"]]
 
         return nodenames
@@ -309,7 +305,7 @@ class DPMDriver(driver.ComputeDriver):
             flavor = (
                 flavor_object.Flavor.get_by_id(context,
                                                instance.instance_type_id))
-        LOG.debug("Flavor = %(flavor)s" % {'flavor': flavor})
+        LOG.debug("Flavor = %s", flavor)
 
         inst = vm.PartitionInstance(instance, self._cpc, flavor)
         inst.create(inst.properties())
@@ -344,8 +340,8 @@ class DPMDriver(driver.ComputeDriver):
 
         hba_uri = inst.get_boot_hba_uri()
 
-        LOG.debug("HBA boot uri %(uri)s for the instance %(name)s"
-                  % {'uri': hba_uri, 'name': instance.hostname})
+        LOG.debug("HBA boot uri %s for the instance %s", hba_uri,
+                  instance.hostname)
 
         target_wwpn, lun = self.get_fc_boot_props(
             block_device_info, inst)
@@ -363,8 +359,7 @@ class DPMDriver(driver.ComputeDriver):
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
 
-        LOG.debug("Block device mapping %(block_device_map)s"
-                  % {'block_device_map': str(block_device_mapping)})
+        LOG.debug("Block device mapping %s", str(block_device_mapping))
 
         wwpns = inst.get_partition_wwpns()
 
@@ -411,8 +406,7 @@ class DPMDriver(driver.ComputeDriver):
         target_wwpn = (target_wwpns[0]
                        if len(target_wwpns) > 0 else '')
 
-        LOG.debug("Returning valid TargetWWPN %(target_wwpn)s" %
-                  {'target_wwpn': target_wwpn})
+        LOG.debug("Returning valid target WWPN %s", target_wwpn)
         return target_wwpn
 
     def destroy(self, context, instance, network_info, block_device_info=None,

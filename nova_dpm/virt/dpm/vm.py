@@ -185,11 +185,9 @@ class PartitionInstance(object):
         }
         LOG.debug("Creating NIC %s", dpm_nic_dict)
         nic_interface = self.partition.nics.create(dpm_nic_dict)
-        LOG.debug("NIC created successfully %(nic_name)s "
-                  "with URI %(nic_uri)s"
-                  % {'nic_name': nic_interface.properties['name'],
-                     'nic_uri': nic_interface.properties[
-                         'virtual-switch-uri']})
+        LOG.debug("NIC created successfully %s with URI %s",
+                  nic_interface.properties['name'],
+                  nic_interface.properties['virtual-switch-uri'])
         return nic_interface
 
     def attach_hbas(self):
@@ -210,14 +208,10 @@ class PartitionInstance(object):
                                     str(adapter_port)
             }
             hba = self.partition.hbas.create(dpm_hba_dict)
-            LOG.debug("HBA created successfully %(hba_name)s "
-                      "with URI %(hba_uri)s and adapterporturi"
-                      "%(adapter-port-uri)s"
-                      % {'hba_name': hba.properties['name'],
-                         'hba_uri': hba.properties[
-                             'element-uri'],
-                         'adapter-port-uri': hba.properties[
-                             'adapter-port-uri']})
+            LOG.debug("HBA created successfully %s "
+                      "with URI %s and adapter port URI %s",
+                      hba.properties['name'], hba.properties['element-uri'],
+                      hba.properties['adapter-port-uri'])
 
     def get_adapter_port_mappings(self):
         LOG.debug('Creating Adapter uris')
@@ -230,8 +224,8 @@ class PartitionInstance(object):
         return mapping
 
     def _build_resources(self, context, instance, block_device_mapping):
-        LOG.debug('Start building block device mappings for instance.',
-                  instance=self.instance)
+        LOG.debug('Start building block device mappings for instance %s',
+                  self.instance)
         resources = {}
         instance.vm_state = vm_states.BUILDING
         instance.task_state = task_states.BLOCK_DEVICE_MAPPING
