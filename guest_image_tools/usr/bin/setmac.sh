@@ -21,6 +21,8 @@
 # The format of the cmdline parameters must be
 #     <devno>,<port>,<mac>;
 
+# Exit on error
+set -e
 
 # Matches MAC in format: xxxxxxxxxxxx
 REGEX_MAC="[0-9A-Fa-f]{12}"
