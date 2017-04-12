@@ -356,16 +356,6 @@ class PartitionInstance(object):
             time.sleep(2)
             iterations -= 1
 
-    def get_boot_properties(self):
-        LOG.debug('Retrieving boot properties for partition')
-        # TODO(preethipy): update the boot-device to storage-adapter
-        # TODO(preethipy): update the boot-storage-device with valid
-        # HBA uri
-        # TODO(preethipy): update boot-logical-unit-number and
-        # boot-world-wide-port-name
-        bootProperties = {'boot-device': 'test-operating-system'}
-        return bootProperties
-
     def get_partition(self):
         """Get the zhmcclient partition object for this PartitionInstance
 
