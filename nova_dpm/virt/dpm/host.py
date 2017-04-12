@@ -40,8 +40,7 @@ class Host(object):
 
     def __init__(self, cpc):
 
-        LOG.debug('Host initializing for cpcsubset %(cpcsubset_name)s'
-                  % {'cpcsubset_name': CONF.host})
+        LOG.debug('Host initializing for cpcsubset %s', CONF.host)
 
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
