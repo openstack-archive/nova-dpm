@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import requests.packages.urllib3
-import zhmcclient
-import zhmcclient_mock
-
+from nova.compute import power_state
 from nova.objects import flavor as flavor_obj
 from nova.objects import instance as instance_obj
 from nova.test import TestCase
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
+import requests.packages.urllib3
+import zhmcclient
+import zhmcclient_mock
 
 
 def fake_session():
@@ -33,6 +33,14 @@ def fake_session():
         'dpm-enabled': True,
         'processor-count-ifl': 10,
         'storage-customer': 2048,
+    })
+    cpc1.partitions.add({
+        'name': 'OpenStack-foo-6511ee0f-0d64-4392-b9e0-aaaaaaaaaaaa',
+        'description': 'OpenStack CPCSubset=foo',
+        'initial-memory': 1,
+        'status': 'ACTIVE',
+        'maximum-memory': 512,
+        'ifl-processors': 3
     })
     adapter1 = cpc1.adapters.add({
         'object-id': '6511ee0f-0d64-4392-b9e0-cdbea10a17c3',
@@ -284,3 +292,35 @@ class PhysicalAdapterModelTestCase(TestCase):
         self.assertEqual(
             port,
             self.phycal_adapter._adapter_ports[0]['port'])
+
+
+class PartitionInstanceInfoTestCase(TestCase):
+
+    def setUp(self):
+        super(PartitionInstanceInfoTestCase, self).setUp()
+        requests.packages.urllib3.disable_warnings()
+        self.session = fake_session()
+        self.client = zhmcclient.Client(self.session)
+        self.cpcs = self.client.cpcs.list()
+        self.flags(host="foo")
+        self.instance = instance_obj.Instance()
+        self.instance.uuid = '6511ee0f-0d64-4392-b9e0-aaaaaaaaaaaa'
+        self.cpc = self.client.cpcs.find(**{"name": "cpc_1"})
+        # Using Partition1 of fake cpc#1
+        # vm.PartitionInstanceInfo class instance to get the information
+        # of the status,memory etc..,
+
+        self.instance_partition = vm.PartitionInstanceInfo(
+            self.instance, self.cpc)
+
+    def test_state(self):
+        self.assertEqual(power_state.RUNNING, self.instance_partition.state)
+
+    def test_mem(self):
+        self.assertEqual(1, self.instance_partition.mem)
+
+    def test_max_mem(self):
+        self.assertEqual(512, self.instance_partition.max_mem)
+
+    def test_num_cpu(self):
+        self.assertEqual(3, self.instance_partition.num_cpu)
