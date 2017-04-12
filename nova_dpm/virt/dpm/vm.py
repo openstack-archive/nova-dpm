@@ -367,14 +367,9 @@ class PartitionInstance(object):
         return bootProperties
 
     def get_partition(self):
-        """Get the zhmcclient partition object for this PartitionInstance
-
-        returns: zhmcclient partition object or None if not found
-        """
-        try:
-            return self.cpc.partitions.find(name=self.partition_name)
-        except NotFound:
-            return None
+        partition = self.cpc.partitions.find(**{
+            "name": self.partition_name})
+        return partition
 
 
 class PartitionInstanceInfo(object):
