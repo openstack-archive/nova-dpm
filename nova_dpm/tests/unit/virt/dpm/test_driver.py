@@ -80,6 +80,11 @@ class DPMdriverInitHostTestCase(TestCase):
         self.flags(group="dpm", max_memory=512)
         self.dpmdriver.init_host(None)
 
+    def test_cpc_not_exists(self):
+        self.flags(group="dpm", cpc_object_id="abc")
+        self.assertRaises(SystemExit,
+                          self.dpmdriver.init_host, None)
+
     def test_get_available_resource(self):
         host_properties = self.dpmdriver.get_available_resource(None)
         self.assertEqual('cpc_1', host_properties['cpc_name'])
