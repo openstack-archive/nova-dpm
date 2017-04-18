@@ -33,6 +33,7 @@ from nova_dpm.virt.dpm import utils
 from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
 from oslo_utils import importutils
+from zhmcclient._exceptions import NotFound
 
 LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
@@ -71,9 +72,16 @@ class DPMDriver(driver.ComputeDriver):
     def init_host(self, host):
         """Driver initialization of the hypervisor node"""
         LOG.debug("init_host")
+        try:
+            self._cpc = self._client.cpcs.find(**{
+                "object-id": CONF.dpm.cpc_object_id})
+        except NotFound:
+            LOG.error("Matching hypervisor %s not found for object-id %s "
+                      "and username %s on HMC %s",
+                      CONF.host, CONF.dpm.cpc_object_id,
+                      CONF.dpm.hmc_username, CONF.dpm.hmc)
+            return None
 
-        self._cpc = self._client.cpcs.find(**{
-            "object-id": CONF.dpm.cpc_object_id})
         LOG.debug("Matching hypervisor found %s for object-id %s and CPC %s",
                   CONF.host, CONF.dpm.cpc_object_id,
                   self._cpc.properties['name'])
