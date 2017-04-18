@@ -49,7 +49,7 @@ def valide_host_conf(cpc):
                       "object-id %(cpcid)s and CPC name %(cpcname)s")
                     % {'config_mem': CONF.dpm.max_processors,
                        'cpcsubset_name': CONF.host,
-                       'max_mem': cpc.get_property('processor-count-ifl'),
+                       'max_mem': cpc.get_property('storage-customer'),
                        'cpcid': CONF.dpm.cpc_object_id,
                        'cpcname': cpc.get_property('name')})
         raise exception.ValidationError(errormsg)
