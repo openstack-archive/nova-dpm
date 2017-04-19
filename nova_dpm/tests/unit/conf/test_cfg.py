@@ -67,7 +67,7 @@ class TestStorageAdapterMappingOpt(TestCase):
         mapping = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa:0"]
         opt = MultiStorageAdapterMappingOpt("mapping")
         cfg.CONF.register_opt(opt)
-        self.flags(mapping=mapping)
+        cfg.CONF.set_override("mapping", mapping, enforce_type=True)
         self.assertEqual([("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "0")],
                          cfg.CONF.mapping)
 
@@ -76,7 +76,7 @@ class TestStorageAdapterMappingOpt(TestCase):
                    "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb:1"]
         opt = MultiStorageAdapterMappingOpt("mapping")
         cfg.CONF.register_opt(opt)
-        self.flags(mapping=mapping)
+        cfg.CONF.set_override("mapping", mapping, enforce_type=True)
         expected_mapping = [
             ("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "0"),
             ("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "1")]

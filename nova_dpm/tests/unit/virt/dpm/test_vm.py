@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_config import cfg
+
 from nova.compute import power_state
 from nova.objects import flavor as flavor_obj
 from nova.objects import instance as instance_obj
@@ -121,7 +123,8 @@ class VmPartitionInstanceTestCase(TestCase):
         self.port_element_id = adapter.ports.list()[0].get_property(
             'element-id')
         storage = self.adapter_object_id + ":" + self.port_element_id
-        self.flags(group="dpm", physical_storage_adapter_mappings=[storage])
+        cfg.CONF.set_override("physical_storage_adapter_mappings", [storage],
+                              group="dpm", enforce_type=True)
         dpm_hba_dict = {
             "name": "OpenStack_Port_" + self.adapter_object_id +
                     "_" + str(self.port_element_id),
