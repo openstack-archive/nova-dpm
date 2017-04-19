@@ -30,3 +30,7 @@ class BootOsSpecificParametersPropertyExceededError(NovaException):
     """The boot-os-specific-parameters property would exceed the allowed max"""
     msg_fmt = _("Exceeded the maximum len for the partitions "
                 "'boot-os-specific-parameters' property.")
+
+
+class BootFromImageNotSupported(NovaException):
+    msg_fmt = _("Boot from image is not supported in nova-dpm.")
