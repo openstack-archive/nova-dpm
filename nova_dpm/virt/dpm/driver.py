@@ -359,6 +359,8 @@ class DPMDriver(driver.ComputeDriver):
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
 
+        self._validate_volume_type(block_device_mapping)
+
         LOG.debug("Block device mapping %s", str(block_device_mapping))
 
         wwpns = inst.get_partition_wwpns()
@@ -408,6 +410,13 @@ class DPMDriver(driver.ComputeDriver):
 
         LOG.debug("Returning valid target WWPN %s", target_wwpn)
         return target_wwpn
+
+    def _validate_volume_type(self, bdms):
+        for bdm in bdms:
+            vol_type = bdm['connection_info']['driver_volume_type']
+            if vol_type != 'fibre_channel':
+                raise exceptions.UnsupportedVolumeTypeException(
+                    vol_type=vol_type)
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):

@@ -95,6 +95,34 @@ class DPMdriverInitHostTestCase(TestCase):
         self.assertEqual(target_wwpn, '500507680B214AC1')
         self.assertEqual(lun, '0')
 
+    def test_validate_volume_type_unsupported(self):
+
+        bdms = [
+            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
+        self.assertRaises(exceptions.UnsupportedVolumeTypeException,
+                          self.dpmdriver._validate_volume_type, bdms)
+
+        bdms = [
+            {'connection_info': {'driver_volume_type': 'fake_vol_type'}},
+            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
+        self.assertRaises(exceptions.UnsupportedVolumeTypeException,
+                          self.dpmdriver._validate_volume_type, bdms)
+
+        bdms = [
+            {'connection_info': {'driver_volume_type': 'fibre_channel'}},
+            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
+        self.assertRaises(exceptions.UnsupportedVolumeTypeException,
+                          self.dpmdriver._validate_volume_type, bdms)
+
+    def test_validate_volume_type_supported(self):
+        bdms = [
+            {'connection_info': {'driver_volume_type': 'fibre_channel'}},
+            {'connection_info': {'driver_volume_type': 'fibre_channel'}}]
+        try:
+            self.dpmdriver._validate_volume_type, bdms
+        except exceptions.UnsupportedVolumeTypeException:
+            raise exceptions.UnsupportedVolumeTypeException
+
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance,
                        'get_partition_wwpns', return_value=[PARTITION_WWPN])
