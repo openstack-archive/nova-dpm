@@ -363,6 +363,9 @@ class DPMDriver(driver.ComputeDriver):
         block_device_mapping = driver.block_device_info_get_mapping(
             block_device_info)
 
+        if len(block_device_mapping) is 0:
+            raise Exception("Block device mapping is Empty")
+
         LOG.debug("Block device mapping %(block_device_map)s"
                   % {'block_device_map': str(block_device_mapping)})
 
@@ -379,6 +382,22 @@ class DPMDriver(driver.ComputeDriver):
         partition_wwpn = wwpns[0]
 
         mapped_block_device = block_device_mapping[0]
+
+        if 'connection_info' not in mapped_block_device:
+            raise Exception("No connection_info found from cinder")
+
+        if 'driver_volume_type' not in mapped_block_device['connection_info']:
+            raise Exception(
+                'Driver volume type in not available'
+                ' in connection_info from cinder')
+
+        vol_type = (
+            mapped_block_device['connection_info']['driver_volume_type'])
+        if vol_type is not 'fibre_channel':
+            raise Exception(
+                'Driver volume type is not Fiber Channel.'
+                ' It is of type %(vol_type)s'
+                % {'vol_type': vol_type})
 
         host_wwpns = (mapped_block_device['connection_info']
                       ['connector']['wwpns'])
