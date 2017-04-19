@@ -304,6 +304,10 @@ class DPMDriver(driver.ComputeDriver):
 
     def prep_for_spawn(self, context, instance,
                        flavor=None):
+
+        if instance.image_ref != '':
+            raise exceptions.UnsupportedBootType()
+
         if not flavor:
             context = context_object.get_admin_context(read_deleted='yes')
             flavor = (
