@@ -98,6 +98,37 @@ class DPMdriverInitHostTestCase(TestCase):
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance,
                        'get_partition_wwpns', return_value=[PARTITION_WWPN])
+    @mock.patch.object(basedriver, 'block_device_info_get_mapping')
+    def test_get_fc_boot_props_exceptions(self,
+                                          mock_block_device,
+                                          mock_get_partition_wwpns,
+                                          mock_get_partition):
+        inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
+
+        mock_block_device.return_value = []
+        self.assertRaises(
+            Exception,
+            self.dpmdriver.get_fc_boot_props, mock.Mock(), inst)
+
+        mock_block_device.return_value = [{}]
+        self.assertRaises(
+            Exception,
+            self.dpmdriver.get_fc_boot_props, mock.Mock(), inst)
+
+        mock_block_device.return_value = [{'connection_info': {}}]
+        self.assertRaises(
+            Exception,
+            self.dpmdriver.get_fc_boot_props, mock.Mock(), inst)
+
+        mock_block_device.return_value = [
+            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
+        self.assertRaises(
+            Exception,
+            self.dpmdriver.get_fc_boot_props, mock.Mock(), inst)
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    @mock.patch.object(vm.PartitionInstance,
+                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
     @mock.patch.object(basedriver, 'block_device_info_get_mapping',
                        return_value=BLOCK_DEVICE)
     def test_get_fc_boot_props_ignore_list(self, mock_block_device,
