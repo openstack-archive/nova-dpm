@@ -30,3 +30,8 @@ class BootOsSpecificParametersPropertyExceededError(NovaException):
     """The boot-os-specific-parameters property would exceed the allowed max"""
     msg_fmt = _("Exceeded the maximum len for the partitions "
                 "'boot-os-specific-parameters' property.")
+
+
+class UnsupportedVolumeTypeException(NovaException):
+    msg_fmt = _("Driver volume type"
+                " %(vol_type)s is not supported by nova-dpm")
