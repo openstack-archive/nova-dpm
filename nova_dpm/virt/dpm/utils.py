@@ -22,8 +22,8 @@ LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
 
 
-def valide_host_conf(cpc):
-    LOG.debug('valide_host_conf')
+def validate_host_conf(cpc):
+    LOG.debug('validate_host_conf')
     if not cpc.dpm_enabled:
         # TODO(preethipy): Exception infrastructure to be finalized
         raise Exception("Host not in DPM mode")

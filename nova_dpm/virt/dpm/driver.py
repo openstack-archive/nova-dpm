@@ -81,7 +81,7 @@ class DPMDriver(driver.ComputeDriver):
                    'cpcid': CONF.dpm.cpc_object_id,
                    'cpcname': self._cpc.properties['name']})
 
-        utils.valide_host_conf(self._cpc)
+        utils.validate_host_conf(self._cpc)
         self._host = Host.Host(self._cpc)
 
     def get_available_resource(self, nodename):
