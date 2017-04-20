@@ -192,15 +192,15 @@ Add DPM-Guest Tools
 
   ::
 
-      cp nova-dpm/dpm_guest_tools/usr/bin/autoconfigure_networking.sh  /usr/bin/autoconfigure_networking.sh
+      cp nova-dpm/guest_image_tools/usr/bin/autoconfigure_networking.sh  /usr/bin/autoconfigure_networking.sh
 
-      cp nova-dpm/dpm_guest_tools/usr/lib/systemd/system/autoconfigure_networking.service  /usr/lib/systemd/system/autoconfigure_networking.service
+      cp nova-dpm/guest_image_tools/usr/lib/systemd/system/autoconfigure_networking.service  /usr/lib/systemd/system/autoconfigure_networking.service
 
-      cp nova-dpm/dpm_guest_tools/usr/bin/dpm_guest_image_tools_common  /usr/bin/
+      cp nova-dpm/guest_image_tools/usr/bin/setmac.sh  /usr/bin/setmac.sh
 
-      cp nova-dpm/dpm_guest_tools/usr/bin/setmac.sh  /usr/bin/setmac.sh
+      cp nova-dpm/guest_image_tools/usr/bin/dpm_guest_image_tools_common  /usr/bin/
 
-      cp nova-dpm/dpm_guest_tools/etc/udev/rules.d/80-setmac.rules /etc/udev/rules.d/80-setmac.rules
+      cp nova-dpm/guest_image_tools/etc/udev/rules.d/80-setmac.rules /etc/udev/rules.d/80-setmac.rules
 
 * Ensure permissions
 
