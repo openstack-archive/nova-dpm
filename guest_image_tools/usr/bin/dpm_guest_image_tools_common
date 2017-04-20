@@ -219,6 +219,14 @@ function configure_device {
   return "$?"
 }
 
+function ensure_ccwgroup_module {
+  if ! [ -d $(_change_root "/sys/bus/ccwgroup") ]; then
+      log "Loading ccwgroup kernel module..."
+      local cmd=$(_change_root "modprobe ccwgroup")
+      eval "$cmd"
+  fi
+}
+
 function get_cmdline {
   #Example: "some stuff nics=0001,0,aabbccddeeff;abcd,1,001122334455;"
   echo $(cat $(_change_root "/proc/cmdline"))
