@@ -69,16 +69,17 @@ class DPMdriverInitHostTestCase(TestCase):
     def test_invalid_mem_config(self):
         self.flags(group="dpm", max_memory=3000)
 
-        self.assertRaises(exception.ValidationError,
+        self.assertRaises(exceptions.MaxMemoryExceededError,
                           self.dpmdriver.init_host,
                           None)
 
     def test_invalid_proc_config(self):
         self.flags(group="dpm", max_processors=50)
 
-        self.assertRaises(exception.ValidationError,
-                          self.dpmdriver.init_host,
-                          None)
+        self.assertRaises(
+            exceptions.MaxProcessorExceededError,
+            self.dpmdriver.init_host,
+            None)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance,
