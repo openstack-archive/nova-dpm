@@ -214,7 +214,7 @@ function configure_device {
   # TODO(andreas_s): Do not depend on znetconf
   # Errors of the following command are written to stderr, and therefore
   # show up in the systemd units journal
-  local cmd=$(_change_root "znetconf -a $dev_bus_id -o portno=$port_no,layer2=1")
+  local cmd=$(_change_root "znetconf -a $dev_bus_id -o portno=$port_no -o layer2=1")
   eval "$cmd"
   return "$?"
 }
