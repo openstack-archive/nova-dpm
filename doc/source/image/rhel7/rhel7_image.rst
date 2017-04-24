@@ -89,7 +89,9 @@ Add the RHEL7.3 yum repository
 Install cloud-init 0.7.9
 ++++++++++++++++++++++++
 
-  Download latest cloud-init from https://launchpad.net/cloud-init/+download
+*  Download latest cloud-init from https://launchpad.net/cloud-init/+download
+
+   `curl -L -O http://launchpad.net/cloud-init/trunk/0.7.9/+download/cloud-init-0.7.9.tar.gz`
 
 * Install python setuptools
 
