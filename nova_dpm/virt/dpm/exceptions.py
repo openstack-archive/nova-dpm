@@ -35,3 +35,21 @@ class BootOsSpecificParametersPropertyExceededError(NovaException):
 class UnsupportedVolumeTypeException(NovaException):
     msg_fmt = _("Driver volume type"
                 " %(vol_type)s is not supported by nova-dpm.")
+
+
+class MaxProcessorExceededError(NovaException):
+    msg_fmt = _("max_processors %(config_proc)s configured for "
+                "CpcSubset %(cpcsubset_name)s is greater than the "
+                "available amount of shared IFL processors %(max_proc)s on "
+                "CPC object-id %(cpcid)s and CPC name %(cpcname)s.")
+
+
+class MaxMemoryExceededError(NovaException):
+    msg_fmt = _("max_memory_mb %(config_mem)s configured for "
+                "CpcSubset %(cpcsubset_name)s is greater than the "
+                "available amount of memory %(max_mem)s on CPC "
+                "object-id %(cpcid)s and CPC name %(cpcname)s.")
+
+
+class CpcDpmModeNotEnabledException(NovaException):
+    msg_fmt = _("DPM mode on CPC %(cpc_name)s not enabled.")
