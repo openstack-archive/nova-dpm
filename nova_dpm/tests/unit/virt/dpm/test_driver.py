@@ -81,17 +81,16 @@ class DPMdriverInitHostTestCase(TestCase):
                           None)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    @mock.patch.object(vm.PartitionInstance,
-                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
     @mock.patch.object(basedriver, 'block_device_info_get_mapping',
                        return_value=BLOCK_DEVICE)
     def test_get_fc_boot_props(self, mock_block_device,
-                               mock_get_partition_wwpns,
                                mock_get_partition):
-
-        inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
+        instance = mock.Mock()
+        instance.uuid = '3cfb165c-0df3-4d80-87b2-4c353e61318f'
+        self.dpmdriver.initator_instance_wwpns_mapping[
+            instance.uuid] = PARTITION_WWPN
         target_wwpn, lun = self.dpmdriver.get_fc_boot_props(
-            mock.Mock(), inst)
+            mock.Mock(), instance)
         self.assertEqual(target_wwpn, '500507680B214AC1')
         self.assertEqual(lun, '0')
 
@@ -121,18 +120,18 @@ class DPMdriverInitHostTestCase(TestCase):
         self.dpmdriver._validate_volume_type(bdms)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    @mock.patch.object(vm.PartitionInstance,
-                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
     @mock.patch.object(basedriver, 'block_device_info_get_mapping',
                        return_value=BLOCK_DEVICE)
     def test_get_fc_boot_props_ignore_list(self, mock_block_device,
-                                           mock_get_partition_wwpns,
                                            mock_get_partition):
         self.flags(group="dpm", target_wwpn_ignore_list=["500507680B214AC1"])
         self.dpmdriver.init_host(None)
-        inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
+        instance = mock.Mock()
+        instance.uuid = '3cfb165c-0df3-4d80-87b2-4c353e61318f'
+        self.dpmdriver.initator_instance_wwpns_mapping[
+            instance.uuid] = PARTITION_WWPN
         target_wwpn, lun = self.dpmdriver.get_fc_boot_props(
-            mock.Mock(), inst)
+            mock.Mock(), instance)
         self.assertEqual(target_wwpn, '500507680B244AC0')
         self.assertEqual(lun, '0')
 
@@ -150,8 +149,15 @@ class DPMdriverInitHostTestCase(TestCase):
         mock_attac_hbas.assert_called_once()
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    def test_get_volume_connector(self, mock_get_partition):
-        self.dpmdriver.get_volume_connector(mock.Mock())
+    @mock.patch.object(vm.PartitionInstance, 'get_partition_wwpns')
+    def test_get_volume_connector(self, mock_get_partition_wwpns,
+                                  mock_get_partition):
+        mock_get_partition_wwpns.return_value = [PARTITION_WWPN]
+        instance = mock.Mock()
+        instance.uuid = '3cfb165c-0df3-4d80-87b2-4c353e61318f'
+        self.dpmdriver.initator_instance_wwpns_mapping[
+            instance.uuid] = PARTITION_WWPN
+        self.dpmdriver.get_volume_connector(instance)
 
     def test_get_available_nodes(self):
         self.flags(host="fake-mini")

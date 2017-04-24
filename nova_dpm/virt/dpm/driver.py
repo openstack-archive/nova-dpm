@@ -65,6 +65,7 @@ class DPMDriver(driver.ComputeDriver):
         LOG.debug("HMC details %s %s", zhmc, userid)
 
         self.deleted_instance_wwpns_mapping = {}
+        self.initator_instance_wwpns_mapping = {}
 
         self.volume_drivers = self._get_volume_drivers()
 
@@ -190,7 +191,10 @@ class DPMDriver(driver.ComputeDriver):
                 instance.uuid)
         else:
             inst = vm.PartitionInstance(instance, self._cpc)
-            props['wwpns'] = inst.get_partition_wwpns()
+            self.initator_instance_wwpns_mapping[
+                instance.uuid] = inst.get_partition_wwpns()[0]
+            props['wwpns'] = [
+                self.initator_instance_wwpns_mapping[instance.uuid]]
 
         props['host'] = instance.uuid
 
@@ -349,7 +353,7 @@ class DPMDriver(driver.ComputeDriver):
         inst.set_boot_properties(target_wwpn, lun, hba_uri)
         inst.launch()
 
-    def get_fc_boot_props(self, block_device_info, inst):
+    def get_fc_boot_props(self, block_device_info, instance):
 
         # block_device_mapping is a list of mapped block devices.
         # In dpm case we are mapping only one device
@@ -361,19 +365,8 @@ class DPMDriver(driver.ComputeDriver):
 
         self._validate_volume_type(block_device_mapping)
 
-        LOG.debug("Block device mapping %s", str(block_device_mapping))
-
-        wwpns = inst.get_partition_wwpns()
-
-        if not wwpns:
-            raise Exception(
-                'No initiator WWPNs found for instance %(instance)s'
-                % {'instance': inst.instance})
-
-        # In this release our consideration
-        # is we will use one wwpn to connect with
-        # volume. So will use first item in the list
-        partition_wwpn = wwpns[0]
+        partition_wwpn = self.initator_instance_wwpns_mapping.pop(
+            instance.uuid)
 
         mapped_block_device = block_device_mapping[0]
 
