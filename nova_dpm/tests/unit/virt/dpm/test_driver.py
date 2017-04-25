@@ -30,6 +30,7 @@ from nova_dpm.virt.dpm.volume import fibrechannel
 import mock
 import requests.packages.urllib3
 import zhmcclient
+import zhmcclient_mock
 
 PARTITION_WWPN = 'C05076FFEB8000D6'
 BLOCK_DEVICE = [{
@@ -47,24 +48,43 @@ BLOCK_DEVICE = [{
             'target_lun': 0}}}]
 
 
+def fake_session():
+    session = zhmcclient_mock.FakedSession(
+        'fake-host', 'fake-hmc', '2.13.1', '1.8')
+
+    session.hmc.cpcs.add({
+        'object-id': '6511ee0f-0d64-4392-b9e0-bbbbbbbbbbbb',
+        'name': 'cpc_1',
+        'description': 'CPC #1',
+        'dpm-enabled': True,
+        'processor-count-ifl': 10,
+        'storage-customer': 2048,
+        'se-version': '2.13.1'
+    })
+
+    return session
+
+
 class DPMdriverInitHostTestCase(TestCase):
 
     def setUp(self):
         super(DPMdriverInitHostTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
-        self.session = utils.create_session_1()
+        self.session = fake_session()
         self.client = zhmcclient.Client(self.session)
         self.dpmdriver = driver.DPMDriver(None)
         self.dpmdriver._client = self.client
 
-        self.flags(group="dpm", cpc_object_id="2")
+        self.flags(
+            group="dpm",
+            cpc_object_id="6511ee0f-0d64-4392-b9e0-bbbbbbbbbbbb")
         self.flags(group="dpm", max_processors=1)
         self.flags(group="dpm", max_memory=512)
         self.dpmdriver.init_host(None)
 
     def test_get_available_resource(self):
         host_properties = self.dpmdriver.get_available_resource(None)
-        self.assertEqual('cpc_2', host_properties['cpc_name'])
+        self.assertEqual('cpc_1', host_properties['cpc_name'])
 
     def test_invalid_mem_config(self):
         self.flags(group="dpm", max_memory=3000)
@@ -81,14 +101,13 @@ class DPMdriverInitHostTestCase(TestCase):
                           None)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    @mock.patch.object(vm.PartitionInstance,
-                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
-    @mock.patch.object(basedriver, 'block_device_info_get_mapping',
-                       return_value=BLOCK_DEVICE)
+    @mock.patch.object(vm.PartitionInstance, 'get_partition_wwpns')
+    @mock.patch.object(basedriver, 'block_device_info_get_mapping')
     def test_get_fc_boot_props(self, mock_block_device,
                                mock_get_partition_wwpns,
                                mock_get_partition):
-
+        mock_block_device.return_value = BLOCK_DEVICE
+        mock_get_partition_wwpns.return_value = [PARTITION_WWPN]
         inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
         target_wwpn, lun = self.dpmdriver.get_fc_boot_props(
             mock.Mock(), inst)
@@ -121,13 +140,13 @@ class DPMdriverInitHostTestCase(TestCase):
         self.dpmdriver._validate_volume_type(bdms)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    @mock.patch.object(vm.PartitionInstance,
-                       'get_partition_wwpns', return_value=[PARTITION_WWPN])
-    @mock.patch.object(basedriver, 'block_device_info_get_mapping',
-                       return_value=BLOCK_DEVICE)
+    @mock.patch.object(vm.PartitionInstance, 'get_partition_wwpns')
+    @mock.patch.object(basedriver, 'block_device_info_get_mapping')
     def test_get_fc_boot_props_ignore_list(self, mock_block_device,
                                            mock_get_partition_wwpns,
                                            mock_get_partition):
+        mock_block_device.return_value = BLOCK_DEVICE
+        mock_get_partition_wwpns.return_value = [PARTITION_WWPN]
         self.flags(group="dpm", target_wwpn_ignore_list=["500507680B214AC1"])
         self.dpmdriver.init_host(None)
         inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
