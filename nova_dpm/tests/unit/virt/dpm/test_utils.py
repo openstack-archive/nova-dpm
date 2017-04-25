@@ -120,6 +120,23 @@ def create_session_1():
                             },
                         ],
                     },
+                    {
+                        'properties': {
+                            'object-id':
+                                '6511ee0f-0d64-4392-b9e0-cdbea10a17c3',
+                            'name': 'fcp_1',
+                            'description': 'FCP #1',
+                            'type': 'fcp',
+                        },
+                        'ports': [
+                            {
+                                'properties': {
+                                    'name': 'fcp_1_1',
+                                    'description': 'FCP #1 Port #1',
+                                }
+                            }
+                        ]
+                    }
                 ],
             },
             {
