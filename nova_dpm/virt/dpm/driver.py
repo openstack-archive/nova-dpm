@@ -381,17 +381,10 @@ class DPMDriver(driver.ComputeDriver):
 
         LOG.debug("Block device mapping %s", str(block_device_mapping))
 
-        wwpns = inst.get_partition_wwpns()
-
-        if not wwpns:
-            raise Exception(
-                'No initiator WWPNs found for instance %(instance)s'
-                % {'instance': inst.instance})
-
-        # In this release our consideration
-        # is we will use one wwpn to connect with
-        # volume. So will use first item in the list
-        partition_wwpn = wwpns[0]
+        partition_hba_uri = inst.get_boot_hba_uri()
+        partition_hba = inst.get_partition().hbas.find(**{
+            "element-uri": partition_hba_uri})
+        partition_wwpn = partition_hba.get_property('wwpn')
 
         mapped_block_device = block_device_mapping[0]
 
