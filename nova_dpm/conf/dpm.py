@@ -28,16 +28,16 @@ value `dpm.DPMDriver`.
 """
 
 ALL_DPM_OPTS = [
-    cfg.IntOpt('max_processors', help="""
+    cfg.IntOpt('max_processors', required=True, help="""
     Maximum number of shared physical IFL processors on the target CPC that can
     be used for this OpenStack hypervisor host"""),
-    cfg.IntOpt('max_memory', help="""
+    cfg.IntOpt('max_memory', required=True, help="""
     Maximum amount of memory (in MiB) on the target CPC that can be used for
     this OpenStack hypervisor host"""),
-    cfg.IntOpt('max_instances', help="""
+    cfg.IntOpt('max_instances', required=True, help="""
     Maximum number of instances (partitions) that can be created for this
     OpenStack hypervisor host"""),
-    MultiStorageAdapterMappingOpt('physical_storage_adapter_mappings', help="""
+    MultiStorageAdapterMappingOpt('physical_storage_adapter_mappings', required=True, help="""
     Physical storage adapter with port details for hba creation"""),
     cfg.ListOpt('target_wwpn_ignore_list', default='', help="""
     list of target/remote wwpns can be used for example to exclude NAS/file
