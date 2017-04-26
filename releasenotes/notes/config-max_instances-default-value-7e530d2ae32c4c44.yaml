@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    Default value of -1 has been set for the configuration option
+    ``max_instances``.  This means that by default, there is no upper
+    limit set on the maximum number of instances that can be created for
+    this host.
