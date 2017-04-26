@@ -34,7 +34,7 @@ ALL_DPM_OPTS = [
     cfg.IntOpt('max_memory', help="""
     Maximum amount of memory (in MiB) on the target CPC that can be used for
     this OpenStack hypervisor host"""),
-    cfg.IntOpt('max_instances', help="""
+    cfg.IntOpt('max_instances', default=-1, help="""
     Maximum number of instances (partitions) that can be created for this
     OpenStack hypervisor host"""),
     MultiStorageAdapterMappingOpt('physical_storage_adapter_mappings', help="""
