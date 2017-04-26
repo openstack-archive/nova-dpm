@@ -17,13 +17,15 @@ from oslo_config import cfg
 from oslo_config.fixture import Config
 import tempfile
 
-from nova.test import TestCase
-
 from nova_dpm.conf.cfg import MultiStorageAdapterMappingOpt
 from nova_dpm.conf.types import StorageAdapterMappingType
+from nova_dpm.tests import TestCase
 
 
 class TestStorageAdapterMappingOpt(TestCase):
+
+    def setUp(self):
+        super(TestStorageAdapterMappingOpt, self).setUp()
 
     def create_tempfiles(self, files, ext='.conf'):
         """Create temp files for testing
