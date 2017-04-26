@@ -17,7 +17,7 @@ from oslo_config import cfg
 from nova.compute import power_state
 from nova.objects import flavor as flavor_obj
 from nova.objects import instance as instance_obj
-from nova.test import TestCase
+from nova_dpm.tests import TestCase
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
 import requests.packages.urllib3
@@ -58,7 +58,6 @@ def fake_session():
 
 
 class ValidPartitionNameTestCase(TestCase):
-
     def setUp(self):
         super(ValidPartitionNameTestCase, self).setUp()
 
@@ -93,6 +92,7 @@ class ValidPartitionNameTestCase(TestCase):
 
 
 class VmPartitionInstanceTestCase(TestCase):
+
     def setUp(self):
         super(VmPartitionInstanceTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
