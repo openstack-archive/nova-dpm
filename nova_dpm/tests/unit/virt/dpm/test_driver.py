@@ -21,6 +21,7 @@ from nova.objects import flavor as flavor_object
 from nova.test import TestCase
 from nova.virt import driver as basedriver
 from nova_dpm.tests.unit.virt.dpm import test_data as utils
+from nova_dpm.tests.unit.virt.dpm import test_override as override
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
@@ -68,6 +69,7 @@ def fake_session():
 class DPMdriverInitHostTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(DPMdriverInitHostTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
         self.session = fake_session()
@@ -185,6 +187,7 @@ class DPMdriverInitHostTestCase(TestCase):
 class DPMdriverVolumeTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(DPMdriverVolumeTestCase, self).setUp()
         self.dpmdriver = driver.DPMDriver(None)
 
@@ -232,6 +235,7 @@ class DPMdriverVolumeTestCase(TestCase):
 class DPMDriverInstanceTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(DPMDriverInstanceTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
         self.session = utils.create_session_1()
