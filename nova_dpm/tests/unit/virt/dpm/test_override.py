@@ -12,19 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nova.test import TestCase
 from oslo_config import cfg
 
 
-class TestCase(TestCase):
-
-    def setUp(self):
-        cfg.CONF.set_override("max_processors", 3, enforce_type=True,
-                              group="dpm")
-        cfg.CONF.set_override("max_instances", 3, enforce_type=True,
-                              group="dpm")
-        cfg.CONF.set_override("max_memory", 3, enforce_type=True, group="dpm")
-        storage = "48602646-b18d-11e6-9c12-42f2e9ef1641:0"
-        cfg.CONF.set_override("physical_storage_adapter_mappings", [storage],
-                              group="dpm", enforce_type=True)
-        super(TestCase, self).setUp()
+def override_conf():
+    cfg.CONF.set_override("max_processors", 3, enforce_type=True, group="dpm")
+    cfg.CONF.set_override("max_instances", 3, enforce_type=True, group="dpm")
+    cfg.CONF.set_override("max_memory", 3, enforce_type=True, group="dpm")
+    storage = "48602646-b18d-11e6-9c12-42f2e9ef1641:0"
+    cfg.CONF.set_override("physical_storage_adapter_mappings", [storage],
+                          group="dpm", enforce_type=True)
