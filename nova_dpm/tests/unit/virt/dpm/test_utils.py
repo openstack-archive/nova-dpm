@@ -15,7 +15,7 @@
 import zhmcclient
 import zhmcclient_mock
 
-from nova.test import TestCase
+from nova_dpm.tests import TestCase
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
 

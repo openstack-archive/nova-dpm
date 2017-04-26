@@ -15,7 +15,7 @@
 import json
 import zhmcclient
 
-from nova.test import TestCase
+from nova_dpm.tests import TestCase
 from nova_dpm.tests.unit.virt.dpm import test_data as utils
 from nova_dpm.virt.dpm import host
 
