@@ -18,6 +18,7 @@ from nova.compute import power_state
 from nova.objects import flavor as flavor_obj
 from nova.objects import instance as instance_obj
 from nova.test import TestCase
+from nova_dpm.tests.unit.virt.dpm import test_override as override
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
 import requests.packages.urllib3
@@ -60,6 +61,7 @@ def fake_session():
 class ValidPartitionNameTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(ValidPartitionNameTestCase, self).setUp()
 
     def test_is_valid_partition_name(self):
@@ -93,7 +95,9 @@ class ValidPartitionNameTestCase(TestCase):
 
 
 class VmPartitionInstanceTestCase(TestCase):
+
     def setUp(self):
+        override.override_conf()
         super(VmPartitionInstanceTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
 
@@ -271,6 +275,7 @@ class VmPartitionInstanceTestCase(TestCase):
 class PhysicalAdapterModelTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(PhysicalAdapterModelTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
         self.session = fake_session()
@@ -300,6 +305,7 @@ class PhysicalAdapterModelTestCase(TestCase):
 class PartitionInstanceInfoTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(PartitionInstanceInfoTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
         self.session = fake_session()
