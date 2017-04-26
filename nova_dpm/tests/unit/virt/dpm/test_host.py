@@ -18,12 +18,14 @@ import zhmcclient
 
 from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import test_data as utils
+from nova_dpm.tests.unit.virt.dpm import test_override as override
 from nova_dpm.virt.dpm import host
 
 
 class HostTestCase(TestCase):
 
     def setUp(self):
+        override.override_conf()
         super(HostTestCase, self).setUp()
         requests.packages.urllib3.disable_warnings()
         self.session = utils.create_session_1()
