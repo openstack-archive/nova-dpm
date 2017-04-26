@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nova.test import TestCase
-
 from nova_dpm.conf.types import MAPPING_REGEX
 from nova_dpm.conf.types import StorageAdapterMappingType
+from nova_dpm.tests import TestCase
 
 VALID_DPM_OBJECT_ID = "fa1f2466-12df-311a-804c-4ed2cc1d656b"
 VALID_DPM_OBJECT_ID_UC = "FA1F2466-12DF-311A-804C-4ED2CC1D656B"
