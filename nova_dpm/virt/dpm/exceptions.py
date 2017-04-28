@@ -32,6 +32,10 @@ class BootOsSpecificParametersPropertyExceededError(NovaException):
                 "'boot-os-specific-parameters' property.")
 
 
+class BootFromImageNotSupported(NovaException):
+    msg_fmt = _("Boot from image is not supported in nova-dpm.")
+
+
 class UnsupportedVolumeTypeException(NovaException):
     msg_fmt = _("Driver volume type"
                 " %(vol_type)s is not supported by nova-dpm.")
