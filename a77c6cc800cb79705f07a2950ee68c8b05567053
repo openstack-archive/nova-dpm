@@ -1,0 +1,8 @@
+Code-Review+2: Andreas Scheuring <andreas.scheuring@de.ibm.com>
+Workflow+1: Andreas Scheuring <andreas.scheuring@de.ibm.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 28 Apr 2017 15:00:48 +0000
+Reviewed-on: https://review.openstack.org/460413
+Project: openstack/nova-dpm
+Branch: refs/heads/stable/ocata
