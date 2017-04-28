@@ -8,17 +8,30 @@ SERVICE_TOKEN=$ADMIN_PASSWORD
 LOGFILE=$DEST/logs/stack.sh.log
 SCREEN_LOGDIR=$DEST/logs/screen
 
-# Set to True to install the latest zhmcclient from source
-INSTALL_ZHMCCLIENT=TRUE
+# ---------------------------------
+# Networking
+# ---------------------------------
 
 # Configure Neutron DPM Agent
 enable_plugin networking-dpm http://git.openstack.org/openstack/networking-dpm
 enable_service q-dpm-agt
+
+# provider network
+# The name of the physical network that should be used. It must match the name
+# given in the physical_network_adapter_mappings.
+PHYSICAL_NETWORK=provider
+OVS_PHYSICAL_BRIDGE=br-provider
 PUBLIC_INTERFACE=<interface-used-for-dhcp>
+
+# public network
+PUBLIC_PHYSICAL_NETWORK=public
+
+# Note: br-provider must be created manually upfront
+# ovs-vsctl add-br br-provider
+OVS_BRIDGE_MAPPINGS=provider:br-provider,public:br-ex
 
 # Use IPv4 only
 IP_VERSION=4
-
 # The Subnet that should be used in CIDR format. Make sure that this is unique!
 # Using the same Subnet on different devstack installations causes IP
 # conflicts! Make also sure you do not use a subnet that is already used by
@@ -28,16 +41,23 @@ IP_VERSION=4
 # IPV4_ADDRS_SAFE_TO_USE=192.168.224.0/24
 # ...
 IPV4_ADDRS_SAFE_TO_USE=<subnet-cidr>
-
 # Usually the first IP address in your subnet. E.g. 192.168.221.1
 NETWORK_GATEWAY=<gateway-ip>
 
-# The name of the physcial network that should be used. It must match the name
-# given in the physical_network_adapter_mappings.
-PHYSICAL_NETWORK=provider
+
+# ---------------------------------
+# Compute
+# ---------------------------------
 
 # Configure Nova DPM Driver
 enable_plugin nova-dpm http://git.openstack.org/openstack/nova-dpm
+
+# ---------------------------------
+# HMC
+# ---------------------------------
+
+# Set to True to install the latest zhmcclient from source
+INSTALL_ZHMCCLIENT=TRUE
 
 HMC=<hmc-ip>
 HMC_USERNAME=<hmc-username>
@@ -46,6 +66,8 @@ CPC_OBJECT_ID=<cpc-object-id>
 
 [[post-config|$NOVA_CONF]]
 [DEFAULT]
+# It's important that q-agt and n-cpu use the same 'host' value and that this
+# value differs from the default host value (hostname)
 host = foo
 [dpm]
 max_instances = <max-allowed-instances-count>
@@ -59,6 +81,8 @@ physical_storage_adapter_mappings = "<storage-adapter-id>:<port-element-id>"
 
 [[post-config|/$DPM_AGENT_CONF]]
 [DEFAULT]
+# It's important that q-agt and n-cpu use the same 'host' value and that this
+# value differs from the default host value (hostname)
 host = foo
 
 [dpm]
@@ -66,4 +90,4 @@ cpc_object_id = $CPC_OBJECT_ID
 hmc_password = $HMC_PASSWORD
 hmc_username = $HMC_USERNAME
 hmc = $HMC
-physical_network_adapter_mappings = "public:<adapter-id>:<port-element-id>"
+physical_network_adapter_mappings = "provider:<adapter-id>:<port-element-id>"
