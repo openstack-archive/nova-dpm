@@ -105,9 +105,14 @@ class DPMDriver(driver.ComputeDriver):
         multi compute-nodes, this method returns a list of nodenames managed
         by the service. Otherwise, this method should return
         [hypervisor_hostname].
+
+        But we do not support multiple nodes per agent. So it will return
+        [hypervisor_hostname]
+
+        And it will also not make sense to use refresh=True/False because
+        we have one node per agent.
         """
-        # TODO(preethipy): Refresh parameter should be handled to fetch
-        # updated nodenames
+
         LOG.debug("get_available_nodes returns node %s",
                   self._host.properties["hypervisor_hostname"])
         nodenames = [self._host.properties["hypervisor_hostname"]]
