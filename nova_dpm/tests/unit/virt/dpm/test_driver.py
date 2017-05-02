@@ -203,6 +203,11 @@ class DPMdriverInitHostTestCase(TestCase):
         nodes = self.dpmdriver.get_available_nodes()
         self.assertEqual(nodes, ['fake-mini'])
 
+    def test_get_available_nodes_refresh_true(self):
+        self.flags(host="foo")
+        nodes = self.dpmdriver.get_available_nodes(True)
+        self.assertEqual(nodes, ['foo'])
+
     def test_node_is_available(self):
         self.flags(host="fake-mini")
         self.assertTrue(self.dpmdriver.node_is_available('fake-mini'))

@@ -106,11 +106,14 @@ class DPMDriver(driver.ComputeDriver):
         by the service. Otherwise, this method should return
         [hypervisor_hostname].
         """
-        # TODO(preethipy): Refresh parameter should be handled to fetch
-        # updated nodenames
+
+        host = self._host
+        if refresh:
+            host = Host.Host(self._cpc)
+
         LOG.debug("get_available_nodes returns node %s",
-                  self._host.properties["hypervisor_hostname"])
-        nodenames = [self._host.properties["hypervisor_hostname"]]
+                  host.properties["hypervisor_hostname"])
+        nodenames = [host.properties["hypervisor_hostname"]]
 
         return nodenames
 
