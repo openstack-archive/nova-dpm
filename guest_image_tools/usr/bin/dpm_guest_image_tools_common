@@ -191,6 +191,9 @@ function get_device_bus_id {
   # $1 = the device number
   # returns the corresponding device_bus_id
 
+  # Set device-bus-id format is: '0.<subchannel set id>.<devno>'
+  # It's safe to return 0.0. here as DPM does not support multiple
+  # subchannel sets right now.
   echo "0.0.$1"
 }
 
