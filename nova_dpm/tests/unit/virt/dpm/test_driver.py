@@ -28,7 +28,6 @@ from nova_dpm.virt.dpm.volume import fibrechannel
 
 
 import mock
-import requests.packages.urllib3
 import zhmcclient
 import zhmcclient_mock
 
@@ -69,7 +68,6 @@ class DPMdriverInitHostTestCase(TestCase):
 
     def setUp(self):
         super(DPMdriverInitHostTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
         self.session = fake_session()
         self.client = zhmcclient.Client(self.session)
         self.dpmdriver = driver.DPMDriver(None)
@@ -259,7 +257,6 @@ class DPMDriverInstanceTestCase(TestCase):
 
     def setUp(self):
         super(DPMDriverInstanceTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
         self.session = utils.create_session_1()
         self.client = zhmcclient.Client(self.session)
         self.dpmdriver = driver.DPMDriver(None)

@@ -36,8 +36,6 @@ def import_zhmcclient():
     """
 
     LOG.debug("get_zhmcclient")
-    # TODO(preethipy): The below line will be removed once the warnings are
-    # supressed within zhmclient code
     requests.packages.urllib3.disable_warnings()
 
     global zhmcclient

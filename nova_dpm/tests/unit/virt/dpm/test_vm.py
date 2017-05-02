@@ -20,7 +20,6 @@ from nova.objects import instance as instance_obj
 from nova.test import TestCase
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
-import requests.packages.urllib3
 import zhmcclient
 import zhmcclient_mock
 
@@ -95,7 +94,6 @@ class ValidPartitionNameTestCase(TestCase):
 class VmPartitionInstanceTestCase(TestCase):
     def setUp(self):
         super(VmPartitionInstanceTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
 
         self.session = fake_session()
         self.client = zhmcclient.Client(self.session)
@@ -272,7 +270,6 @@ class PhysicalAdapterModelTestCase(TestCase):
 
     def setUp(self):
         super(PhysicalAdapterModelTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
         self.session = fake_session()
         self.client = zhmcclient.Client(self.session)
         self.cpc = self.client.cpcs.find(**{"name": "cpc_1"})
@@ -301,7 +298,6 @@ class PartitionInstanceInfoTestCase(TestCase):
 
     def setUp(self):
         super(PartitionInstanceInfoTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
         self.session = fake_session()
         self.client = zhmcclient.Client(self.session)
         self.cpcs = self.client.cpcs.list()

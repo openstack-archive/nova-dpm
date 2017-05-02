@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import json
-import requests.packages.urllib3
 import zhmcclient
 
 from nova.test import TestCase
@@ -25,7 +24,6 @@ class HostTestCase(TestCase):
 
     def setUp(self):
         super(HostTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
         self.session = utils.create_session_1()
         client = zhmcclient.Client(self.session)
         self.cpc = client.cpcs.find(**{"name": "cpc_2"})

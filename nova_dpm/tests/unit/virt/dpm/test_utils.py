@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import requests.packages.urllib3
 import zhmcclient
 import zhmcclient_mock
 
@@ -25,7 +24,6 @@ class HostTestCase(TestCase):
 
     def setUp(self):
         super(HostTestCase, self).setUp()
-        requests.packages.urllib3.disable_warnings()
 
         session = zhmcclient_mock.FakedSession(
             'fake-host', 'fake-hmc', '2.13.1', '1.8')
@@ -65,7 +63,6 @@ class HostTestCase(TestCase):
         utils.validate_host_conf(self.cpc)
 
     def test_dpm_enabled_false(self):
-        requests.packages.urllib3.disable_warnings()
 
         session = zhmcclient_mock.FakedSession(
             'fake-host', 'fake-hmc', '2.13.1', '1.8')
