@@ -37,7 +37,7 @@ def validate_host_conf(cpc):
 
     if (CONF.dpm.max_memory > cpc.get_property('storage-customer')):
         raise exceptions.MaxMemoryExceededError(
-            config_mem=CONF.dpm.max_processors,
+            config_mem=CONF.dpm.max_memory,
             cpcsubset_name=CONF.host,
             max_mem=cpc.get_property('storage-customer'),
             cpcid=CONF.dpm.cpc_object_id,
