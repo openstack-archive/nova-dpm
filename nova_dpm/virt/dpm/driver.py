@@ -205,6 +205,11 @@ class DPMDriver(driver.ComputeDriver):
         else:
             inst = vm.PartitionInstance(instance, self._cpc)
             props['wwpns'] = inst.get_partition_wwpns()
+            # If wwpns are not assigned due to some error
+            # situation in partition then provided dummy
+            # wwpn so that cinder volume will not be in used status
+            if not props['wwpns']:
+                props['wwpns'] = ['abababababababab']
 
         props['host'] = instance.uuid
 
