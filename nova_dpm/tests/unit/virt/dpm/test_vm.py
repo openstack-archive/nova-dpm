@@ -122,7 +122,7 @@ class VmPartitionInstanceTestCase(TestCase):
             'element-id')
         storage = self.adapter_object_id + ":" + self.port_element_id
         cfg.CONF.set_override("physical_storage_adapter_mappings", [storage],
-                              group="dpm", enforce_type=True)
+                              group="dpm")
         dpm_hba_dict = {
             "name": "OpenStack_Port_" + self.adapter_object_id +
                     "_" + str(self.port_element_id),
