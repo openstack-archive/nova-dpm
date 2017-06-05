@@ -258,8 +258,8 @@ class DPMdriverVolumeTestCase(TestCase):
     def test_get_volume_drivers(self):
 
         driver_reg = self.dpmdriver._get_volume_drivers()
-        self.assertTrue(isinstance(driver_reg['fibre_channel'],
-                                   fibrechannel.DpmFibreChannelVolumeDriver))
+        self.assertIsInstance(driver_reg['fibre_channel'],
+                              fibrechannel.DpmFibreChannelVolumeDriver)
 
     @mock.patch.object(fibrechannel.DpmFibreChannelVolumeDriver,
                        'connect_volume')
