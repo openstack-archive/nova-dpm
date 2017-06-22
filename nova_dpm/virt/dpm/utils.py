@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import nova_dpm.conf
+import sys
 
 from nova_dpm.virt.dpm import exceptions
 from oslo_log import log as logging
@@ -28,6 +29,10 @@ def validate_host_conf(cpc):
             cpc_name=cpc.get_property('name'))
 
     if (CONF.dpm.max_processors > cpc.get_property('processor-count-ifl')):
+        if cpc.get_property('processor-count-ifl') == 0:
+            raise exceptions.CpcDownError(
+                msg='Or processor is not configured to CPC')
+            sys.exit(1)
         raise exceptions.MaxProcessorExceededError(
             config_proc=CONF.dpm.max_processors,
             cpcsubset_name=CONF.host,
@@ -36,6 +41,10 @@ def validate_host_conf(cpc):
             cpcname=cpc.get_property('name'))
 
     if (CONF.dpm.max_memory > cpc.get_property('storage-customer')):
+        if cpc.get_property('storage-customer') == 0:
+            raise exceptions.CpcDownError(
+                msg='Or memory is not configured to CPC')
+            sys.exit(1)
         raise exceptions.MaxMemoryExceededError(
             config_mem=CONF.dpm.max_memory,
             cpcsubset_name=CONF.host,

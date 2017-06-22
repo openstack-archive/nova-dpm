@@ -83,3 +83,45 @@ class HostTestCase(TestCase):
         self.assertRaises(
             exceptions.CpcDpmModeNotEnabledException,
             utils.validate_host_conf, cpc)
+
+    def test_if_cpc_is_down_or_processor_is_not_configured(self):
+        session = zhmcclient_mock.FakedSession(
+            'fake-host', 'fake-hmc', '2.13.1', '1.8')
+
+        session.hmc.cpcs.add({
+            'name': 'cpc_1',
+            'description': 'CPC #1',
+            'dpm-enabled': True,
+            'processor-count-ifl': 0,
+            'storage-customer': 2048,
+        })
+        client = zhmcclient.Client(session)
+        cpc = client.cpcs.find(**{"name": "cpc_1"})
+        self.flags(host='foo')
+        self.flags(group="dpm", max_processors=3)
+        self.flags(group="dpm", max_memory=1024)
+
+        self.assertRaises(
+            exceptions.CpcDownError,
+            utils.validate_host_conf, cpc)
+
+    def test_if_cpc_is_down_or_memory_is_not_configured(self):
+        session = zhmcclient_mock.FakedSession(
+            'fake-host', 'fake-hmc', '2.13.1', '1.8')
+
+        session.hmc.cpcs.add({
+            'name': 'cpc_1',
+            'description': 'CPC #1',
+            'dpm-enabled': True,
+            'processor-count-ifl': 10,
+            'storage-customer': 0,
+        })
+        client = zhmcclient.Client(session)
+        cpc = client.cpcs.find(**{"name": "cpc_1"})
+        self.flags(host='foo')
+        self.flags(group="dpm", max_processors=3)
+        self.flags(group="dpm", max_memory=1024)
+
+        self.assertRaises(
+            exceptions.CpcDownError,
+            utils.validate_host_conf, cpc)
