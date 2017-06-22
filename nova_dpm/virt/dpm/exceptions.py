@@ -57,3 +57,7 @@ class MaxMemoryExceededError(NovaException):
 
 class CpcDpmModeNotEnabledException(NovaException):
     msg_fmt = _("DPM mode on CPC %(cpc_name)s not enabled.")
+
+
+class CpcDownError(NovaException):
+    msg_fmt = _("CPC is Down. %(msg)s")
