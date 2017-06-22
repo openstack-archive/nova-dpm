@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import nova_dpm.conf
+from zhmcclient import HTTPError
 
 from nova_dpm.virt.dpm import exceptions
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 CONF = nova_dpm.conf.CONF
+CPC_UP_STATUS = ("active", "service-required", "degraded", "exceptions")
 
 
 def validate_host_conf(cpc):
@@ -26,6 +28,15 @@ def validate_host_conf(cpc):
     if not cpc.dpm_enabled:
         raise exceptions.CpcDpmModeNotEnabledException(
             cpc_name=cpc.get_property('name'))
+
+    try:
+        if cpc.get_property('status') not in CPC_UP_STATUS:
+            raise exceptions.CpcDownError()
+    except HTTPError as http_error:
+        if http_error.http_status == 409:
+            raise exceptions.CpcDownError()
+        else:
+            raise http_error
 
     if (CONF.dpm.max_processors > cpc.get_property('processor-count-ifl')):
         raise exceptions.MaxProcessorExceededError(
