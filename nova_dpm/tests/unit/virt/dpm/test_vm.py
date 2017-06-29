@@ -43,6 +43,14 @@ def fake_session():
         'maximum-memory': 512,
         'ifl-processors': 3
     })
+    cpc1.partitions.add({
+        'name': 'OpenStack-foo-cccccccc-cccc-cccc-cccc-cccccccccccc',
+        'description': 'OpenStack CPCSubset=foo',
+        'initial-memory': 1,
+        'status': 'paused',
+        'maximum-memory': 512,
+        'ifl-processors': 3
+    })
     adapter1 = cpc1.adapters.add({
         'object-id': '6511ee0f-0d64-4392-b9e0-cdbea10a17c3',
         'name': 'fcp_1',
@@ -320,6 +328,12 @@ class PartitionInstanceInfoTestCase(TestCase):
 
     def test_state(self):
         self.assertEqual(power_state.RUNNING, self.instance_partition.state)
+
+    def test_paused_partition_state(self):
+        instance = instance_obj.Instance()
+        instance.uuid = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        instance_partition = vm.PartitionInstanceInfo(instance, self.cpc)
+        self.assertEqual(power_state.SHUTDOWN, instance_partition.state)
 
     def test_mem(self):
         self.assertEqual(1, self.instance_partition.mem)

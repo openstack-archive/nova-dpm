@@ -42,7 +42,16 @@ DPM_TO_NOVA_STATE = {
     utils.PartitionState.RUNNING: power_state.RUNNING,
     utils.PartitionState.STOPPED: power_state.SHUTDOWN,
     utils.PartitionState.UNKNOWN: power_state.NOSTATE,
-    utils.PartitionState.PAUSED: power_state.PAUSED,
+    # DPM does'not support from PAUSED to UNPAUSED state
+    # The partition will go into PAUSED state if we will
+    # do in band shutdown from operating system which is
+    # installed on partition. But partition does not
+    # support UNPAUSED operation. So nova-dpm also does
+    # not support PAUSED and UNPAUSED operation. So
+    # work around for partition when it goes to PAUSED
+    # state due to in band shutdown is we will SHUTDOWN
+    # the partition when it is in PAUSED state.
+    utils.PartitionState.PAUSED: power_state.SHUTDOWN,
     utils.PartitionState.STARTING: power_state.PAUSED
 }
 
@@ -313,6 +322,11 @@ class PartitionInstance(object):
 
     def power_on_vm(self):
         LOG.debug('Partition power on triggered')
+        if self.partition.get_property(
+                'status') == utils.PartitionState.PAUSED:
+            self.partition.stop(True)
+            self._loop_status_update(5, utils.PartitionState.STOPPED)
+
         self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM(701894) is fixed to return correct status on API return
