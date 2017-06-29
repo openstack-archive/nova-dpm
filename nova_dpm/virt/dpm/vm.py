@@ -38,12 +38,16 @@ CONF = conf.CONF
 OPENSTACK_PREFIX = 'OpenStack'
 CPCSUBSET_PREFIX = 'CPCSubset='
 
+STARTED_STATUSES = ('active', 'degraded', 'reservation-error')
+STOPPED_STATUSES = ('stopped', 'terminated', 'paused')
+
 
 DPM_TO_NOVA_STATE = {
     utils.PartitionState.RUNNING: power_state.RUNNING,
     utils.PartitionState.STOPPED: power_state.SHUTDOWN,
     utils.PartitionState.UNKNOWN: power_state.NOSTATE,
-    utils.PartitionState.PAUSED: power_state.PAUSED,
+    # operation to get out of the "paused" status is "stop"
+    utils.PartitionState.PAUSED: power_state.SHUTDOWN,
     utils.PartitionState.STARTING: power_state.PAUSED
 }
 
@@ -325,10 +329,25 @@ class PartitionInstance(object):
 
     def power_on_vm(self):
         LOG.debug('Partition power on triggered')
-        self.partition.start(True)
-        # TODO(preethipy): The below method to be removed once the bug
-        # on DPM(701894) is fixed to return correct status on API return
-        self._loop_status_update(5, 'Active')
+        partition_state = self.partition.get_property('status')
+
+        if partition_state == utils.PartitionState.STARTING:
+            self.partition.wait_for_status(
+                status=STARTED_STATUSES, status_timeout=60)
+        elif partition_state == utils.PartitionState.SHUTTING_DOWN:
+            self.partition.wait_for_status(
+                status=STOPPED_STATUSES, status_timeout=60)
+
+        if self.partition.get_property(
+                'status') == utils.PartitionState.PAUSED:
+            self.partition.stop(True)
+            self.partition.wait_for_status(
+                status=utils.PartitionState.STOPPED, status_timeout=60)
+
+        if self.partition.get_property('status') not in STARTED_STATUSES:
+            self.partition.start(True)
+            self.partition.wait_for_status(
+                status=STARTED_STATUSES, status_timeout=60)
 
     def power_off_vm(self):
         LOG.debug('Partition power off triggered')
