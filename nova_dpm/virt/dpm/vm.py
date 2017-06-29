@@ -313,6 +313,11 @@ class PartitionInstance(object):
 
     def power_on_vm(self):
         LOG.debug('Partition power on triggered')
+        if self.partition.get_property(
+                'status') == utils.PartitionState.PAUSED:
+            self.partition.stop(True)
+            self._loop_status_update(5, utils.PartitionState.STOPPED)
+
         self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM(701894) is fixed to return correct status on API return
