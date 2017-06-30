@@ -289,7 +289,10 @@ class PartitionInstance(object):
     def destroy(self):
         LOG.debug('Partition Destroy triggered')
         if self.partition:
-            self.partition.stop(True)
+            if self.partition.get_property(
+                    'status') != utils.PartitionState.STOPPED:
+                self.partition.stop(True)
+
             # TODO(preethipy): The below method to be removed once the bug
             # on DPM is fixed to return correct status on API return
             self._loop_status_update(5, 'stopped')
