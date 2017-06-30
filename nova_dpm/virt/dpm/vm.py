@@ -31,6 +31,7 @@ from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
+from zhmcclient._exceptions import HTTPError
 from zhmcclient._exceptions import NotFound
 
 CONF = conf.CONF
@@ -289,7 +290,13 @@ class PartitionInstance(object):
     def destroy(self):
         LOG.debug('Partition Destroy triggered')
         if self.partition:
-            self.partition.stop(True)
+            try:
+                self.partition.stop(True)
+            except HTTPError:
+                pass
+            except Exception as e:
+                raise e
+
             # TODO(preethipy): The below method to be removed once the bug
             # on DPM is fixed to return correct status on API return
             self._loop_status_update(5, 'stopped')
