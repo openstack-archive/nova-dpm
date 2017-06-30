@@ -20,6 +20,9 @@ from nova.objects import instance as instance_obj
 from nova.test import TestCase
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
+from zhmcclient import HTTPError
+
+import mock
 import zhmcclient
 import zhmcclient_mock
 
@@ -40,6 +43,14 @@ def fake_session():
         'description': 'OpenStack CPCSubset=foo',
         'initial-memory': 1,
         'status': 'ACTIVE',
+        'maximum-memory': 512,
+        'ifl-processors': 3
+    })
+    cpc1.partitions.add({
+        'name': 'OpenStack-foo-6511ee0f-0d64-4392-aaaa-bbbbbbbbbbbb',
+        'description': 'OpenStack CPCSubset=foo',
+        'initial-memory': 1,
+        'status': 'stopped',
         'maximum-memory': 512,
         'ifl-processors': 3
     })
@@ -264,6 +275,14 @@ class VmPartitionInstanceTestCase(TestCase):
             partition.get_property(
                 'object-uri') + '/hbas/1',
             self.partition_inst.get_boot_hba_uri())
+
+    def test_destroy_of_stop_partition(self):
+        instance = instance_obj.Instance()
+        instance.save = mock.Mock()
+        instance.uuid = '6511ee0f-0d64-4392-aaaa-bbbbbbbbbbbb'
+        partition_inst = vm.PartitionInstance(instance, self.cpc)
+
+        self.assertRaises(HTTPError, partition_inst.destroy)
 
 
 class PhysicalAdapterModelTestCase(TestCase):
