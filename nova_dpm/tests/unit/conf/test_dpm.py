@@ -23,10 +23,14 @@ class TestConfigParameters(TestCase):
         super(TestConfigParameters, self).setUp()
         self.CONF = nova_dpm.conf.CONF
 
-    def test_default_value(self):
+    def test_max_instances_default_value(self):
         max_instance = self.CONF.dpm.max_instances
         self.assertEqual(-1, max_instance)
 
-    def test_min_value(self):
+    def test_max_instances_min_value(self):
         self.assertRaises(ValueError, self.CONF.set_override, "max_instances",
                           -2, group="dpm")
+
+    def test_max_memory_min_value(self):
+        self.assertRaises(ValueError, self.CONF.set_override, "max_memory",
+                          500, group="dpm")
