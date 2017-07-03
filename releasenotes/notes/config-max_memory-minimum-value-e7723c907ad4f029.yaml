@@ -1,0 +1,5 @@
+---
+upgrade:
+  - Minimum value of 512 has been set for the configuration
+    option ``max_memory``.This is the minimum memory needed
+    by the host to launch an instance.
