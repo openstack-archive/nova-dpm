@@ -47,6 +47,8 @@ CPC_OBJECT_ID=<cpc-object-id>
 [[post-config|$NOVA_CONF]]
 [DEFAULT]
 host = foo
+reserved_host_memory_mb = 0
+
 [dpm]
 max_instances = <max-allowed-instances-count>
 max_memory = <max-available-memory>
