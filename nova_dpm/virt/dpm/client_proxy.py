@@ -48,5 +48,15 @@ def import_zhmcclient():
 def get_client_for_session(zhmc, userid, password):
     LOG.debug("get_client_for_session")
     zhmcclient = import_zhmcclient()
-    session = zhmcclient.Session(zhmc, userid, password)
-    return zhmcclient.Client(session)
+    # When we start/restart nova-dpm service then nova-dpm
+    # service will retry to connect to HMC once if connection fails
+    # first time.
+    conection_retry = zhmcclient.RetryTimeoutConfig(connect_retries=1)
+    session = zhmcclient.Session(
+        zhmc, userid, password, retry_timeout_config=conection_retry)
+    client = zhmcclient.Client(session)
+    # When nova-dpm service is up and if nova-dpm lost connection
+    # to HMC the it will retry 120 times.
+    conection_retry.override_with(
+        zhmcclient.RetryTimeoutConfig(connect_retries=120))
+    return client
