@@ -30,3 +30,7 @@ class TestConfigParameters(TestCase):
     def test_min_value(self):
         self.assertRaises(ValueError, self.CONF.set_override, "max_instances",
                           -2, group="dpm")
+
+    def test_max_memory_min_value(self):
+        self.assertRaises(ValueError, self.CONF.set_override, "max_memory",
+                          500, group="dpm")
