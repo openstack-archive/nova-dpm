@@ -1,0 +1,6 @@
+---
+upgrade:
+  - 'reserved_host_memory_mb' is a config parameter that
+    reserves memory for the host processes this needs to
+    be modified to 0 so that max-memory value can be
+    optimized to a minimal value of 512Mb.
