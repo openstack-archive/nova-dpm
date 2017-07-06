@@ -113,7 +113,7 @@ class DPMdriverInitHostTestCase(TestCase):
 
         storage = self.adapter_object_id + ":" + self.port_element_id
         cfg.CONF.set_override("physical_storage_adapter_mappings", [storage],
-                              group="dpm", enforce_type=True)
+                              group="dpm")
 
         self.flags(
             group="dpm",
