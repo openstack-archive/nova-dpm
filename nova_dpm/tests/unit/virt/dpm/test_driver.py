@@ -335,11 +335,11 @@ class DPMDriverInstanceTestCase(TestCase):
         vif = {"address": "aa:bb:cc:dd:ee:ff",
                "id": "foo-id",
                "type": "dpm_vswitch",
-               "details": {"object_id": "oid"}}
+               "details": {"object_id": "1"}}
         vif2 = {"address": "11:22:33:44:55:66",
                 "id": "foo-id2",
                 "type": "dpm_vswitch",
-                "details": {"object_id": "oid2"}}
+                "details": {"object_id": "2"}}
         network_info = [vif, vif2]
         self.dpmdriver.spawn(None, mock_instance, None, None, None,
                              network_info, flavor=mock.Mock())

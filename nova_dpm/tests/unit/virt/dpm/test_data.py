@@ -81,6 +81,16 @@ def create_session_1():
                     'storage-customer': 2048,
                     'se-version': '2.13.1'
                 },
+                'virtual_switches': [
+                    {'properties': {
+                        'name': 'vs1',
+                        'object-id': '1'
+                    }},
+                    {'properties': {
+                        'name': 'vs2',
+                        'object-id': '2'
+                    }}
+                ],
                 'partitions': [
                     {
                         'properties': {

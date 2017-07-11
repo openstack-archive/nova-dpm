@@ -53,6 +53,10 @@ def fake_session():
         'name': 'fcp_1_1',
         'description': 'FCP #1 Port #1',
     })
+    cpc1.virtual_switches.add({
+        'name': 'virtual_switch',
+        'object-id': '3ea09d2a-b18d-11e6-89a4-42f2e9ef1641'
+    })
     return session
 
 
@@ -109,7 +113,10 @@ class VmPartitionInstanceTestCase(TestCase):
 
         self.create_partition_properties = {
             'name': self.part_name,
-            'description': self.part_description}
+            'description': self.part_description,
+            'initial-memory': 512,
+            'maximum-memory': 512
+        }
         # Create partition in a cpc not from openstack
         # and used same uuid of instance to create
         # vm.PartitionInstance class instance except create_partition.
@@ -184,7 +191,6 @@ class VmPartitionInstanceTestCase(TestCase):
             "address": "fa:16:3e:e4:9a:98",
             "type": "dpm_vswitch",
             "id": "703da361-9d4d-4441-b99b-e081c3e9cfbb"}
-
         nic_interface = self.partition_inst.attach_nic(vif)
         self.assertEqual(
             'OpenStack_Port_703da361-9d4d-4441-b99b-e081c3e9cfbb',
