@@ -57,7 +57,6 @@ function configure_nova_dpm {
     iniset $NOVA_CONF dpm cpc_object_id $CPC_OBJECT_ID
     iniset $NOVA_CONF dpm max_processors $MAX_PROC
     iniset $NOVA_CONF dpm max_memory $MAX_MEM
-    iniset $NOVA_CONF dpm max_instances $MAX_INSTANCES
 }
 
 # install_nova_dpm() - Install nova_dpm and necessary dependencies
