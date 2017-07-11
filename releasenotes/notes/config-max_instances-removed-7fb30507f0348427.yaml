@@ -1,0 +1,6 @@
+---
+upgrade:
+  - The max_instances config parameter is removed as 
+    NumInstancesFilter is used inorder to filter the
+    number of instances on each host.
+
