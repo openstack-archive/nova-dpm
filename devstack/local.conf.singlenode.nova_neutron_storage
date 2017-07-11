@@ -48,7 +48,6 @@ CPC_OBJECT_ID=<cpc-object-id>
 [DEFAULT]
 host = foo
 [dpm]
-max_instances = <max-allowed-instances-count>
 max_memory = <max-available-memory>
 max_processors = <max-avaialable-processor>
 cpc_object_id = $CPC_OBJECT_ID
