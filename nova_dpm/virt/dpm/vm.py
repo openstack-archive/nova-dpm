@@ -32,6 +32,7 @@ from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
+from zhmcclient import HTTPError
 
 CONF = conf.CONF
 OPENSTACK_PREFIX = 'OpenStack'
@@ -289,7 +290,18 @@ class PartitionInstance(object):
     def destroy(self):
         LOG.debug('Partition Destroy triggered')
         if self.partition:
-            self.partition.stop(True)
+            try:
+                self.partition.stop(True)
+            except HTTPError as http_error:
+                # (http_status == 409 and reason == 1) means
+                # Partition status is not valid to perform the operation.
+                # e.g - If partition is already stop then stop operation
+                # is not a valid operation on partition.
+                if http_error.http_status == 409 and http_error.reason == 1:
+                    pass
+                else:
+                    raise http_error
+
             # TODO(preethipy): The below method to be removed once the bug
             # on DPM is fixed to return correct status on API return
             self._loop_status_update(5, 'stopped')
