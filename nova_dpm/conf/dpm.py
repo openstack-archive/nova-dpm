@@ -34,14 +34,6 @@ ALL_DPM_OPTS = [
     cfg.IntOpt('max_memory', min=512, help="""
     Maximum amount of memory (in MiB) on the target CPC that can be used for
     this OpenStack hypervisor host"""),
-    cfg.IntOpt('max_instances', default=-1, min=-1, help="""
-    Maximum number of instances (partitions) that can be created for this
-    OpenStack hypervisor host. Valid values are:
-    -1: The number of instances is  only limited by the
-        number of free partitions on this CPC
-     0: A technically valid upper bound but useless.
-    >0: If this value is reached,
-        this host won't be able to spawn new instances."""),
     MultiStorageAdapterMappingOpt('physical_storage_adapter_mappings', help="""
     Physical storage adapter with port details for hba creation"""),
     cfg.ListOpt('target_wwpn_ignore_list', default='', help="""
