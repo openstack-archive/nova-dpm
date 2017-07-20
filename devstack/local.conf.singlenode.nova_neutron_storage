@@ -48,9 +48,13 @@ CPC_OBJECT_ID=<cpc-object-id>
 [DEFAULT]
 host = foo
 reserved_host_memory_mb = 0
+enabled_filters = NumInstancesFilter
+scheduler_default_filters = NumInstancesFilter
+
 [dpm]
 max_memory = <max-available-memory>
 max_processors = <max-avaialable-processor>
+max_instances_per_host = <max-instances>
 cpc_object_id = $CPC_OBJECT_ID
 hmc_password = $HMC_PASSWORD
 hmc_username = $HMC_USERNAME
