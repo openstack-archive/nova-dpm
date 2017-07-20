@@ -31,6 +31,9 @@ ALL_DPM_OPTS = [
     cfg.IntOpt('max_processors', help="""
     Maximum number of shared physical IFL processors on the target CPC that can
     be used for this OpenStack hypervisor host"""),
+    cfg.IntOpt('max_instances_per_host', help="""
+    Maximum number of instances on the target CPC that can
+    be launched on  this OpenStack hypervisor host"""),
     cfg.IntOpt('max_memory', min=512, help="""
     Maximum amount of memory (in MiB) on the target CPC that can be used for
     this OpenStack hypervisor host"""),
