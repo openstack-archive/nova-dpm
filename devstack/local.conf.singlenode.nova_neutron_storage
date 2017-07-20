@@ -48,6 +48,10 @@ CPC_OBJECT_ID=<cpc-object-id>
 [DEFAULT]
 host = foo
 reserved_host_memory_mb = 0
+[filter_scheduler]
+enabled_filters = NumInstancesFilter,RetryFilter,AvailabilityZoneFilter,RamFilter,DiskFilter,ComputeFilter,ComputeCapabilitiesFilter,ImagePropertiesFilter,ServerGroupAntiAffinityFilter,ServerGroupAffinityFilter,SameHostFilter,DifferentHostFilter
+max_instances_per_host = <max_instances_per_host>
+
 [dpm]
 max_memory = <max-available-memory>
 max_processors = <max-avaialable-processor>
