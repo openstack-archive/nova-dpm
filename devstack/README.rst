@@ -7,7 +7,7 @@ What is DevStack?
 
 DevStack is a script to quickly create an OpenStack development environment.
 
-Find out more `here <http://docs.openstack.org/developer/devstack/>`_.
+Find out more `here <https://docs.openstack.org/devstack/latest/>`_.
 
 
 What are DevStack plugins?
@@ -19,7 +19,7 @@ part of the normal local.conf and stack.sh execution. The devstack plugin setup 
 is for nova-dpm. Without any additional scripting required the nova-dpm plugin would be plugged
 to devstack environment.
 
-More details can be `found here. <http://docs.openstack.org/developer/devstack/plugins.html>`_
+More details can be `found here. <https://docs.openstack.org/devstack/latest/plugins.html>`_
 
 
 How to use the nova-dpm DevStack plugins:

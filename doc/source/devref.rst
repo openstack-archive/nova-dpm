@@ -43,7 +43,7 @@ To build the release notes::
    in your local repository of this project.
 
 More information about *reno* can be found at:
-http://docs.openstack.org/developer/reno/index.html
+https://docs.openstack.org/reno/latest/index.html
 
 
 Release Management
