@@ -123,7 +123,8 @@ class DPMdriverInitHostTestCase(TestCase):
         self.dpmdriver.init_host(None)
 
     def test_cpc_not_exists(self):
-        self.flags(group="dpm", cpc_object_id="abc")
+        self.flags(group="dpm",
+                   cpc_object_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
         self.assertRaises(SystemExit,
                           self.dpmdriver.init_host, None)
 
