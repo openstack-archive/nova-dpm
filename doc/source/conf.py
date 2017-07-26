@@ -30,7 +30,6 @@ extensions = [
     'sphinx.ext.autodoc',
     #'sphinx.ext.intersphinx',
     'sphinxcontrib.seqdiag',
-    'oslosphinx',
     'oslo_config.sphinxconfiggen',
     'reno.sphinxext',
 ]
@@ -81,7 +80,7 @@ pygments_style = 'sphinx'
 # For more details see: https://bugs.launchpad.net/oslosphinx/+bug/1664976
 # Once the bug is fixed, those 2 lines can be remove again
 html_theme_path = [os.path.join(os.path.dirname(oslosphinx.__file__), 'theme')]
-html_theme = 'openstack'
+html_theme = 'classic'
 
 html_static_path = ['_static']
 
