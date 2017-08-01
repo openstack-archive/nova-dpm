@@ -108,16 +108,15 @@ def cpcsubset_partition_list(cpc):
 
 
 class PartitionInstance(object):
-    def __init__(self, instance, cpc, flavor=None):
+    def __init__(self, instance, cpc):
         self.instance = instance
-        self.flavor = flavor
         self.cpc = cpc
         self.partition = self.get_partition()
 
     @staticmethod
     def create_object(instance, cpc, flavor=None):
         """Generator method. Simplifies things in unittests"""
-        return PartitionInstance(instance, cpc, flavor=None)
+        return PartitionInstance(instance, cpc)
 
     @property
     def partition_name(self):
@@ -139,10 +138,10 @@ class PartitionInstance(object):
         properties = {}
         properties['name'] = self.partition_name
         properties['description'] = self.partition_description
-        if self.flavor is not None:
-            properties['ifl-processors'] = self.flavor.vcpus
-            properties['initial-memory'] = self.flavor.memory_mb
-            properties['maximum-memory'] = self.flavor.memory_mb
+        if self.instance.flavor is not None:
+            properties['ifl-processors'] = self.instance.flavor.vcpus
+            properties['initial-memory'] = self.instance.flavor.memory_mb
+            properties['maximum-memory'] = self.instance.flavor.memory_mb
         return properties
 
     def create(self, properties):
@@ -386,7 +385,7 @@ class PartitionInstanceInfo(object):
         self.partition = None
         partition_manager = self.cpc.partitions
         partition_lists = partition_manager.list(full_properties=False)
-        inst = PartitionInstance(self.instance, self.cpc, None)
+        inst = PartitionInstance(self.instance, self.cpc)
         for partition in partition_lists:
             if partition.properties['name'] == inst.partition_name:
                 self.partition = partition

@@ -20,10 +20,8 @@ Supports DPM APIs for virtualization in z Systems
 
 import nova_dpm.conf
 
-from nova import context as context_object
 from nova import exception
 from nova.i18n import _
-from nova.objects import flavor as flavor_object
 from nova.virt import driver
 from nova_dpm.virt.dpm import client_proxy
 from nova_dpm.virt.dpm import constants
@@ -318,14 +316,7 @@ class DPMDriver(driver.ComputeDriver):
         if instance.image_ref != '':
             raise exceptions.BootFromImageNotSupported()
 
-        if not flavor:
-            context = context_object.get_admin_context(read_deleted='yes')
-            flavor = (
-                flavor_object.Flavor.get_by_id(context,
-                                               instance.instance_type_id))
-        LOG.debug("Flavor = %s", flavor)
-
-        inst = vm.PartitionInstance(instance, self._cpc, flavor)
+        inst = vm.PartitionInstance(instance, self._cpc)
         inst.create(inst.properties())
 
         inst.attach_hbas()

@@ -113,11 +113,13 @@ class VmPartitionInstanceTestCase(TestCase):
         self.client = zhmcclient.Client(self.session)
         self.cpc = self.client.cpcs.find(**{"name": "cpc_1"})
         self.flags(host="foo")
+
+        flavor = flavor_obj.Flavor()
+        flavor.vcpus = 1
+        flavor.memory_mb = 512
         self.instance = instance_obj.Instance()
         self.instance.uuid = '6511ee0f-0d64-4392-b9e0-aaaaaaaaaaaa'
-        self.flavor = flavor_obj.Flavor()
-        self.flavor.vcpus = 1
-        self.flavor.memory_mb = 512
+        self.instance.flavor = flavor
         self.part_name = "OpenStack-foo-" + self.instance.uuid
         self.part_description = 'OpenStack CPCSubset=foo'
 
@@ -154,7 +156,7 @@ class VmPartitionInstanceTestCase(TestCase):
         # to hbas except hba_create
         partition.hbas.create(dpm_hba_dict)
         self.partition_inst = vm.PartitionInstance(
-            self.instance, self.cpc, self.flavor)
+            self.instance, self.cpc)
 
     def test_properties(self):
         properties = self.partition_inst.properties()
@@ -170,9 +172,9 @@ class VmPartitionInstanceTestCase(TestCase):
         properties = {
             'name': partition_name,
             'description': self.part_description,
-            'ifl-processors': self.flavor.vcpus,
-            'initial-memory': self.flavor.memory_mb,
-            'maximum-memory': self.flavor.memory_mb}
+            'ifl-processors': self.instance.flavor.vcpus,
+            'initial-memory': self.instance.flavor.memory_mb,
+            'maximum-memory': self.instance.flavor.memory_mb}
 
         self.partition_inst.create(properties)
         partition = self.cpc.partitions.find(**{"name": partition_name})
