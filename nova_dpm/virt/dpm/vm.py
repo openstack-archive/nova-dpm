@@ -208,7 +208,13 @@ class PartitionInstance(object):
                                     "/storage-ports/" +
                                     str(adapter_port)
             }
-            hba = self.partition.hbas.create(dpm_hba_dict)
+            try:
+                hba = self.partition.hbas.create(dpm_hba_dict)
+            except HTTPError as http_error:
+                if http_error.http_status == 400 and http_error.reason == 8:
+                    pass
+                else:
+                    raise http_error
             LOG.debug("HBA created successfully %s "
                       "with URI %s and adapter port URI %s",
                       hba.properties['name'], hba.properties['element-uri'],
