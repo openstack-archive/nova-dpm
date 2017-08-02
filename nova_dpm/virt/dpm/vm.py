@@ -18,7 +18,6 @@ Partition will map nova parameter to PRSM parameter
 """
 import re
 import sys
-import time
 
 from nova.compute import manager as compute_manager
 from nova.compute import power_state
@@ -37,6 +36,7 @@ from zhmcclient import HTTPError
 CONF = conf.CONF
 OPENSTACK_PREFIX = 'OpenStack'
 CPCSUBSET_PREFIX = 'CPCSubset='
+STATUS_TIMEOUT = 60
 
 STARTED_STATUSES = (
     utils.PartitionState.RUNNING,
@@ -294,7 +294,9 @@ class PartitionInstance(object):
         self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM is fixed to return correct status on API return
-        self._loop_status_update(5, 'Active')
+        self.partition.wait_for_status(
+            status=utils.PartitionState.RUNNING,
+            status_timeout=STATUS_TIMEOUT)
 
     def destroy(self):
         LOG.debug('Partition Destroy triggered')
@@ -311,9 +313,10 @@ class PartitionInstance(object):
                 else:
                     raise http_error
 
-            # TODO(preethipy): The below method to be removed once the bug
-            # on DPM is fixed to return correct status on API return
-            self._loop_status_update(5, 'stopped')
+            self.partition.wait_for_status(
+                status=utils.PartitionState.STOPPED,
+                status_timeout=STATUS_TIMEOUT)
+            self.partition.pull_full_properties()
             if (self.partition.properties['status'] == 'stopped'):
                 self.instance.vm_state = vm_states.STOPPED
                 self.instance.save()
@@ -363,32 +366,25 @@ class PartitionInstance(object):
         self.partition.stop(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM(701894) is fixed to return correct status on API return
-        self._loop_status_update(5, 'stopped')
+        self.partition.wait_for_status(
+            status=utils.PartitionState.STOPPED,
+            status_timeout=STATUS_TIMEOUT)
 
     def reboot_vm(self):
         LOG.debug('Partition reboot triggered')
         self.partition.stop(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM(701894) is fixed to return correct status on API return
-        self._loop_status_update(5, 'stopped')
+        self.partition.wait_for_status(
+            status=utils.PartitionState.STOPPED,
+            status_timeout=STATUS_TIMEOUT)
 
         self.partition.start(True)
         # TODO(preethipy): The below method to be removed once the bug
         # on DPM(701894) is fixed to return correct status on API return
-        self._loop_status_update(5, 'Active')
-
-    def _loop_status_update(self, iterations, status):
-        # TODO(preethipy): This method loops until the partition goes out
-        # of pause state or until the iterations complete. Introduced because
-        # of the bug in DPM for having status populated correctly only
-        # after 4-5 seconds
-        self.partition.pull_full_properties()
-        while (self.partition.properties['status'] != status) and (
-                iterations):
-            LOG.debug("sleep for 2 seconds every iteration "
-                      "for status check")
-            time.sleep(2)
-            iterations -= 1
+        self.partition.wait_for_status(
+            status=utils.PartitionState.RUNNING,
+            status_timeout=STATUS_TIMEOUT)
 
     def get_partition(self):
         """Get the zhmcclient partition object for this PartitionInstance
