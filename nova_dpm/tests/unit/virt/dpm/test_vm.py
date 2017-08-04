@@ -46,6 +46,14 @@ def fake_session():
         'ifl-processors': 3
     })
     cpc1.partitions.add({
+        'name': 'OpenStack-foo-cccccccc-cccc-cccc-cccc-cccccccccccc',
+        'description': 'OpenStack CPCSubset=foo',
+        'initial-memory': 1,
+        'status': 'paused',
+        'maximum-memory': 512,
+        'ifl-processors': 3
+    })
+    cpc1.partitions.add({
         'name': 'OpenStack-foo-6511ee0f-0d64-4392-aaaa-bbbbbbbbbbbb',
         'description': 'OpenStack CPCSubset=foo',
         'initial-memory': 512,
@@ -283,6 +291,14 @@ class VmPartitionInstanceTestCase(TestCase):
                 'object-uri') + '/hbas/1',
             self.partition_inst.get_boot_hba_uri())
 
+    def test_power_on_vm_when_paused(self):
+        instance = instance_obj.Instance()
+        instance.uuid = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        partition_inst = vm.PartitionInstance(instance, self.cpc)
+        partition_inst.power_on_vm()
+        self.assertEqual(
+            'active', partition_inst.get_partition().get_property('status'))
+
     def test_destroy_stopped_partition(self):
         instance = instance_obj.Instance()
         instance.save = mock.Mock()
@@ -339,6 +355,12 @@ class PartitionInstanceInfoTestCase(TestCase):
 
     def test_state(self):
         self.assertEqual(power_state.RUNNING, self.instance_partition.state)
+
+    def test_paused_partition_state(self):
+        instance = instance_obj.Instance()
+        instance.uuid = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        instance_partition = vm.PartitionInstanceInfo(instance, self.cpc)
+        self.assertEqual(power_state.SHUTDOWN, instance_partition.state)
 
     def test_mem(self):
         self.assertEqual(1, self.instance_partition.mem)
