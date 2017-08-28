@@ -71,6 +71,21 @@ Update boot loader
 Installation of Cloud-init
 --------------------------
 
+Install cloud-utils-growpart
+++++++++++++++++++++++++++++
+
+This package is required for growing the filesystem.
+
+* Download a version of cloud-utils-growpart < 0.27.13
+
+  .. note::
+    Greater version can not deal with rhel7s old 'util-linux' package version
+
+* install it::
+
+  rpm -i cloud-utils-growpart-0.27-9.fc20.noarch.rpm
+
+
 Add the RHEL7.3 yum repository
 +++++++++++++++++++++++++++++++
 
