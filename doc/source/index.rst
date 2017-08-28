@@ -52,6 +52,7 @@ Overview
     history
     topology
     support-matrix
+    storage
 
 Using the driver
 ================
@@ -59,6 +60,7 @@ Using the driver
 .. toctree::
     :maxdepth: 2
 
+    getting_started
     installation
     configuration
     guest_image_tools
