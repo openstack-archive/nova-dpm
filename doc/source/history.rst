@@ -2,3 +2,5 @@
    http://docs.openstack.org/developer/reno/sphinxext.html
 
 .. release-notes:: Release Notes
+   :branch: origin/master
+
