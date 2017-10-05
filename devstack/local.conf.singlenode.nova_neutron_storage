@@ -6,7 +6,6 @@ SERVICE_PASSWORD=$ADMIN_PASSWORD
 SERVICE_TOKEN=$ADMIN_PASSWORD
 
 LOGFILE=$DEST/logs/stack.sh.log
-SCREEN_LOGDIR=$DEST/logs/screen
 
 # ---------------------------------
 # Networking

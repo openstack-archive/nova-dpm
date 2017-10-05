@@ -16,6 +16,5 @@ INSTALL_ZHMCCLIENT=TRUE
 #Logging
 #-------
 LOGFILE=/opt/stack/logs/stack.sh.log
-SCREEN_LOGDIR=~/screen_log/
 LOGDAYS=1
 
