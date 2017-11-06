@@ -312,9 +312,10 @@ class DPMDriverInstanceTestCase(TestCase):
     def test_spawn_max_nics(self, mock_prop, mock_create, mock_get_part):
         dpmdriver = driver.DPMDriver(None)
         network_info = [x for x in range(0, 13)]
-        self.assertRaises(exceptions.MaxAmountOfInstancePortsExceededError,
+        self.assertRaises(
+                          exceptions.MaxAmountOfInstancePortsExceededError,
                           dpmdriver.spawn, None, None, None, None, None,
-                          network_info, flavor=mock.Mock())
+                          None, network_info)
 
     @mock.patch.object(driver.DPMDriver, 'get_fc_boot_props',
                        return_value=(None, None))
@@ -342,9 +343,8 @@ class DPMDriverInstanceTestCase(TestCase):
                 "type": "dpm_vswitch",
                 "details": {"object_id": "2"}}
         network_info = [vif, vif2]
-        self.dpmdriver.spawn(None, mock_instance, None, None, None,
-                             network_info, flavor=mock.Mock())
-
+        self.dpmdriver.spawn(None, mock_instance, None, None, None, None,
+                             network_info)
         partition = cpc.partitions.find(**{
             "object-id": "1"})
         nics = partition.nics.list()
