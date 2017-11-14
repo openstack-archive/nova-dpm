@@ -174,6 +174,7 @@ class PartitionInstance(object):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
+        LOG.debug("XXX vif: %s", vif)
 
         port_id = vif['id']
         vif_type = vif['type']
@@ -193,6 +194,28 @@ class PartitionInstance(object):
             "virtual-switch-uri": "/api/virtual-switches/"
                                   + dpm_object_id
         }
+
+        if self.instance.image_ref != '':
+            # SSC
+            network = vif["network"]
+            # There could be mutliple subnets on a network!
+            subnet = network["subnets"][0]
+            # There could be multiple IPs on a subnet port
+            ip = subnet["ips"][0]
+            gateway_ip = subnet["gateway"]["address"]
+            import re
+            mask = re.search('.*(/[0-9]{1,2})', subnet["cidr"]).group(1)
+            ssc_nic_dict = {
+                "ssc-mask-prefix": mask,
+                "ssc-ip-address": ip["address"],
+                "ssc-ip-address-type": "ipv{}".format(ip["version"]),
+                # Only the management nic should have this attribute
+                "ssc-management-nic": True
+            }
+            LOG.debug("XXX vnic ssc details: %s", ssc_nic_dict)
+            LOG.debug("XXX setting partiton gateway to: %s", gateway_ip)
+            self.partition.update_properties(properties={"ssc-ipv4-gateway": gateway_ip})
+            dpm_nic_dict.update(ssc_nic_dict)
         LOG.debug("Creating NIC %s", dpm_nic_dict)
         nic_interface = self.partition.nics.create(dpm_nic_dict)
         LOG.debug("NIC created successfully %s with URI %s",
@@ -282,11 +305,16 @@ class PartitionInstance(object):
 
     def set_boot_properties(self, wwpn, lun, booturi):
         LOG.debug('set_boot_properties')
-        bootProperties = {'boot-device': 'storage-adapter',
-                          'boot-storage-device': booturi,
-                          'boot-world-wide-port-name': wwpn,
-                          'boot-logical-unit-number': lun}
-        self.partition.update_properties(properties=bootProperties)
+        if self.instance.image_ref != '':
+            # Boot from image = SSC
+            pass
+        else:
+            # Boot from FCP volume
+            bootProperties = {'boot-device': 'storage-adapter',
+                              'boot-storage-device': booturi,
+                              'boot-world-wide-port-name': wwpn,
+                              'boot-logical-unit-number': lun}
+            self.partition.update_properties(properties=bootProperties)
 
     def launch(self, partition=None):
         LOG.debug('Partition launch triggered')
@@ -501,3 +529,29 @@ class PhysicalAdapterModel(object):
         :return: list of adapter_port dict
         """
         return self._adapter_ports
+
+
+
+class SSCPartitionInstance(PartitionInstance):
+    def properties(self):
+        props = super(SSCPartitionInstance, self).properties()
+        LOG.debug("XXX log instance params: %s", self.instance)
+        ssc_props = {
+            'type': 'ssc',
+#            'ssc_boot_selection': 'foo',
+            # Is updating the hostname a use case?
+            'ssc-host-name': self.instance.display_name,
+            # Needs to be a dummy. Information not available in the early stage. Should be available when in spawn.
+#            'ssc-ipv4-gateway': '9.152.150.205',
+            # Needs to be a dummy. Information not available in the early stage. Should be available when in spawn.
+#            'ssc-dns-servers': ['8.8.8.8'],
+            # Where is this value coming from?
+            'ssc-master-userid': 'sscinfra',
+            # Where is this value coming from?
+            'ssc-master-pw': 'sscinfra'
+        }
+        ssc_props.update(props)
+#        ssc_props['initial-memory'] = 4096
+#        ssc_props['maximum-memory'] = 4096
+        LOG.debug("XXX log ssc_properties: %s", ssc_props)
+        return ssc_props

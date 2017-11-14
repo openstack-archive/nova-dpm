@@ -350,9 +350,10 @@ class DPMDriver(driver.ComputeDriver):
                        flavor=None):
 
         if instance.image_ref != '':
-            raise exceptions.BootFromImageNotSupported()
-
-        inst = vm.PartitionInstance(instance, self._cpc)
+        #    raise exceptions.BootFromImageNotSupported()
+            inst = vm.SSCPartitionInstance(instance, self._cpc)
+        else:
+            inst = vm.PartitionInstance(instance, self._cpc)
         inst.create(inst.properties())
 
         inst.attach_hbas()
@@ -360,7 +361,7 @@ class DPMDriver(driver.ComputeDriver):
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, allocations, network_info=None,
               block_device_info=None):
-
+        LOG.debug("XXX spawn instance: %s", instance)
         inst = vm.PartitionInstance(instance, self._cpc)
 
         # The creation of NICs is limited in DPM by the partitions
@@ -380,6 +381,7 @@ class DPMDriver(driver.ComputeDriver):
         nic_boot_string = ""
         for vif in network_info:
             nic = inst.attach_nic(vif)
+            # Not required for ssc - will be ignored
             nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
         inst.set_boot_os_specific_parameters(nic_boot_string)
 
