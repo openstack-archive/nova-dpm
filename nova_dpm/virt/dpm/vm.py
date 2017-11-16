@@ -200,6 +200,9 @@ class PartitionInstance(object):
                   nic_interface.properties['virtual-switch-uri'])
         return nic_interface
 
+    def hot_resize_partition(self, flavor):
+        self.partition.update_properties(properties={"ifl-processors": flavor.vcpus})
+
     def attach_hbas(self):
         LOG.debug('Creating vhbas for instance',
                   instance=self.instance)

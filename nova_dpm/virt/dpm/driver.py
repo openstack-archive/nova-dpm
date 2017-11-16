@@ -36,7 +36,9 @@ import zhmcclient
 
 
 LOG = logging.getLogger(__name__)
+logging.set_defaults(default_log_levels=logging.get_default_log_levels() + ["zhmcclient=WARNING"])
 CONF = nova_dpm.conf.CONF
+logging.setup(CONF, "nova")
 
 dpm_volume_drivers = [
     'fibre_channel=nova_dpm.virt.dpm.volume.'
@@ -68,6 +70,40 @@ class DPMDriver(driver.ComputeDriver):
         self.deleted_instance_wwpns_mapping = {}
 
         self.volume_drivers = self._get_volume_drivers()
+
+    def get_host_ip_addr(self):
+        from nova.compute import utils as compute_utils
+        ips = compute_utils.get_machine_ips()
+        if CONF.my_ip not in ips:
+            LOG.warning('my_ip address (%(my_ip)s) was not found on '
+                        'any of the interfaces: %(ifaces)s',
+                        {'my_ip': CONF.my_ip, 'ifaces': ", ".join(ips)})
+        return CONF.my_ip
+
+    def migrate_disk_and_power_off(self, context, instance, dest,
+                                   flavor, network_info,
+                                   block_device_info=None,
+                                   timeout=0, retry_interval=0):
+        LOG.debug("XXX migrate_disk_and_power_off resize to flavor: %s", flavor)
+        inst = vm.SSCPartitionInstance(instance, self._cpc)
+        inst.hot_resize_partition(flavor)
+        LOG.debug("XXX resize done")
+
+    def finish_migration(self, context, migration, instance, disk_info,
+                         network_info, image_meta, resize_instance,
+                         block_device_info=None, power_on=True):
+        LOG.debug("XXX finish_migration")
+        pass
+    def confirm_migration(self, context, migration, instance,
+                          network_info):
+        LOG.debug("XXX confirm_migration")
+
+    def finish_revert_migration(self, context, instance,
+                                network_info, block_device_info, power_on):
+        LOG.debug("XXX finish_revert_migration")
+        inst = vm.SSCPartitionInstance(instance, self._cpc)
+        inst.hot_resize_partition(instance.flavor)
+        LOG.debug("XXX finish_revert_migration done")
 
     def init_host(self, host):
         """Driver initialization of the hypervisor node"""
