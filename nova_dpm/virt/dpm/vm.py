@@ -16,7 +16,10 @@
 """
 Partition will map nova parameter to PRSM parameter
 """
+import json
+import os
 import re
+import requests
 import sys
 
 from nova.compute import manager as compute_manager
@@ -329,6 +332,13 @@ class PartitionInstance(object):
             status=utils.PartitionState.RUNNING,
             status_timeout=STATUS_TIMEOUT)
 
+    def _cleanup_image(self):
+        import shutil
+        try: 
+            shutil.rmtree(path = CONF.instances_path + "/" + self.instance.uuid)
+        except OSError as err:
+            LOG.debug("XXX error removing image %s", str(err))
+
     def destroy(self):
         LOG.debug('Partition Destroy triggered')
         if self.partition:
@@ -350,6 +360,8 @@ class PartitionInstance(object):
                 self.instance.vm_state = vm_states.STOPPED
                 self.instance.save()
                 self.partition.delete()
+                # SSC only
+                self._cleanup_image()
             except exception.InstanceInvalidState as invalid_state:
                 errormsg = (_("Partition - %(partition)s status "
                               "%(status)s is invalid") %
@@ -357,6 +369,8 @@ class PartitionInstance(object):
                              'status': self.partition.properties['status']})
                 raise invalid_state(errormsg)
         else:
+            # SSC only
+            self._cleanup_image()
             errormsg = (_("Partition corresponding to the instance "
                           "%(instance)s and instance uuid %(uuid)s "
                           "does not exist") %
@@ -424,6 +438,11 @@ class PartitionInstance(object):
             return self.cpc.partitions.find(name=self.partition_name)
         except NotFound:
             return None
+
+    def install(self, context, mgmt_vif, target_wwpn, lun, hba_uri):
+        # Nothing required for installation
+        pass
+
 
 
 class PartitionInstanceInfo(object):
@@ -531,7 +550,6 @@ class PhysicalAdapterModel(object):
         return self._adapter_ports
 
 
-
 class SSCPartitionInstance(PartitionInstance):
     def properties(self):
         props = super(SSCPartitionInstance, self).properties()
@@ -555,3 +573,81 @@ class SSCPartitionInstance(PartitionInstance):
 #        ssc_props['maximum-memory'] = 4096
         LOG.debug("XXX log ssc_properties: %s", ssc_props)
         return ssc_props
+
+    def _ssc_auth(self, ip):
+        url = 'https://{}/api/com.ibm.zaci.system/api-tokens'.format(ip)
+        headers = {
+            "Content-type": "application/vnd.ibm.zaci.payload+json;version=1.0",
+            "zACI-API": "com.ibm.zaci.system/1.0",
+            "Accept": "application/vnd.ibm.zaci.payload+json;version=1.0",
+        }
+
+        payload = {"kind": "request",
+            "parameters": {
+            "user": "sscinfra",
+            "password": "sscinfra"
+            }}
+        r = requests.post(url, headers=headers, json=payload, verify=False)
+        result = json.loads(r.text)
+        self.token = result["parameters"]["token"]
+        LOG.debug("XXX got token: %s", self.token)
+
+    def _get_hba_dev_bus_id(self, hba_uri):
+        partition_hba = self.partition.hbas.find(**{
+            "element-uri": hba_uri})
+        devno = partition_hba.get_property('device-number')
+        LOG.debug("XXX using devno %s", devno)
+        return "0.0.%s" % devno
+
+    # copied from os-brick fibre_channel_s390x.py
+    def _get_lun_string(self, lun):
+        LOG.debug("XXX got LUN %s", str(lun))
+        target_lun = 0
+        if lun <= 0xffff:
+            # removed 0x prefix - ssc does not accept it
+            target_lun = "%04x000000000000" % lun
+        elif lun <= 0xffffffff:
+            target_lun = "%08x00000000" % lun
+        LOG.debug("XXX Using lunstring %s", target_lun)
+        return target_lun
+
+    def _download_image(self, context, path):
+        LOG.debug("XXX creating directory %s", path)
+        if not os.path.exists(path):
+           os.makedirs(path)
+        from nova.virt import images
+        LOG.debug("XXX downloading imag to %s", path)
+        image_path = path + "/image"
+        images.fetch(context, self.instance.image_ref, image_path)
+        return image_path
+
+
+    def _ssc_install(self, context, ip, target_wwpn, lun, dev_bus_id):
+        LOG.debug("XXX image: %s", self.instance.image_ref)
+        path = CONF.instances_path + "/" + self.instance.uuid
+        image_path = self._download_image(context, path)
+
+        url = 'https://{}/api/com.ibm.zaci.system/sw-appliances/install'.format(ip)
+        params = {"id": dev_bus_id, "wwpn": target_wwpn, "lun": self._get_lun_string(int(lun))}
+        headers = {
+            "Content-type": "application/octet-stream",
+            "zACI-API": "com.ibm.zaci.system/1.0",
+            "Authorization": "Bearer {}".format(self.token),
+        }
+
+        with open(image_path) as img:
+            r = requests.post(url, headers=headers, params=params, data=img, verify=False)
+        LOG.debug("XXX uploaded image with result %s", r.text)
+
+    def install(self, context, mgmt_vif, target_wwpn, lun, hba_uri):
+        # need to set gateway before partition start
+        network = mgmt_vif["network"]
+        # There could be mutliple subnets on a network!
+        subnet = network["subnets"][0]
+        # There could be multiple IPs on a subnet port
+        ip = subnet["ips"][0]["address"]
+        self._ssc_auth(ip)
+        dev_bus_id = self._get_hba_dev_bus_id(hba_uri)
+        self._ssc_install(context, ip, target_wwpn, lun, dev_bus_id)
+        # TODO prepare for start & reboot!
+

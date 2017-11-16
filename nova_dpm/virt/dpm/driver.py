@@ -85,7 +85,7 @@ class DPMDriver(driver.ComputeDriver):
                                    block_device_info=None,
                                    timeout=0, retry_interval=0):
         LOG.debug("XXX migrate_disk_and_power_off resize to flavor: %s", flavor)
-        inst = vm.SSCPartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.hot_resize_partition(flavor)
         LOG.debug("XXX resize done")
 
@@ -101,7 +101,7 @@ class DPMDriver(driver.ComputeDriver):
     def finish_revert_migration(self, context, instance,
                                 network_info, block_device_info, power_on):
         LOG.debug("XXX finish_revert_migration")
-        inst = vm.SSCPartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.hot_resize_partition(instance.flavor)
         LOG.debug("XXX finish_revert_migration done")
 
@@ -237,7 +237,7 @@ class DPMDriver(driver.ComputeDriver):
             props['wwpns'] = self.deleted_instance_wwpns_mapping.pop(
                 instance.uuid)
         else:
-            inst = vm.PartitionInstance(instance, self._cpc)
+            inst = self._get_partition_instance(instance)
             props['wwpns'] = inst.get_partition_wwpns()
 
         props['host'] = instance.uuid
@@ -345,24 +345,30 @@ class DPMDriver(driver.ComputeDriver):
             mac=vif["address"].replace(":", "")
         )
         return nic_boot_parms
+    def _get_partition_instance(self, instance):
+        if instance.image_ref != '':
+        #    raise exceptions.BootFromImageNotSupported()
+            return vm.SSCPartitionInstance(instance, self._cpc)
+        else:
+            return vm.PartitionInstance(instance, self._cpc)
 
     def prep_for_spawn(self, context, instance,
                        flavor=None):
 
-        if instance.image_ref != '':
-        #    raise exceptions.BootFromImageNotSupported()
-            inst = vm.SSCPartitionInstance(instance, self._cpc)
-        else:
-            inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.create(inst.properties())
 
         inst.attach_hbas()
+    def _get_management_vif(self, network_info):
+        # Need a proper way to determine the mgmt nic
+        # Based on the network name (label)?
+        return network_info[0]
 
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, allocations, network_info=None,
               block_device_info=None):
         LOG.debug("XXX spawn instance: %s", instance)
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
 
         # The creation of NICs is limited in DPM by the partitions
         # boot-os-specific-parameters property. It is used to pass additional
@@ -379,8 +385,12 @@ class DPMDriver(driver.ComputeDriver):
                 current_ports=len(network_info)
             ))
         nic_boot_string = ""
+        mgmt_vif = self._get_management_vif(network_info)
         for vif in network_info:
-            nic = inst.attach_nic(vif)
+            if vif == mgmt_vif:
+                nic = inst.attach_nic(vif)
+            else:
+                nic = inst.attach_nic(vif)
             # Not required for ssc - will be ignored
             nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
         inst.set_boot_os_specific_parameters(nic_boot_string)
@@ -395,6 +405,7 @@ class DPMDriver(driver.ComputeDriver):
 
         inst.set_boot_properties(target_wwpn, lun, hba_uri)
         inst.launch()
+        inst.install(context, mgmt_vif, target_wwpn, lun, hba_uri)
 
     def get_fc_boot_props(self, block_device_info, inst):
 
@@ -460,7 +471,7 @@ class DPMDriver(driver.ComputeDriver):
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         # Need to save wwpns before deletion of the partition
         # Because after driver.destroy function driver.get_volume_connector
         # will be called which required hbas wwpns of partition.
@@ -469,15 +480,15 @@ class DPMDriver(driver.ComputeDriver):
         inst.destroy()
 
     def power_off(self, instance, timeout=0, retry_interval=0):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.power_off_vm()
 
     def power_on(self, context, instance, network_info,
                  block_device_info=None):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.power_on_vm()
 
     def reboot(self, context, instance, network_info, reboot_type,
                block_device_info=None, bad_volumes_callback=None):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.reboot_vm()
