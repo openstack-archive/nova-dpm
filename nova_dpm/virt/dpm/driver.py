@@ -353,7 +353,7 @@ class DPMDriver(driver.ComputeDriver):
             nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
         inst.set_boot_os_specific_parameters(nic_boot_string)
 
-        hba_uri = inst.get_boot_hba_uri()
+        hba_uri = inst.get_boot_hba().get_property("element-uri")
 
         LOG.debug("HBA boot uri %s for the instance %s", hba_uri,
                   instance.hostname)
@@ -378,9 +378,7 @@ class DPMDriver(driver.ComputeDriver):
 
         LOG.debug("Block device mapping %s", str(block_device_mapping))
 
-        partition_hba_uri = inst.get_boot_hba_uri()
-        partition_hba = inst.get_partition().hbas.find(**{
-            "element-uri": partition_hba_uri})
+        partition_hba = inst.get_boot_hba()
         partition_wwpn = partition_hba.get_property('wwpn')
 
         mapped_block_device = block_device_mapping[0]

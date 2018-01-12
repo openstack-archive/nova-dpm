@@ -154,6 +154,7 @@ class DPMdriverInitHostTestCase(TestCase):
         mock_get_partition.return_value = self.partition
         mock_block_device.return_value = BLOCK_DEVICE
         inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
+
         target_wwpn, lun = self.dpmdriver.get_fc_boot_props(
             mock.Mock(), inst)
         self.assertEqual(target_wwpn, '500507680B214AC1')
@@ -317,12 +318,12 @@ class DPMDriverInstanceTestCase(TestCase):
         mock_instance = mock.Mock()
         mock_instance.image_ref = ""
         self.assertRaises(exceptions.MaxAmountOfInstancePortsExceededError,
-                          dpmdriver.spawn, None, mock_instance, None, None, None,
-                          None, network_info)
+                          dpmdriver.spawn, None, mock_instance, None, None,
+                          None, None, network_info)
 
     @mock.patch.object(driver.DPMDriver, 'get_fc_boot_props',
                        return_value=(None, None))
-    @mock.patch.object(vm.PartitionInstance, 'get_boot_hba_uri')
+    @mock.patch.object(vm.PartitionInstance, 'get_boot_hba')
     @mock.patch.object(vm.PartitionInstance, 'launch')
     @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
     @mock.patch.object(vm.PartitionInstance, 'properties')
