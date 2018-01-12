@@ -284,12 +284,11 @@ class VmPartitionInstanceTestCase(TestCase):
                 'object-uri') + '/hbas/1',
             self.partition_inst.get_hba_uris()[0])
 
-    def test_get_boot_hba_uri(self):
+    def test_get_boot_hba(self):
         partition = self.cpc.partitions.find(**{"name": self.part_name})
-        self.assertEqual(
-            partition.get_property(
-                'object-uri') + '/hbas/1',
-            self.partition_inst.get_boot_hba_uri())
+        hba = self.partition_inst.get_boot_hba()
+        self.assertEqual(partition.get_property('object-uri') + '/hbas/1',
+                         hba.get_property('element-uri'))
 
     def test_power_on_vm_when_paused(self):
         instance = instance_obj.Instance()
