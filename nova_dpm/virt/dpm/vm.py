@@ -273,8 +273,9 @@ class PartitionInstance(object):
                 partition_wwpns.append(wwpn.replace('0x', ''))
         return partition_wwpns
 
-    def set_boot_properties(self, wwpn, lun, booturi):
+    def set_boot_properties(self, wwpn, lun):
         LOG.debug('set_boot_properties')
+        booturi = self.get_boot_hba().get_property("element-uri")
         bootProperties = {'boot-device': 'storage-adapter',
                           'boot-storage-device': booturi,
                           'boot-world-wide-port-name': wwpn,
