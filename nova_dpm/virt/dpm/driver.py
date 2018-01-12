@@ -327,6 +327,13 @@ class DPMDriver(driver.ComputeDriver):
 
         inst.attach_hbas()
 
+    @staticmethod
+    def _get_block_device_mapping(block_device_info):
+        bdm = driver.block_device_info_get_mapping(
+            block_device_info)
+        LOG.debug("Block device mapping %s", str(bdm))
+        return bdm
+
     def spawn(self, context, instance, image_meta, injected_files,
               admin_password, allocations, network_info=None,
               block_device_info=None):
@@ -353,71 +360,8 @@ class DPMDriver(driver.ComputeDriver):
             nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
         inst.set_boot_os_specific_parameters(nic_boot_string)
 
-        target_wwpn, lun = self.get_fc_boot_props(
-            block_device_info, inst)
-
-        inst.set_boot_properties(target_wwpn, lun)
+        inst.set_boot_properties(self._get_block_device_mapping(block_device_info))
         inst.launch()
-
-    def get_fc_boot_props(self, block_device_info, inst):
-
-        # block_device_mapping is a list of mapped block devices.
-        # In dpm case we are mapping only one device
-        # So block_device_mapping contains one item in the list
-        # i.e. block_device_mapping[0]
-
-        block_device_mapping = driver.block_device_info_get_mapping(
-            block_device_info)
-
-        self._validate_volume_type(block_device_mapping)
-
-        LOG.debug("Block device mapping %s", str(block_device_mapping))
-
-        partition_hba = inst.get_boot_hba()
-        partition_wwpn = partition_hba.get_property('wwpn')
-
-        mapped_block_device = block_device_mapping[0]
-
-        host_wwpns = (mapped_block_device['connection_info']
-                      ['connector']['wwpns'])
-
-        if partition_wwpn not in host_wwpns:
-            raise Exception('Partition WWPN not found from cinder')
-
-        # There is a list of target WWPNs which can be configured that
-        # has to be ignored. The storewize driver as of today returns
-        # complete set of Target WWPNS both supported and unsupported
-        # (nas/file module connected)out of which we need to filter
-        # out those mentioned as target_wwpn_ignore_list
-        target_wwpn = self._fetch_valid_target_wwpn(mapped_block_device,
-                                                    partition_wwpn)
-        lun = str(mapped_block_device['connection_info']
-                  ['data']['target_lun'])
-        return target_wwpn, lun
-
-    def _fetch_valid_target_wwpn(self, mapped_block_device, partition_wwpn):
-        LOG.debug("_fetch_valid_target_wwpn")
-        list_target_wwpns = (mapped_block_device['connection_info']['data']
-                             ['initiator_target_map'][partition_wwpn])
-
-        target_wwpns = [wwpn for wwpn in list_target_wwpns
-                        if wwpn not in CONF.dpm.target_wwpn_ignore_list]
-
-        # target_wwpns is a list of wwpns which will be accessible
-        # from host wwpn. So we can use any of the target wwpn in the
-        # list.
-        target_wwpn = (target_wwpns[0]
-                       if len(target_wwpns) > 0 else '')
-
-        LOG.debug("Returning valid target WWPN %s", target_wwpn)
-        return target_wwpn
-
-    def _validate_volume_type(self, bdms):
-        for bdm in bdms:
-            vol_type = bdm['connection_info']['driver_volume_type']
-            if vol_type != 'fibre_channel':
-                raise exceptions.UnsupportedVolumeTypeException(
-                    vol_type=vol_type)
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):

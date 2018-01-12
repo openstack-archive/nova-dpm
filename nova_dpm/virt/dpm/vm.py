@@ -25,6 +25,7 @@ from nova.compute import task_states
 from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
+from nova.virt import driver
 from nova_dpm import conf
 from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
@@ -271,14 +272,20 @@ class PartitionInstance(object):
                 partition_wwpns.append(wwpn.replace('0x', ''))
         return partition_wwpns
 
-    def set_boot_properties(self, wwpn, lun):
+    def set_boot_properties(self, bdm):
         LOG.debug('set_boot_properties')
-        booturi = self.get_boot_hba().get_property("element-uri")
-        bootProperties = {'boot-device': 'storage-adapter',
-                          'boot-storage-device': booturi,
-                          'boot-world-wide-port-name': wwpn,
-                          'boot-logical-unit-number': lun}
-        self.partition.update_properties(properties=bootProperties)
+        # block_device_mapping is a list of mapped block devices.
+        # In dpm case we are mapping only the first device for now
+        # So block_device_mapping contains one item in the list
+        # i.e. block_device_mapping[0]
+        bd = BlockDevice(bdm[0])
+
+        boot_hba = self.get_boot_hba()
+        boot_properties = {'boot-device': 'storage-adapter',
+                           'boot-storage-device': boot_hba.get_property("element-uri"),
+                           'boot-world-wide-port-name': bd.get_target_wwpn(boot_hba.get_property('wwpn')),
+                           'boot-logical-unit-number': bd.lun}
+        self.partition.update_properties(properties=boot_properties)
 
     def launch(self, partition=None):
         LOG.debug('Partition launch triggered')
@@ -493,3 +500,44 @@ class PhysicalAdapterModel(object):
         :return: list of adapter_port dict
         """
         return self._adapter_ports
+
+
+class BlockDevice(object):
+    def __init__(self, block_device):
+        self.bd = block_device
+        self._validate_volume_type()
+
+    def _validate_volume_type(self):
+        vol_type = self.bd['connection_info']['driver_volume_type']
+        if vol_type != 'fibre_channel':
+            raise exceptions.UnsupportedVolumeTypeException(
+                    vol_type=vol_type)
+
+    @property
+    def host_wwpns(self):
+        return self.bd['connection_info']['connector']['wwpns']
+
+    def get_target_wwpn(self, partition_wwpn):
+        if partition_wwpn not in self.host_wwpns:
+            raise Exception('Partition WWPN not found from cinder')
+
+        bd_target_wwpns = (self.bd['connection_info']['data']['initiator_target_map'][partition_wwpn])
+
+        # Some storage systems return a complete list of target WWPNs on cinders request.
+        # Only some of them might be available in our FC network. Therefore we need to
+        # filter out the invalid ones. The user defines the invalid ones via a config setting
+        valid_target_wwpns = [
+            wwpn for wwpn in bd_target_wwpns if wwpn not in CONF.dpm.target_wwpn_ignore_list]
+
+        # target_wwpns is a list of wwpns which will be accessible
+        # from host wwpn. So we can use any of the target wwpn in the
+        # list.
+        target_wwpn = (valid_target_wwpns[0]
+                       if len(valid_target_wwpns) > 0 else '')
+
+        LOG.debug("Returning valid target WWPN %s", target_wwpn)
+        return target_wwpn
+
+    @property
+    def lun(self):
+        return str(self.bd['connection_info']['data']['target_lun'])
