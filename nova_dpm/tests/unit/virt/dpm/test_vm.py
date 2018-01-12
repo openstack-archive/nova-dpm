@@ -247,9 +247,9 @@ class VmPartitionInstanceTestCase(TestCase):
 
         wwpn = '500507680B214AC1'
         lun = 1
-        booturi = '/api/partitions/1/hbas/1'
+        booturi = '/api/partitions/4/hbas/1'
         partition = self.cpc.partitions.find(**{"name": self.part_name})
-        self.partition_inst.set_boot_properties(wwpn, lun, booturi)
+        self.partition_inst.set_boot_properties(wwpn, lun)
         self.assertEqual(
             'storage-adapter',
             partition.get_property('boot-device'))
@@ -287,7 +287,8 @@ class VmPartitionInstanceTestCase(TestCase):
     def test_get_boot_hba(self):
         partition = self.cpc.partitions.find(**{"name": self.part_name})
         hba = self.partition_inst.get_boot_hba()
-        self.assertEqual(partition.get_property('object-uri') + '/hbas/1', hba.get_property('element-uri'))
+        self.assertEqual(partition.get_property('object-uri') + '/hbas/1',
+                         hba.get_property('element-uri'))
 
     def test_power_on_vm_when_paused(self):
         instance = instance_obj.Instance()

@@ -318,8 +318,8 @@ class DPMDriverInstanceTestCase(TestCase):
         mock_instance = mock.Mock()
         mock_instance.image_ref = ""
         self.assertRaises(exceptions.MaxAmountOfInstancePortsExceededError,
-                          dpmdriver.spawn, None, mock_instance, None, None, None,
-                          None, network_info)
+                          dpmdriver.spawn, None, mock_instance, None, None,
+                          None, None, network_info)
 
     @mock.patch.object(driver.DPMDriver, 'get_fc_boot_props',
                        return_value=(None, None))

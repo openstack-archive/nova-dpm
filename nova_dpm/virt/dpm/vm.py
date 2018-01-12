@@ -255,9 +255,11 @@ class PartitionInstance(object):
         # Using the first adapter in the config option for boot
         adapter_uuid, port = CONF.dpm.physical_storage_adapter_mappings[0]
 
-        adapter_port_uri = "/api/adapters/%s/storage-ports/%s" % (adapter_uuid, port)
+        adapter_port_uri = "/api/adapters/%s/storage-ports/%s" % (adapter_uuid,
+                                                                  port)
         # will raise zhmcclient NoUniqueMatch exception when multiple found
-        hba = self.partition.hbas.find(**{"adapter-port-uri": adapter_port_uri})
+        hba = self.partition.hbas.find(**
+                                       {"adapter-port-uri": adapter_port_uri})
         return hba
 
     def get_partition_wwpns(self):
@@ -271,8 +273,9 @@ class PartitionInstance(object):
                 partition_wwpns.append(wwpn.replace('0x', ''))
         return partition_wwpns
 
-    def set_boot_properties(self, wwpn, lun, booturi):
+    def set_boot_properties(self, wwpn, lun):
         LOG.debug('set_boot_properties')
+        booturi = self.get_boot_hba().get_property("element-uri")
         bootProperties = {'boot-device': 'storage-adapter',
                           'boot-storage-device': booturi,
                           'boot-world-wide-port-name': wwpn,
