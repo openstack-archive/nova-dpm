@@ -69,6 +69,12 @@ class DPMDriver(driver.ComputeDriver):
 
         self.volume_drivers = self._get_volume_drivers()
 
+    def _get_partition_instance(self, instance):
+        if instance.image_ref != '':
+            raise exceptions.BootFromImageNotSupported()
+        else:
+            return vm.PartitionInstance(instance, self._cpc)
+
     def init_host(self, host):
         """Driver initialization of the hypervisor node"""
         LOG.debug("init_host")
@@ -201,7 +207,7 @@ class DPMDriver(driver.ComputeDriver):
             props['wwpns'] = self.deleted_instance_wwpns_mapping.pop(
                 instance.uuid)
         else:
-            inst = vm.PartitionInstance(instance, self._cpc)
+            inst = self._get_partition_instance(instance)
             props['wwpns'] = inst.get_partition_wwpns()
 
         props['host'] = instance.uuid
@@ -316,7 +322,7 @@ class DPMDriver(driver.ComputeDriver):
         if instance.image_ref != '':
             raise exceptions.BootFromImageNotSupported()
 
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.create(inst.properties())
 
         inst.attach_hbas()
@@ -325,7 +331,7 @@ class DPMDriver(driver.ComputeDriver):
               admin_password, allocations, network_info=None,
               block_device_info=None):
 
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
 
         # The creation of NICs is limited in DPM by the partitions
         # boot-os-specific-parameters property. It is used to pass additional
@@ -422,7 +428,7 @@ class DPMDriver(driver.ComputeDriver):
 
     def destroy(self, context, instance, network_info, block_device_info=None,
                 destroy_disks=True, migrate_data=None):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         # Need to save wwpns before deletion of the partition
         # Because after driver.destroy function driver.get_volume_connector
         # will be called which required hbas wwpns of partition.
@@ -431,15 +437,15 @@ class DPMDriver(driver.ComputeDriver):
         inst.destroy()
 
     def power_off(self, instance, timeout=0, retry_interval=0):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.power_off_vm()
 
     def power_on(self, context, instance, network_info,
                  block_device_info=None):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.power_on_vm()
 
     def reboot(self, context, instance, network_info, reboot_type,
                block_device_info=None, bad_volumes_callback=None):
-        inst = vm.PartitionInstance(instance, self._cpc)
+        inst = self._get_partition_instance(instance)
         inst.reboot_vm()
