@@ -251,20 +251,14 @@ class PartitionInstance(object):
         LOG.debug('Get Hba properties')
         return self.partition.get_property('hba-uris')
 
-    def get_boot_hba_uri(self):
-        hbas = self.get_hba_uris()
+    def get_boot_hba(self):
         # Using the first adapter in the config option for boot
         adapter_uuid, port = CONF.dpm.physical_storage_adapter_mappings[0]
-        hba_uri = None
 
-        for hba in hbas:
-            if hba.find(adapter_uuid):
-                hba_uri = str(hba)
-                break
-
-        if not hba_uri:
-            raise Exception('No HBA found')
-        return hba_uri
+        adapter_port_uri = "/api/adapters/%s/storage-ports/%s" % (adapter_uuid, port)
+        # will raise zhmcclient NoUniqueMatch exception when multiple found
+        hba = self.partition.hbas.find(**{"adapter-port-uri": adapter_port_uri})
+        return hba
 
     def get_partition_wwpns(self):
         LOG.debug('Get Partition wwpns')
