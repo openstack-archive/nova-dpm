@@ -238,7 +238,9 @@ class DPMdriverInitHostTestCase(TestCase):
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_get_volume_connector(self, mock_get_partition):
-        self.dpmdriver.get_volume_connector(mock.Mock())
+        instance = mock.Mock()
+        instance.image_ref = ""
+        self.dpmdriver.get_volume_connector(instance)
 
     def test_get_available_nodes(self):
         self.flags(host="fake-mini")
@@ -312,9 +314,11 @@ class DPMDriverInstanceTestCase(TestCase):
     def test_spawn_max_nics(self, mock_prop, mock_create, mock_get_part):
         dpmdriver = driver.DPMDriver(None)
         network_info = [x for x in range(0, 13)]
+        mock_instance = mock.Mock()
+        mock_instance.image_ref = ""
         self.assertRaises(exceptions.MaxAmountOfInstancePortsExceededError,
-                          dpmdriver.spawn, None, None, None, None, None,
-                          None, network_info)
+                          dpmdriver.spawn, None, mock_instance, None, None,
+                          None, None, network_info)
 
     @mock.patch.object(driver.DPMDriver, 'get_fc_boot_props',
                        return_value=(None, None))
@@ -332,6 +336,7 @@ class DPMDriverInstanceTestCase(TestCase):
 
         mock_instance = mock.Mock()
         mock_instance.uuid = "1"
+        mock_instance.image_ref = ""
 
         vif = {"address": "aa:bb:cc:dd:ee:ff",
                "id": "foo-id",
