@@ -353,15 +353,10 @@ class DPMDriver(driver.ComputeDriver):
             nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
         inst.set_boot_os_specific_parameters(nic_boot_string)
 
-        hba_uri = inst.get_boot_hba().get_property("element-uri")
-
-        LOG.debug("HBA boot uri %s for the instance %s", hba_uri,
-                  instance.hostname)
-
         target_wwpn, lun = self.get_fc_boot_props(
             block_device_info, inst)
 
-        inst.set_boot_properties(target_wwpn, lun, hba_uri)
+        inst.set_boot_properties(target_wwpn, lun)
         inst.launch()
 
     def get_fc_boot_props(self, block_device_info, inst):

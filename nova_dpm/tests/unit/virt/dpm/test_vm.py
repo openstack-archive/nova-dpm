@@ -247,9 +247,9 @@ class VmPartitionInstanceTestCase(TestCase):
 
         wwpn = '500507680B214AC1'
         lun = 1
-        booturi = '/api/partitions/1/hbas/1'
+        booturi = '/api/partitions/4/hbas/1'
         partition = self.cpc.partitions.find(**{"name": self.part_name})
-        self.partition_inst.set_boot_properties(wwpn, lun, booturi)
+        self.partition_inst.set_boot_properties(wwpn, lun)
         self.assertEqual(
             'storage-adapter',
             partition.get_property('boot-device'))
