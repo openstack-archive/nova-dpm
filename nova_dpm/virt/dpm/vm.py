@@ -171,29 +171,27 @@ class PartitionInstance(object):
             'boot-os-specific-parameters': data
         })
 
+    @staticmethod
+    def _get_nic_properties_dict(vif_obj):
+        return {
+            "name": "OpenStack_Port_" + str(vif_obj.port_id),
+            "description": "OpenStack mac=" + vif_obj.mac + ", CPCSubset=" +
+                           CONF.host,
+            "virtual-switch-uri": "/api/virtual-switches/" +
+                                  vif_obj.dpm_nic_object_id
+        }
+
     def attach_nic(self, vif_obj):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
 
-        port_id = vif_obj.port_id
-        vif_type = vif_obj.type
-        mac = vif_obj.mac
-        dpm_object_id = vif_obj.dpm_nic_object_id
-
         # Only dpm_vswitch attachments are supported for now
-        if vif_type != "dpm_vswitch":
+        if vif_obj.type != "dpm_vswitch":
             raise Exception
 
-        dpm_nic_dict = {
-            "name": "OpenStack_Port_" + str(port_id),
-            "description": "OpenStack mac=" + mac +
-                           ", CPCSubset=" +
-                           CONF.host,
-            "virtual-switch-uri": "/api/virtual-switches/"
-                                  + dpm_object_id
-        }
-        LOG.debug("Creating NIC %s", dpm_nic_dict)
+        dpm_nic_dict = self._get_nic_properties_dict(vif_obj)
+        LOG.debug("Creating NIC with properties: %s", dpm_nic_dict)
         nic_interface = self.partition.nics.create(dpm_nic_dict)
         LOG.debug("NIC created successfully %s with URI %s",
                   nic_interface.properties['name'],

@@ -220,6 +220,21 @@ class VmPartitionInstanceTestCase(TestCase):
             self.part_name,
             self.partition_inst.get_partition().get_property('name'))
 
+    def test__get_nic_properties_dict(self):
+        cfg.CONF.set_override("host", "subset")
+        vif = mock.Mock()
+        vif.dpm_nic_object_id = "nic_oid"
+        vif.mac = "mac"
+        vif.port_id = "port_id"
+
+        nic_props = self.partition_inst._get_nic_properties_dict(vif)
+
+        self.assertEqual("OpenStack_Port_port_id", nic_props["name"])
+        self.assertEqual("OpenStack mac=mac, CPCSubset=subset",
+                         nic_props["description"])
+        self.assertEqual("/api/virtual-switches/nic_oid",
+                         nic_props["virtual-switch-uri"])
+
     def test_attach_nic(self):
         vif = mock.Mock()
         vif.mac = "fa:16:3e:e4:9a:98"
