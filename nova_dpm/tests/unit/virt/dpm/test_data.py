@@ -153,6 +153,9 @@ def create_session_1():
                             'description': 'Partition #1 in CPC #3',
                             'initial-memory': 512,
                             'ifl-processors': 1,
+                            # The zhmcclient mock support does not provide an
+                            # empty default value
+                            'boot-os-specific-parameters': ""
                         },
 
                         'hbas': [

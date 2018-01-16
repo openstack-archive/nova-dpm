@@ -152,7 +152,9 @@ class VmPartitionInstanceTestCase(TestCase):
             'name': self.part_name,
             'description': self.part_description,
             'initial-memory': 512,
-            'maximum-memory': 512
+            'maximum-memory': 512,
+            # The zhmcclient mock support does not provide an empty default
+            'boot-os-specific-parameters': ""
         }
         # Create partition in a cpc not from openstack
         # and used same uuid of instance to create
@@ -254,19 +256,30 @@ class VmPartitionInstanceTestCase(TestCase):
             Exception,
             self.partition_inst.attach_nic, vif)
 
-    def test_set_boot_os_specific_parameters(self):
+    def test_append_to_boot_os_specific_parameters_empty(self):
         data = '1800,0,fa163ee49a98;'
-        self.partition_inst.set_boot_os_specific_parameters(data)
+        self.partition_inst.append_to_boot_os_specific_parameters(data)
         self.assertEqual(
-            data,
+            " " + data,
             self.partition_inst.get_partition().get_property(
                 'boot-os-specific-parameters'))
 
-    def test_set_boot_os_specific_parameters_negative(self):
+    def test_append_to_boot_os_specific_parameters_value(self):
+        data = '1800,0,fa163ee49a98;'
+        self.partition_inst.partition.update_properties({
+            'boot-os-specific-parameters': 'foo'
+        })
+        self.partition_inst.append_to_boot_os_specific_parameters(data)
+        self.assertEqual(
+            "foo " + data,
+            self.partition_inst.get_partition().get_property(
+                'boot-os-specific-parameters'))
+
+    def test_append_to_boot_os_specific_parameters_too_long(self):
         data = 257 * 'a'
         self.assertRaises(
             exceptions.BootOsSpecificParametersPropertyExceededError,
-            self.partition_inst.set_boot_os_specific_parameters, data)
+            self.partition_inst.append_to_boot_os_specific_parameters, data)
 
     @mock.patch.object(vm.BlockDevice, "get_target_wwpn")
     @mock.patch.object(vm.PartitionInstance, "get_boot_hba")

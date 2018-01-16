@@ -159,16 +159,19 @@ class PartitionInstance(object):
         partition_manager = self.cpc.partitions
         self.partition = partition_manager.create(properties)
 
-    def set_boot_os_specific_parameters(self, data):
-        """Set the boot-os-specific-parameters property
+    def append_to_boot_os_specific_parameters(self, data):
+        """Append something to the boot-os-specific-parameters property
 
         The value of this property will be appended to the kernels cmdline
         argument.
         """
+        current = self.partition.get_property("boot-os-specific-parameters")
+        new_data = "%(current)s %(data)s" % {'current': current, 'data': data}
+
         if len(data) > constants.BOOT_OS_SPECIFIC_PARAMETERS_MAX_LEN:
             raise exceptions.BootOsSpecificParametersPropertyExceededError()
         self.partition.update_properties({
-            'boot-os-specific-parameters': data
+            'boot-os-specific-parameters': new_data
         })
 
     @staticmethod
