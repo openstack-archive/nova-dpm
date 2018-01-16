@@ -174,6 +174,43 @@ class PartitionInstance(object):
             'boot-os-specific-parameters': new_data
         })
 
+    def _set_nic_string_in_os_specific_parameters(self, nic, vif_obj):
+        """Generate the NIC string that must be available from inside the OS
+
+        Passing the string into the operating system is achieved via appending
+        it to the partitions boot-os-specific-parameters property.
+        The value of this property will then be appended to the kernels cmdline
+        and be accessible from within the instance under /proc/cmdline.
+        It is ignored by the Linux Boot process but can be parsed by
+        other userspace tools and scripts.
+
+        This allows the following operations to be done from within the
+        Instance/Partitions Operating System:
+
+        * Replace the z Systems Firmware generated MAC address
+          of the NIC with the one generated from Neutron. The MAC can be
+          removed from this parameter once it is possible to set the correct
+          MAC right on DPM NIC creation.
+
+        * Configure the physical network adapter port to be used.
+          The port number can be removed once Linux is able to get this
+          information via a different channel.
+        """
+        # Format: <space><dev-no>,<port-no>,<mac>;
+        # <space>: A space to ensure separation from other parameters
+        # <devno>: The DPM device number
+        # <port-no>: The network adapters port that should be usd
+        # <mac>: MAC address without deliminator. This saves 5 additional
+        #        characters in the limited boot-os-specific-parameters property
+        # Example: 0001,1,aabbccddeeff;
+        # TODO(andreas_s): Update <port-no> once provided by Neutron. Till
+        # then default to 0
+        nic_boot_parms = "{devno},0,{mac};".format(
+            devno=nic.get_property("device-number"),
+            mac=vif_obj.mac.replace(":", "")
+        )
+        self.append_to_boot_os_specific_parameters(nic_boot_parms)
+
     @staticmethod
     def _get_nic_properties_dict(vif_obj):
         return {
@@ -199,6 +236,7 @@ class PartitionInstance(object):
         LOG.debug("NIC created successfully %s with URI %s",
                   nic_interface.properties['name'],
                   nic_interface.properties['virtual-switch-uri'])
+        self._set_nic_string_in_os_specific_parameters(nic_interface, vif_obj)
         return nic_interface
 
     def attach_hbas(self):

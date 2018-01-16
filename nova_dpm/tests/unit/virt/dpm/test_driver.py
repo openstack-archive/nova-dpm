@@ -260,9 +260,8 @@ class DPMDriverInstanceTestCase(TestCase):
     @mock.patch.object(vm.PartitionInstance, 'launch')
     @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
     @mock.patch.object(vm.PartitionInstance, 'properties')
-    @mock.patch.object(driver.DPMDriver, '_get_nic_string_for_guest_os')
     def test_spawn_attach_nic(self, mock_prop, mock_attachHba, mock_launch,
-                              mock_hba_uri, mock_get_bprops, mock_nic_string):
+                              mock_hba_uri, mock_get_bprops):
 
         cpc = self.client.cpcs.find(**{"object-id": "2"})
         self.dpmdriver._cpc = cpc
@@ -288,6 +287,11 @@ class DPMDriverInstanceTestCase(TestCase):
         nics = partition.nics.list()
         self.assertEqual(nics[0].name, "OpenStack_Port_foo-id")
         self.assertEqual(nics[1].name, "OpenStack_Port_foo-id2")
+
+        self.assertIn("8001,0,aabbccddeeff;",
+                      partition.get_property("boot-os-specific-parameters"))
+        self.assertIn("8002,0,112233445566;",
+                      partition.get_property("boot-os-specific-parameters"))
 
     def test_list_instances(self):
         self.flags(host="fakemini")

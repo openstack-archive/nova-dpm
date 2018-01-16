@@ -222,6 +222,20 @@ class VmPartitionInstanceTestCase(TestCase):
             self.part_name,
             self.partition_inst.get_partition().get_property('name'))
 
+    def test__set_nic_string_in_os_specific_parameters(self):
+        nic = mock.Mock()
+        nic.get_property = lambda prop: {'device-number': 'devno'}[prop]
+
+        vif_obj = mock.Mock()
+        vif_obj.mac = 'mac'
+
+        self.partition_inst._set_nic_string_in_os_specific_parameters(nic,
+                                                                      vif_obj)
+
+        boot_os_params = self.partition_inst.partition.get_property(
+            'boot-os-specific-parameters')
+        self.assertIn('devno,0,mac;', boot_os_params)
+
     def test__get_nic_properties_dict(self):
         cfg.CONF.set_override("host", "subset")
         vif = mock.Mock()
