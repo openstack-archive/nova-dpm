@@ -17,11 +17,12 @@
 # additional information for a NIC into the Operating System.
 # The boot-os-specific-parameters property is limited to 256 chars.
 # The format for a nic is <devno>,<portno>,<mac>;
+# len(" ") = 1 # space
 # len(<devno>) = 4
 # len(<portno>) = 1
 # len(<mac>) = 12
 # len (,,;) = 3
-# total len per NIC: 20
+# total len per NIC: 21
 # Max number of NICs = 256/20 = 12
 MAX_NICS_PER_PARTITION = 12
 

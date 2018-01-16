@@ -355,12 +355,11 @@ class DPMDriver(driver.ComputeDriver):
                 max_ports=constants.MAX_NICS_PER_PARTITION,
                 current_ports=len(network_info)
             ))
-        nic_boot_string = ""
         for vif_dict in network_info:
             vif_obj = DPMVIF(vif_dict)
             nic = inst.attach_nic(vif_obj)
-            nic_boot_string += self._get_nic_string_for_guest_os(nic, vif_obj)
-        inst.set_boot_os_specific_parameters(nic_boot_string)
+            inst.append_to_boot_os_specific_parameters(
+                self._get_nic_string_for_guest_os(nic, vif_obj))
 
         inst.set_boot_properties(
             self._get_block_device_mapping(block_device_info))
