@@ -171,16 +171,15 @@ class PartitionInstance(object):
             'boot-os-specific-parameters': data
         })
 
-    def attach_nic(self, vif):
+    def attach_nic(self, vif_obj):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
 
-        port_id = vif['id']
-        vif_type = vif['type']
-        mac = vif['address']
-        vif_details = vif['details']
-        dpm_object_id = vif_details['object_id']
+        port_id = vif_obj.port_id
+        vif_type = vif_obj.type
+        mac = vif_obj.mac
+        dpm_object_id = vif_obj.dpm_nic_object_id
 
         # Only dpm_vswitch attachments are supported for now
         if vif_type != "dpm_vswitch":

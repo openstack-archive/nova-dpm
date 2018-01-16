@@ -221,26 +221,19 @@ class VmPartitionInstanceTestCase(TestCase):
             self.partition_inst.get_partition().get_property('name'))
 
     def test_attach_nic(self):
-        vif = {
-            "details":
-                {"port_filter": False,
-                 "object_id": "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641"},
-            "address": "fa:16:3e:e4:9a:98",
-            "type": "dpm_vswitch",
-            "id": "703da361-9d4d-4441-b99b-e081c3e9cfbb"}
+        vif = mock.Mock()
+        vif.mac = "fa:16:3e:e4:9a:98"
+        vif.dpm_nic_object_id = "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641"
+        vif.type = "dpm_vswitch"
+        vif.port_id = "703da361-9d4d-4441-b99b-e081c3e9cfbb"
         nic_interface = self.partition_inst.attach_nic(vif)
         self.assertEqual(
             'OpenStack_Port_703da361-9d4d-4441-b99b-e081c3e9cfbb',
             nic_interface.properties['name'])
 
     def test_attach_nic_with_non_dpm_vswitch(self):
-        vif = {
-            "details":
-                {"port_filter": False,
-                 "object_id": "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641"},
-            "address": "fa:16:3e:e4:9a:98",
-            "type": "non_dpm_vswitch",
-            "id": "703da361-9d4d-4441-b99b-e081c3e9cfbb"}
+        vif = mock.Mock()
+        vif.type = "non_dpm_vswitch"
 
         self.assertRaises(
             Exception,

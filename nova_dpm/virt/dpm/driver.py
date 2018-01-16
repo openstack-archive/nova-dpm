@@ -28,6 +28,7 @@ from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
+from nova_dpm.virt.dpm.vif import DPMVIF
 from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -280,7 +281,7 @@ class DPMDriver(driver.ComputeDriver):
         """
         self.prep_for_spawn(context=None, instance=instance)
 
-    def _get_nic_string_for_guest_os(self, nic, vif):
+    def _get_nic_string_for_guest_os(self, nic, vif_obj):
         """Generate the NIC string that must be available from inside the OS
 
         Passing the string into the operating system is achieved via appending
@@ -312,7 +313,7 @@ class DPMDriver(driver.ComputeDriver):
         # then default to 0
         nic_boot_parms = "{devno},0,{mac};".format(
             devno=nic.get_property("device-number"),
-            mac=vif["address"].replace(":", "")
+            mac=vif_obj.mac.replace(":", "")
         )
         return nic_boot_parms
 
@@ -355,9 +356,10 @@ class DPMDriver(driver.ComputeDriver):
                 current_ports=len(network_info)
             ))
         nic_boot_string = ""
-        for vif in network_info:
-            nic = inst.attach_nic(vif)
-            nic_boot_string += self._get_nic_string_for_guest_os(nic, vif)
+        for vif_dict in network_info:
+            vif_obj = DPMVIF(vif_dict)
+            nic = inst.attach_nic(vif_obj)
+            nic_boot_string += self._get_nic_string_for_guest_os(nic, vif_obj)
         inst.set_boot_os_specific_parameters(nic_boot_string)
 
         inst.set_boot_properties(
