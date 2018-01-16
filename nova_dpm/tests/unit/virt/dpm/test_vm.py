@@ -26,6 +26,23 @@ import zhmcclient
 import zhmcclient_mock
 
 
+PARTITION_WWPN = 'CCCCCCCCCCCCCCCC'
+LUN = 0
+BLOCK_DEVICE = {
+    'connection_info': {
+        'driver_volume_type': 'fibre_channel',
+        'connector': {
+            'wwpns': [PARTITION_WWPN],
+            'host': '3cfb165c-0df3-4d80-87b2-4c353e61318f'},
+        'data': {
+            'initiator_target_map': {
+                PARTITION_WWPN: [
+                    'AAAAAAAAAAAAAAAA',
+                    'BBBBBBBBBBBBBBBB']},
+            'target_discovered': False,
+            'target_lun': LUN}}}
+
+
 def fake_session():
     session = zhmcclient_mock.FakedSession(
         'fake-host', 'fake-hmc', '2.13.1', '1.8')
@@ -243,13 +260,28 @@ class VmPartitionInstanceTestCase(TestCase):
             exceptions.BootOsSpecificParametersPropertyExceededError,
             self.partition_inst.set_boot_os_specific_parameters, data)
 
-    def test_set_boot_properties(self):
+    @mock.patch.object(vm.BlockDevice, "get_target_wwpn")
+    @mock.patch.object(vm.PartitionInstance, "get_boot_hba")
+    @mock.patch.object(vm.BlockDevice, "lun", new_callable=mock.PropertyMock)
+    def test_set_boot_properties(self, mock_lun, mock_get_hba, mock_gtw):
+        mock_lun.return_value = '1'
 
-        wwpn = '500507680B214AC1'
-        lun = 1
-        booturi = '/api/partitions/4/hbas/1'
+        wwpn = 'DDDDDDDDDDDDDDDD'
+        mock_gtw.return_value = wwpn
+
+        booturi = '/api/partitions/1/hbas/1'
+        mock_hba = mock.Mock()
+        mock_hba.get_property = lambda prop: {'element-uri': booturi,
+                                              'wwpn': wwpn}[prop]
+        mock_get_hba.return_value = mock_hba
+
+        bdm = [BLOCK_DEVICE]
+
+        self.partition_inst.set_boot_properties(bdm)
+
+        mock_gtw.assert_called_once_with(wwpn)
+
         partition = self.cpc.partitions.find(**{"name": self.part_name})
-        self.partition_inst.set_boot_properties(wwpn, lun)
         self.assertEqual(
             'storage-adapter',
             partition.get_property('boot-device'))
@@ -257,7 +289,7 @@ class VmPartitionInstanceTestCase(TestCase):
             wwpn,
             partition.get_property('boot-world-wide-port-name'))
         self.assertEqual(
-            lun,
+            '1',
             partition.get_property('boot-logical-unit-number'))
         self.assertEqual(
             booturi,

@@ -26,6 +26,7 @@ from nova.compute import vm_states
 from nova import exception
 from nova.i18n import _
 from nova_dpm import conf
+from nova_dpm.virt.dpm.block_device import BlockDevice
 from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
@@ -273,14 +274,22 @@ class PartitionInstance(object):
                 partition_wwpns.append(wwpn.replace('0x', ''))
         return partition_wwpns
 
-    def set_boot_properties(self, wwpn, lun):
+    def set_boot_properties(self, bdm):
         LOG.debug('set_boot_properties')
-        booturi = self.get_boot_hba().get_property("element-uri")
-        bootProperties = {'boot-device': 'storage-adapter',
-                          'boot-storage-device': booturi,
-                          'boot-world-wide-port-name': wwpn,
-                          'boot-logical-unit-number': lun}
-        self.partition.update_properties(properties=bootProperties)
+        # block_device_mapping is a list of mapped block devices.
+        # In dpm case we are mapping only the first device for now
+        # So block_device_mapping contains one item in the list
+        # i.e. block_device_mapping[0]
+        bd = BlockDevice(bdm[0])
+
+        boot_hba = self.get_boot_hba()
+        boot_properties = {
+            'boot-device': 'storage-adapter',
+            'boot-storage-device': boot_hba.get_property("element-uri"),
+            'boot-world-wide-port-name': bd.get_target_wwpn(
+                boot_hba.get_property('wwpn')),
+            'boot-logical-unit-number': bd.lun}
+        self.partition.update_properties(properties=boot_properties)
 
     def launch(self, partition=None):
         LOG.debug('Partition launch triggered')

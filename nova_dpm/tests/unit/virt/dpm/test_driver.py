@@ -19,7 +19,6 @@ from nova import context as context_object
 from nova import exception
 from nova.objects import flavor as flavor_object
 from nova.test import TestCase
-from nova.virt import driver as basedriver
 from nova_dpm.tests.unit.virt.dpm import test_data as utils
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import exceptions
@@ -32,19 +31,6 @@ import zhmcclient
 import zhmcclient_mock
 
 PARTITION_WWPN = 'C05076FFEB8000D6'
-BLOCK_DEVICE = [{
-    'connection_info': {
-        'driver_volume_type': 'fibre_channel',
-        'connector': {
-            'wwpns': [PARTITION_WWPN],
-            'host': '3cfb165c-0df3-4d80-87b2-4c353e61318f'},
-        'data': {
-            'initiator_target_map': {
-                PARTITION_WWPN: [
-                    '500507680B214AC1',
-                    '500507680B244AC0']},
-            'target_discovered': False,
-            'target_lun': 0}}}]
 
 
 def fake_session():
@@ -146,58 +132,6 @@ class DPMdriverInitHostTestCase(TestCase):
             exceptions.MaxProcessorExceededError,
             self.dpmdriver.init_host,
             None)
-
-    @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    @mock.patch.object(basedriver, 'block_device_info_get_mapping')
-    def test_get_fc_boot_props(self, mock_block_device,
-                               mock_get_partition):
-        mock_get_partition.return_value = self.partition
-        mock_block_device.return_value = BLOCK_DEVICE
-        inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
-
-        target_wwpn, lun = self.dpmdriver.get_fc_boot_props(
-            mock.Mock(), inst)
-        self.assertEqual(target_wwpn, '500507680B214AC1')
-        self.assertEqual(lun, '0')
-
-    def test_validate_volume_type_unsupported(self):
-
-        bdms = [
-            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
-        self.assertRaises(exceptions.UnsupportedVolumeTypeException,
-                          self.dpmdriver._validate_volume_type, bdms)
-
-        bdms = [
-            {'connection_info': {'driver_volume_type': 'fake_vol_type'}},
-            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
-        self.assertRaises(exceptions.UnsupportedVolumeTypeException,
-                          self.dpmdriver._validate_volume_type, bdms)
-
-        bdms = [
-            {'connection_info': {'driver_volume_type': 'fibre_channel'}},
-            {'connection_info': {'driver_volume_type': 'fake_vol_type'}}]
-        self.assertRaises(exceptions.UnsupportedVolumeTypeException,
-                          self.dpmdriver._validate_volume_type, bdms)
-
-    def test_validate_volume_type_supported(self):
-        bdms = [
-            {'connection_info': {'driver_volume_type': 'fibre_channel'}},
-            {'connection_info': {'driver_volume_type': 'fibre_channel'}}]
-        self.dpmdriver._validate_volume_type(bdms)
-
-    @mock.patch.object(vm.PartitionInstance, 'get_partition')
-    @mock.patch.object(basedriver, 'block_device_info_get_mapping')
-    def test_get_fc_boot_props_ignore_list(self, mock_block_device,
-                                           mock_get_partition):
-        mock_get_partition.return_value = self.partition
-        mock_block_device.return_value = BLOCK_DEVICE
-        self.flags(group="dpm", target_wwpn_ignore_list=["500507680B214AC1"])
-        self.dpmdriver.init_host(None)
-        inst = vm.PartitionInstance(mock.Mock(), mock.Mock())
-        target_wwpn, lun = self.dpmdriver.get_fc_boot_props(
-            mock.Mock(), inst)
-        self.assertEqual(target_wwpn, '500507680B244AC0')
-        self.assertEqual(lun, '0')
 
     @mock.patch.object(flavor_object.Flavor, 'get_by_id')
     @mock.patch.object(context_object, 'get_admin_context')
@@ -321,8 +255,7 @@ class DPMDriverInstanceTestCase(TestCase):
                           dpmdriver.spawn, None, mock_instance, None, None,
                           None, None, network_info)
 
-    @mock.patch.object(driver.DPMDriver, 'get_fc_boot_props',
-                       return_value=(None, None))
+    @mock.patch.object(vm.PartitionInstance, 'set_boot_properties')
     @mock.patch.object(vm.PartitionInstance, 'get_boot_hba')
     @mock.patch.object(vm.PartitionInstance, 'launch')
     @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
