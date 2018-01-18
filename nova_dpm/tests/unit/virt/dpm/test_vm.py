@@ -310,9 +310,8 @@ class VmPartitionInstanceTestCase(TestCase):
                                               'wwpn': wwpn}[prop]
         mock_get_hba.return_value = mock_hba
 
-        bdm = [BLOCK_DEVICE]
-
-        self.partition_inst.set_boot_properties(bdm)
+        self.partition_inst.block_device_info = [BLOCK_DEVICE]
+        self.partition_inst.set_boot_properties()
 
         mock_gtw.assert_called_once_with(wwpn)
 
