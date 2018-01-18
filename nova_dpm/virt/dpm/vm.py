@@ -119,11 +119,12 @@ def cpcsubset_partition_list(cpc):
 
 
 class PartitionInstance(object):
-    def __init__(self, instance, cpc, context=None):
+    def __init__(self, instance, cpc, context=None, block_device_info=None):
         self.instance = instance
         self.cpc = cpc
         self.partition = self.get_partition()
         self.context = context
+        self.block_device_info = block_device_info
 
     @staticmethod
     def create_object(instance, cpc, flavor=None):
