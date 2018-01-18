@@ -314,13 +314,17 @@ class PartitionInstance(object):
                 partition_wwpns.append(wwpn.replace('0x', ''))
         return partition_wwpns
 
-    def set_boot_properties(self, bdm):
-        LOG.debug('set_boot_properties')
+    def _get_boot_bd(self):
         # block_device_mapping is a list of mapped block devices.
         # In dpm case we are mapping only the first device for now
         # So block_device_mapping contains one item in the list
-        # i.e. block_device_mapping[0]
-        bd = BlockDevice(bdm[0])
+        # i.e. block_device_info[0]
+        return BlockDevice(self.block_device_info[0])
+
+    def set_boot_properties(self):
+        LOG.debug('set_boot_properties')
+
+        bd = self._get_boot_bd()
 
         boot_hba = self.get_boot_hba()
         boot_properties = {
