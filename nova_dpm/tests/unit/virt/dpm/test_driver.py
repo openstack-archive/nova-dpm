@@ -251,7 +251,18 @@ class DPMDriverInstanceTestCase(TestCase):
         self.dpmdriver.spawn(mock_context, mock_inst, None, None, None, None,
                              [])
 
-        mocked_get_part_inst.assert_called_once_with(mock_inst, mock_context)
+        mocked_get_part_inst.assert_called_once_with(mock_inst, mock_context,
+                                                     None)
+
+    @mock.patch.object(driver.DPMDriver, '_get_partition_instance')
+    def test_spawn_bdi(self, mocked_get_part_inst):
+        """Make sure that block_device_info is provided to PartitionInstance"""
+        mock_bdm = mock.Mock()
+        mock_inst = mock.Mock()
+        self.dpmdriver.spawn(None, mock_inst, None, None, None, None,
+                             [], block_device_info=mock_bdm)
+
+        mocked_get_part_inst.assert_called_once_with(mock_inst, None, mock_bdm)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance, 'create')
