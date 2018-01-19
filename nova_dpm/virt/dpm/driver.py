@@ -71,12 +71,12 @@ class DPMDriver(driver.ComputeDriver):
         self.volume_drivers = self._get_volume_drivers()
 
     def _get_partition_instance(self, instance, context=None,
-                                block_device_info=None):
+                                block_device_mapping=None):
         if instance.image_ref != '':
             raise exceptions.BootFromImageNotSupported()
         else:
             return vm.PartitionInstance(instance, self._cpc, context,
-                                        block_device_info)
+                                        block_device_mapping)
 
     def init_host(self, host):
         """Driver initialization of the hypervisor node"""
@@ -301,8 +301,8 @@ class DPMDriver(driver.ComputeDriver):
               admin_password, allocations, network_info=None,
               block_device_info=None):
 
-        inst = self._get_partition_instance(instance, context,
-                                            block_device_info)
+        bdm = self._get_block_device_mapping(block_device_info)
+        inst = self._get_partition_instance(instance, context, bdm)
 
         # The creation of NICs is limited in DPM by the partitions
         # boot-os-specific-parameters property. It is used to pass additional
@@ -322,8 +322,7 @@ class DPMDriver(driver.ComputeDriver):
             vif_obj = DPMVIF(vif_dict)
             inst.attach_nic(vif_obj)
 
-        inst.set_boot_properties(
-            self._get_block_device_mapping(block_device_info))
+        inst.set_boot_properties()
         inst.launch()
 
     def destroy(self, context, instance, network_info, block_device_info=None,

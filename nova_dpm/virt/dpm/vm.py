@@ -119,12 +119,12 @@ def cpcsubset_partition_list(cpc):
 
 
 class PartitionInstance(object):
-    def __init__(self, instance, cpc, context=None, block_device_info=None):
+    def __init__(self, instance, cpc, context=None, block_device_mapping=None):
         self.instance = instance
         self.cpc = cpc
         self.partition = self.get_partition()
         self.context = context
-        self.block_device_info = block_device_info
+        self.block_device_mapping = block_device_mapping
 
     @staticmethod
     def create_object(instance, cpc, flavor=None):
@@ -315,10 +315,10 @@ class PartitionInstance(object):
         return partition_wwpns
 
     def _get_boot_bd(self):
-        # block_device_info is a list of block devices.
+        # block_device_mapping is a list of block devices.
         # In DPM case we are mapping only the first device for now.
         # TODO(andreas_s): Need to check whether this bd is marked as bootable
-        return BlockDevice(self.block_device_info[0])
+        return BlockDevice(self.block_device_mapping[0])
 
     def set_boot_properties(self):
         LOG.debug('set_boot_properties')
