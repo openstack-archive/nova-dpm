@@ -286,9 +286,6 @@ class DPMDriver(driver.ComputeDriver):
     def prep_for_spawn(self, context, instance,
                        flavor=None):
 
-        if instance.image_ref != '':
-            raise exceptions.BootFromImageNotSupported()
-
         inst = self._get_partition_instance(instance)
         inst.create(inst.properties())
 
