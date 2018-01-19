@@ -243,6 +243,16 @@ class DPMDriverInstanceTestCase(TestCase):
         self.dpmdriver = driver.DPMDriver(None)
         self.dpmdriver._client = self.client
 
+    @mock.patch.object(driver.DPMDriver, '_get_partition_instance')
+    def test_spawn_context(self, mocked_get_part_inst):
+        """Make sure that context is provided to the PartitionInstance"""
+        mock_context = mock.Mock()
+        mock_inst = mock.Mock()
+        self.dpmdriver.spawn(mock_context, mock_inst, None, None, None, None,
+                             [])
+
+        mocked_get_part_inst.assert_called_once_with(mock_inst, mock_context)
+
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance, 'create')
     @mock.patch.object(vm.PartitionInstance, 'properties')
