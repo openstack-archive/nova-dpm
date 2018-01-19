@@ -139,7 +139,7 @@ class DPMdriverInitHostTestCase(TestCase):
     @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance, 'properties')
-    def test_prep_for_spawn_volume(self, mock_properties,
+    def test__prep_for_spawn_volume(self, mock_properties,
                                    mock_partition,
                                    mock_attac_hbas,
                                    mock_create,
@@ -148,7 +148,7 @@ class DPMdriverInitHostTestCase(TestCase):
 
         instance = mock.Mock()
         instance.image_ref = ''
-        self.dpmdriver.prep_for_spawn(mock.Mock, instance)
+        self.dpmdriver._prep_for_spawn(instance)
         mock_create.assert_called_once()
         mock_attac_hbas.assert_called_once()
 
@@ -158,7 +158,7 @@ class DPMdriverInitHostTestCase(TestCase):
     @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     @mock.patch.object(vm.PartitionInstance, 'properties')
-    def test_prep_for_spawn_image(self, mock_properties,
+    def test__prep_for_spawn_image(self, mock_properties,
                                   mock_partition,
                                   mock_attac_hbas,
                                   mock_create,
@@ -168,8 +168,7 @@ class DPMdriverInitHostTestCase(TestCase):
         instance.image_ref = '6c77503d-4bff-4205-9e90-d75373c3c689'
         self.assertRaises(
             exceptions.BootFromImageNotSupported,
-            self.dpmdriver.prep_for_spawn,
-            mock.Mock(), instance)
+            self.dpmdriver._prep_for_spawn, instance)
 
     @mock.patch.object(vm.PartitionInstance, 'get_partition')
     def test_get_volume_connector(self, mock_get_partition):

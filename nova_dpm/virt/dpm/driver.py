@@ -281,10 +281,9 @@ class DPMDriver(driver.ComputeDriver):
         driver.get_volume_connector (returns the partitions WWPNs)
         driver.spawn (continues setting up the partition)
         """
-        self.prep_for_spawn(context=None, instance=instance)
+        self._prep_for_spawn(instance)
 
-    def prep_for_spawn(self, context, instance,
-                       flavor=None):
+    def _prep_for_spawn(self, instance):
 
         inst = self._get_partition_instance(instance)
         inst.create(inst.properties())
