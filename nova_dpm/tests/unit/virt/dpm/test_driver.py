@@ -243,6 +243,38 @@ class DPMDriverInstanceTestCase(TestCase):
         self.dpmdriver = driver.DPMDriver(None)
         self.dpmdriver._client = self.client
 
+    def _test__get_partition_instance(self, context=None, bdi=None):
+        self.dpmdriver._cpc = mock.Mock()
+
+        mock_inst = mock.Mock()
+        mock_inst.image_ref = ''
+
+        part_inst = self.dpmdriver._get_partition_instance(
+            mock_inst, context=context, block_device_info=bdi)
+        self.assertEqual(mock_inst, part_inst.instance)
+        self.assertEqual(self.dpmdriver._cpc, part_inst.cpc)
+        self.assertEqual(context, part_inst.context)
+        self.assertEqual(bdi, part_inst.block_device_info)
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    def test___get_partition_instance_minimal(self, mocked_gp):
+        self._test__get_partition_instance()
+
+    @mock.patch.object(vm.PartitionInstance, 'get_partition')
+    def test___get_partition_instance_max(self, mocked_gp):
+        mock_context = mock.Mock()
+        mock_bdi = mock.Mock()
+
+        self._test__get_partition_instance(context=mock_context,
+                                           bdi=mock_bdi)
+
+    def test__get_partition_instance_boot_from_image(self):
+        mock_inst = mock.Mock()
+        mock_inst.image_ref = 'something'
+
+        self.assertRaises(exceptions.BootFromImageNotSupported,
+                          self.dpmdriver._get_partition_instance, mock_inst)
+
     @mock.patch.object(driver.DPMDriver, '_get_partition_instance')
     def test_spawn_context(self, mocked_get_part_inst):
         """Make sure that context is provided to the PartitionInstance"""
