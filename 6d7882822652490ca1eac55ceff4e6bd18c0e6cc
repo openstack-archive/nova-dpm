@@ -1,0 +1,8 @@
+Code-Review+2: Andreas Scheuring <andreas.scheuring@de.ibm.com>
+Workflow+1: Andreas Scheuring <andreas.scheuring@de.ibm.com>
+Verified+2: Zuul
+Submitted-by: Zuul
+Submitted-at: Fri, 19 Jan 2018 07:27:38 +0000
+Reviewed-on: https://review.openstack.org/535401
+Project: openstack/nova-dpm
+Branch: refs/heads/master
