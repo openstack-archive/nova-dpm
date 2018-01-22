@@ -19,7 +19,6 @@ Partition will map nova parameter to PRSM parameter
 import re
 import sys
 
-from nova.compute import manager as compute_manager
 from nova.compute import power_state
 from nova.compute import task_states
 from nova.compute import vm_states
@@ -273,20 +272,6 @@ class PartitionInstance(object):
             mapping._validate_adapter_type(adapter)
             mapping._add_adapter_port(adapter_uuid, port)
         return mapping
-
-    def _build_resources(self, context, instance, block_device_mapping):
-        LOG.debug('Start building block device mappings for instance %s',
-                  self.instance)
-        resources = {}
-        instance.vm_state = vm_states.BUILDING
-        instance.task_state = task_states.BLOCK_DEVICE_MAPPING
-        instance.save()
-
-        block_device_info = compute_manager.ComputeManager().\
-            _prep_block_device(context, instance,
-                               block_device_mapping)
-        resources['block_device_info'] = block_device_info
-        return resources
 
     def get_hba_uris(self):
         LOG.debug('Get Hba properties')
