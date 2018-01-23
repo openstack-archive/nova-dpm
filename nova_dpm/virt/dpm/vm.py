@@ -30,6 +30,7 @@ from nova_dpm.virt.dpm.block_device import BlockDevice
 from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import utils
+from nova_dpm.virt.dpm import vif
 from oslo_log import log as logging
 from zhmcclient._exceptions import NotFound
 from zhmcclient import HTTPError
@@ -222,6 +223,11 @@ class PartitionInstance(object):
             "virtual-switch-uri": "/api/virtual-switches/" +
                                   vif_obj.dpm_nic_object_id
         }
+
+    def attach_nics(self, network_info):
+        for vif_dict in network_info:
+            vif_obj = vif.DPMVIF(vif_dict)
+            self.attach_nic(vif_obj)
 
     def attach_nic(self, vif_obj):
         # TODO(preethipy): Implement the listener flow to register for

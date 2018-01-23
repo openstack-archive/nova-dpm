@@ -270,6 +270,21 @@ class VmPartitionInstanceTestCase(TestCase):
             Exception,
             self.partition_inst.attach_nic, vif)
 
+    @mock.patch.object(vm.PartitionInstance, 'attach_nic')
+    def test_attach_nics(self, mocked_attach_nic):
+        vif1 = {"address": "mac1"}
+        vif2 = {"address": "mac2"}
+        self.partition_inst.attach_nics([vif1, vif2])
+        mock_calls = mocked_attach_nic.call_args_list
+        # attach nic called 2 times
+        self.assertEqual(2, len(mock_calls))
+
+        # mock_calls is a list of calls
+        # each call is a tuple (args, kwargs)
+        # args is a tuple (arg1, arg2, arg3). We need the first arg [0]
+        self.assertEqual("mac1", mock_calls[0][0][0].mac)
+        self.assertEqual("mac2", mock_calls[1][0][0].mac)
+
     def test_append_to_boot_os_specific_parameters_empty(self):
         data = '1800,0,fa163ee49a98;'
         self.partition_inst.append_to_boot_os_specific_parameters(data)

@@ -28,7 +28,6 @@ from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import host as Host
 from nova_dpm.virt.dpm import utils
-from nova_dpm.virt.dpm.vif import DPMVIF
 from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
 from oslo_utils import importutils
@@ -318,10 +317,7 @@ class DPMDriver(driver.ComputeDriver):
                 max_ports=constants.MAX_NICS_PER_PARTITION,
                 current_ports=len(network_info)
             ))
-        for vif_dict in network_info:
-            vif_obj = DPMVIF(vif_dict)
-            inst.attach_nic(vif_obj)
-
+        inst.attach_nics(network_info)
         inst.set_boot_properties()
         inst.launch()
 
