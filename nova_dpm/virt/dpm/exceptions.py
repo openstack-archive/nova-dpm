@@ -26,6 +26,13 @@ class MaxAmountOfInstancePortsExceededError(NovaException):
         .format(max_ports=MAX_NICS_PER_PARTITION)
 
 
+class InvalidVIFTypeError(NovaException):
+    msg_fmt = _("The vif type %(type)s is not supported by nova-dpm. The "
+                "only supported type is 'dpm_vswitch'. Please "
+                "configure the networking-dpm agent to only use OSA or "
+                "hipersockets adapters.")
+
+
 class BootOsSpecificParametersPropertyExceededError(NovaException):
     """The boot-os-specific-parameters property would exceed the allowed max"""
     msg_fmt = _("Exceeded the maximum len for the partitions "

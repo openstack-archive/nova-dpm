@@ -267,7 +267,7 @@ class VmPartitionInstanceTestCase(TestCase):
         vif.type = "non_dpm_vswitch"
 
         self.assertRaises(
-            Exception,
+            exceptions.InvalidVIFTypeError,
             self.partition_inst.attach_nic, vif)
 
     @mock.patch.object(vm.PartitionInstance, 'attach_nic')

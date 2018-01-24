@@ -236,7 +236,7 @@ class PartitionInstance(object):
 
         # Only dpm_vswitch attachments are supported for now
         if vif_obj.type != "dpm_vswitch":
-            raise Exception
+            raise exceptions.InvalidVIFTypeError(type=vif_obj.type)
 
         dpm_nic_dict = self._get_nic_properties_dict(vif_obj)
         LOG.debug("Creating NIC with properties: %s", dpm_nic_dict)
