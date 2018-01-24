@@ -37,3 +37,11 @@ class DPMVIF(object):
     @property
     def dpm_nic_object_id(self):
         return self.details['object_id']
+
+    @property
+    def vlan_id(self):
+        """VLAN ID of VIF
+
+        @:returns vlan-id or None
+        """
+        return self.details.get('vlan')

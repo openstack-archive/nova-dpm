@@ -19,7 +19,8 @@ from nova_dpm.virt.dpm.vif import DPMVIF
 VIF_DICT = {
     "details":
         {"port_filter": False,
-         "object_id": "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641"},
+         "object_id": "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641",
+         "vlan": 1},
     "address": "fa:16:3e:e4:9a:98",
     "type": "dpm_vswitch",
     "id": "703da361-9d4d-4441-b99b-e081c3e9cfbb"}
@@ -43,9 +44,17 @@ class DPMVIFTestCase(TestCase):
 
     def test_get_details(self):
         details = {"port_filter": False,
-                   "object_id": "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641"}
+                   "object_id": "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641",
+                   "vlan": 1}
         self.assertEqual(details, self.vif_obj.details)
 
     def test_get_dpm_nic_object_id(self):
         self.assertEqual('3ea09d2a-b18d-11e6-89a4-42f2e9ef1641',
                          self.vif_obj.dpm_nic_object_id)
+
+    def test_get_vlan_id(self):
+        self.assertEqual(1, self.vif_obj.vlan_id)
+
+    def test_get_vlan_id_none(self):
+        vif_obj = DPMVIF({"details": {}})
+        self.assertIsNone(vif_obj.vlan_id)

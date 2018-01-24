@@ -257,6 +257,7 @@ class VmPartitionInstanceTestCase(TestCase):
         vif.dpm_nic_object_id = "3ea09d2a-b18d-11e6-89a4-42f2e9ef1641"
         vif.type = "dpm_vswitch"
         vif.port_id = "703da361-9d4d-4441-b99b-e081c3e9cfbb"
+        vif.vlan_id = None
         nic_interface = self.partition_inst.attach_nic(vif)
         self.assertEqual(
             'OpenStack_Port_703da361-9d4d-4441-b99b-e081c3e9cfbb',
@@ -268,6 +269,15 @@ class VmPartitionInstanceTestCase(TestCase):
 
         self.assertRaises(
             exceptions.InvalidVIFTypeError,
+            self.partition_inst.attach_nic, vif)
+
+    def test_attach_nic_vlan(self):
+        vif = mock.Mock()
+        vif.type = "dpm_vswitch"
+        vif.vlan_id = 1
+
+        self.assertRaises(
+            exceptions.InvalidNetworkTypeError,
             self.partition_inst.attach_nic, vif)
 
     @mock.patch.object(vm.PartitionInstance, 'attach_nic')

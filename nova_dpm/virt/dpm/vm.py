@@ -224,6 +224,15 @@ class PartitionInstance(object):
                                   vif_obj.dpm_nic_object_id
         }
 
+    @staticmethod
+    def _verify_vif_valid(vif_obj):
+        # Only dpm_vswitch attachments are supported for now
+        if vif_obj.type != "dpm_vswitch":
+            raise exceptions.InvalidVIFTypeError(type=vif_obj.type)
+
+        if vif_obj.vlan_id:
+            raise exceptions.InvalidNetworkTypeError(type="VLAN")
+
     def attach_nics(self, network_info):
         for vif_dict in network_info:
             vif_obj = vif.DPMVIF(vif_dict)
@@ -233,10 +242,7 @@ class PartitionInstance(object):
         # TODO(preethipy): Implement the listener flow to register for
         # nic creation events
         LOG.debug("Creating nic interface for the instance")
-
-        # Only dpm_vswitch attachments are supported for now
-        if vif_obj.type != "dpm_vswitch":
-            raise exceptions.InvalidVIFTypeError(type=vif_obj.type)
+        self._verify_vif_valid(vif_obj)
 
         dpm_nic_dict = self._get_nic_properties_dict(vif_obj)
         LOG.debug("Creating NIC with properties: %s", dpm_nic_dict)

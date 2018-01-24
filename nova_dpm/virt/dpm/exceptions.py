@@ -33,6 +33,13 @@ class InvalidVIFTypeError(NovaException):
                 "hipersockets adapters.")
 
 
+class InvalidNetworkTypeError(NovaException):
+    msg_fmt = _("The instance is connected to a network of type %(type)s. "
+                "Only flat networks are supported for launching DPM "
+                "partitions. Please reconfigure your Neutron networks to "
+                "become flat provider networks.")
+
+
 class BootOsSpecificParametersPropertyExceededError(NovaException):
     """The boot-os-specific-parameters property would exceed the allowed max"""
     msg_fmt = _("Exceeded the maximum len for the partitions "
