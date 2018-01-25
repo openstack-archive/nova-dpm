@@ -22,6 +22,7 @@ from nova.test import TestCase
 from nova_dpm.tests.unit.virt.dpm import test_data as utils
 from nova_dpm.virt.dpm import driver
 from nova_dpm.virt.dpm import exceptions
+from nova_dpm.virt.dpm import host
 from nova_dpm.virt.dpm import vm
 from nova_dpm.virt.dpm.volume import fibrechannel
 from oslo_config import cfg
@@ -107,6 +108,11 @@ class DPMdriverInitHostTestCase(TestCase):
         self.flags(group="dpm", max_processors=1)
         self.flags(group="dpm", max_memory=512)
         self.dpmdriver.init_host(None)
+
+    @mock.patch.object(host.Host, 'initialize_crypto_adapters')
+    def test_initialize_crypto_adapters_called(self, mocked_init_crypto):
+        self.dpmdriver.init_host(None)
+        mocked_init_crypto.assert_called_once()
 
     def test_cpc_not_exists(self):
         self.flags(group="dpm",

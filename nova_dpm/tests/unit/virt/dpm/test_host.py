@@ -61,3 +61,43 @@ class HostTestCase(TestCase):
     def test_get_version_in_int(self):
         version = self.host._get_version_in_int()
         self.assertEqual(2013001, version)
+
+    def test_initialize_crypto_adapters(self):
+        cca_oid = "11111111-2222-3333-4444-aaaaaaaaaaaa"
+        ep11_oid1 = "11111111-2222-3333-4444-bbbbbbbbbbb1"
+        ep11_oid2 = "11111111-2222-3333-4444-bbbbbbbbbbb2"
+        accel_oid = "11111111-2222-3333-4444-cccccccccccc"
+        # OSD adapter should be ignored, as not of type crypto
+        osd_oid = "11111111-2222-3333-4444-dddddddddddd"
+
+        self.flags(physical_crypto_adapters=[cca_oid, ep11_oid1, ep11_oid2,
+                                             accel_oid, osd_oid],
+                   group="dpm")
+        self.host.initialize_crypto_adapters()
+
+        # accelerators
+        self.assertEqual(1, len(self.host.cryptos["accelerator"]))
+        self.assertEqual(
+            accel_oid,
+            self.host.cryptos["accelerator"][0].get_property("object-id"))
+
+        # ep11
+        self.assertEqual(2, len(self.host.cryptos["ep11-coprocessor"]))
+        self.assertEqual(
+            ep11_oid1,
+            self.host.cryptos["ep11-coprocessor"][0].get_property("object-id"))
+        self.assertEqual(
+            ep11_oid2,
+            self.host.cryptos["ep11-coprocessor"][1].get_property("object-id"))
+
+        # cca
+        self.assertEqual(1, len(self.host.cryptos["cca-coprocessor"]))
+        self.assertEqual(
+            cca_oid,
+            self.host.cryptos["cca-coprocessor"][0].get_property("object-id"))
+
+    def test_initialize_crypto_adapters_not_found(self):
+        self.flags(
+            physical_crypto_adapters=["00000000-0000-0000-0000-000000000000"],
+            group="dpm")
+        self.assertRaises(SystemExit, self.host.initialize_crypto_adapters)

@@ -95,6 +95,7 @@ class DPMDriver(driver.ComputeDriver):
 
         utils.validate_host_conf(self._cpc)
         self._host = Host.Host(self._cpc)
+        self._host.initialize_crypto_adapters()
 
     def get_available_resource(self, nodename):
         """Retrieve resource information.

@@ -113,7 +113,8 @@ def create_session_1():
                 'adapters': [
                     {
                         'properties': {
-                            # object-id is auto-generated
+                            'object-id':
+                                '11111111-2222-3333-4444-dddddddddddd',
                             # object-uri is auto-generated
                             'name': 'osa_1',
                             'description': 'OSA #1 in CPC #2',
@@ -130,6 +131,50 @@ def create_session_1():
                             },
                         ],
                     },
+                    {
+                        'properties': {
+                            'object-id':
+                                '11111111-2222-3333-4444-bbbbbbbbbbb1',
+                            # object-uri is auto-generated
+                            'name': 'ep11_1',
+                            'description': 'EP11 #1 in CPC #2',
+                            'type': 'crypto',
+                            'crypto-type': "ep11-coprocessor"
+                        }
+                    },
+                    {
+                        'properties': {
+                            'object-id':
+                                '11111111-2222-3333-4444-bbbbbbbbbbb2',
+                            # object-uri is auto-generated
+                            'name': 'ep11_2',
+                            'description': 'EP11 #2 in CPC #2',
+                            'type': 'crypto',
+                            'crypto-type': "ep11-coprocessor"
+                        }
+                    },
+                    {
+                        'properties': {
+                            'object-id':
+                                '11111111-2222-3333-4444-aaaaaaaaaaaa',
+                            # object-uri is auto-generated
+                            'name': 'cca_1',
+                            'description': 'cca #1 in CPC #2',
+                            'type': 'crypto',
+                            'crypto-type': "cca-coprocessor"
+                        }
+                    },
+                    {
+                        'properties': {
+                            'object-id':
+                                '11111111-2222-3333-4444-cccccccccccc',
+                            # object-uri is auto-generated
+                            'name': 'accelerator_1',
+                            'description': 'accelerator #1 in CPC #2',
+                            'type': 'crypto',
+                            'crypto-type': "accelerator"
+                        }
+                    }
                 ],
             },
             {

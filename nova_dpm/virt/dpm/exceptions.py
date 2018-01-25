@@ -19,6 +19,11 @@ from nova.i18n import _
 from nova_dpm.virt.dpm.constants import MAX_NICS_PER_PARTITION
 
 
+class InvalidAdapterTypeError(NovaException):
+    msg_fmt = _("The adapter '%(id)s' is of type '%(actual)s', but "
+                "type '%(expected)s' was expected.")
+
+
 class MaxAmountOfInstancePortsExceededError(NovaException):
     """The maximum number of Ports attached to a DPM instance was exceeded"""
     msg_fmt = _("Exceeded the maximum number of Ports per DPM Instance. "

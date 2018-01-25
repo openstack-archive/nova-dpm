@@ -17,12 +17,17 @@
 Host will have the handle to the CPCSubsetMgr which will retrieve cpcsubsets
 """
 
+import sys
+
 import nova_dpm.conf
 
 from nova.objects import fields as obj_fields
+from nova_dpm.virt.dpm import constants as const
+from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
+import zhmcclient
 
 
 LOG = logging.getLogger(__name__)
@@ -44,6 +49,11 @@ class Host(object):
 
         self._cpc = cpc
         self._instances = []  # TODO(preethipy): Instance details
+        self.cryptos = {
+            const.ZHMC_CRYPTO_TYPE_ACCELERATOR: [],
+            const.ZHMC_CRYPTO_TYPE_CCA: [],
+            const.ZHMC_CRYPTO_TYPE_EP11: []
+        }
 
         LOG.debug('Host initializing done')
 
@@ -72,6 +82,34 @@ class Host(object):
         LOG.debug(dict_mo)
 
         return dict_mo
+
+    @staticmethod
+    def _validate_crypto_adapter(adapt_obj):
+        if adapt_obj.get_property("type") != const.ZHMC_ADAPTER_TYPE_CRYPTO:
+            raise exceptions.InvalidAdapterTypeError(
+                id=adapt_obj.get_property("object-id"),
+                actual=adapt_obj.get_property("type"),
+                expected=const.ZHMC_ADAPTER_TYPE_CRYPTO)
+
+    def initialize_crypto_adapters(self):
+        for oid in CONF.dpm.physical_crypto_adapters:
+            try:
+                adapt_obj = self._cpc.adapters.find(**{"object-id": oid})
+                self._validate_crypto_adapter(adapt_obj)
+
+                crypto_type = adapt_obj.get_property("crypto-type")
+                self.cryptos[crypto_type].append(adapt_obj)
+            except zhmcclient.NotFound:
+                LOG.error("Adapter with object-id %(oid)s not found on "
+                          "CPC %(cpc)s. Terminating agent!",
+                          {"oid": oid, "cpc": self._cpc.get_property("name")})
+                sys.exit(1)
+            except exceptions.InvalidAdapterTypeError:
+                LOG.warning("Adapter with object-id %(oid)s on CPC %(cpc)s "
+                            "is not of type %(type)s. Ignoring it.",
+                            {"oid": oid,
+                             "type": const.ZHMC_ADAPTER_TYPE_CRYPTO,
+                             "cpc": self._cpc.get_property("name")})
 
     def _get_cpu_info(self, cores):
         """Get cpuinfo information.
