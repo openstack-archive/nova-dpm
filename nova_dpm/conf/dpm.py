@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from os_dpm.config import config as os_dpm_conf
+from os_dpm.config.types import DPMObjectIdType
 from oslo_config import cfg
 
 from nova_dpm.conf.cfg import MultiStorageAdapterMappingOpt
@@ -38,7 +39,20 @@ ALL_DPM_OPTS = [
     Physical storage adapter with port details for hba creation"""),
     cfg.ListOpt('target_wwpn_ignore_list', default='', help="""
     list of target/remote wwpns can be used for example to exclude NAS/file
-    WWPNs returned by the V7000 Unified.""")
+    WWPNs returned by the V7000 Unified."""),
+    cfg.ListOpt("physical_crypto_adapters", default="", sample_default="",
+                item_type=DPMObjectIdType(),
+                help="""
+    List of crypto adapter uuids that are managed by this CPCSubset. If a
+    Crypto Feature is requested, Domains will be assigned only from this
+    list of adapters.
+
+    The crypto adapter 'mode' must have been preconfigured. OpenStack won't set
+    or update it. The list can contain adapters in different 'modes'.
+    The users always requests a Crypto Feature in a certain mode. Depending on
+    that the adpater to be used is chosen.
+    """
+                )
 ]
 
 
