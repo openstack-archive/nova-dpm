@@ -247,6 +247,7 @@ class DPMDriverInstanceTestCase(TestCase):
         self.client = zhmcclient.Client(self.session)
         self.dpmdriver = driver.DPMDriver(None)
         self.dpmdriver._client = self.client
+        self.dpmdriver._host = mock.Mock()
 
     def _test__get_partition_instance(self, context=None, bdm=None):
         self.dpmdriver._cpc = mock.Mock()
@@ -316,13 +317,13 @@ class DPMDriverInstanceTestCase(TestCase):
                           dpmdriver.spawn, None, mock_instance, None, None,
                           None, None, network_info)
 
+    @mock.patch.object(vm.PartitionInstance, 'attach_cryptos')
     @mock.patch.object(vm.PartitionInstance, 'set_boot_properties')
     @mock.patch.object(vm.PartitionInstance, 'get_boot_hba')
     @mock.patch.object(vm.PartitionInstance, 'launch')
     @mock.patch.object(vm.PartitionInstance, 'attach_hbas')
     @mock.patch.object(vm.PartitionInstance, 'properties')
-    def test_spawn_attach_nic(self, mock_prop, mock_attachHba, mock_launch,
-                              mock_hba_uri, mock_get_bprops):
+    def test_spawn_attach_nic(self, *args):
 
         cpc = self.client.cpcs.find(**{"object-id": "2"})
         self.dpmdriver._cpc = cpc

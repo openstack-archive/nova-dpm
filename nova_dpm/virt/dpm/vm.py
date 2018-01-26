@@ -247,6 +247,132 @@ class PartitionInstance(object):
         self._set_nic_string_in_os_specific_parameters(nic_interface, vif_obj)
         return nic_interface
 
+    def _validate_crypto_adapters(self, subset_cryptos):
+        result = {constants.FLAVOR_CRYPTO_TYPE_ACCELERATOR: 0,
+                  constants.FLAVOR_CRYPTO_TYPE_CCA: 0,
+                  constants.FLAVOR_CRYPTO_TYPE_EP11: 0}
+
+        adapter_req = self.instance.flavor.extra_specs.get(
+            constants.FLAVOR_PROPERTY_CRYPTO_ADAPTERS)
+        if not adapter_req:
+            return
+
+        requests = adapter_req.split(",")
+        for request in requests:
+            args = request.split(":")
+            if len(args) > 2:
+                raise exceptions.InvalidCryptoAdaptersFormatInFlavor(
+                    id=self.instance.flavor.id,
+                    value=adapter_req,
+                    cause="Too many ':' in %s." % request
+                )
+            request_count = int(args[1]) if len(args) == 2 else 1
+            crypto_type = args[0]
+
+            # check if requested crypto type is valid
+            if crypto_type not in constants.FLAVOR_CRYPTO_TYPES:
+                raise exceptions.InvalidCryptoAdaptersFormatInFlavor(
+                    id=self.instance.flavor.id,
+                    value=adapter_req,
+                    cause="Requested crypto type %s is not supported. Only "
+                          "the following types are supported: %s"
+                          % (crypto_type, constants.FLAVOR_CRYPTO_TYPES)
+                )
+
+            # verify that we have enough adapters of this type
+            available_count = len(subset_cryptos[
+                constants.FLAVOR_TO_ZHMC_CRYPTO_TYPE_MAP[crypto_type]])
+            if request_count > available_count:
+                raise exceptions.InsufficientCryptoAdaptersError(
+                    type=crypto_type,
+                    count_req=request_count,
+                    count_avail=available_count
+                )
+
+            # Throw Exception when already set - duplicate key
+            result[crypto_type] = request_count
+
+        return result
+
+    def _get_possible_adapter_combinations(self, adapter_request,
+                                           subset_cryptos):
+        adapter_combinations = []
+
+        # Implement more advanced algorithm
+        # This base algorithm always picks the first adapters
+        combo = []
+        for req_type, req_count in adapter_request.iteritems():
+            zhmc_type = constants.FLAVOR_TO_ZHMC_CRYPTO_TYPE_MAP[req_type]
+            for n in range(0, req_count):
+                # We pick the first n adapters
+                combo.append(subset_cryptos[zhmc_type][n])
+
+        # a List of List of adapters
+        # With the simple algorithm there's only a single combination.
+        # But we might want to pimp that at some point in time.
+        adapter_combinations.append(combo)
+        return adapter_combinations
+
+    def attach_cryptos(self, subset_cryptos):
+        adapters_request = self._validate_crypto_adapters(subset_cryptos)
+        if not adapters_request:
+            return
+
+        domain_count_request_str = self.instance.flavor.extra_specs.get(
+            constants.FLAVOR_PROPERTY_CRYPTO_DOMAIN_COUNT, 0)
+        domain_count = int(domain_count_request_str)
+
+        adapter_combinations = self._get_possible_adapter_combinations(
+            adapters_request, subset_cryptos)
+
+        # Iterate over all adapter combinations until we found a combination
+        # that provides the requested number of free domain
+        domains_found = []
+        combo_found = []
+        for combo in adapter_combinations:
+            free_domains = self.cpc.get_free_crypto_domains(combo)
+            if not free_domains:
+                # No free domains for adapters found
+                continue
+            if len(free_domains) < domain_count:
+                # Too less free domains for adapters found
+                continue
+            # We could also collect the free domains for all combinations
+            # and then decide outside the loop which one to pick. This would
+            # offer a more advanced scheduling options
+            domains_found = free_domains
+            combo_found = combo
+            break
+
+        if not domains_found:
+            raise exceptions.InsufficientCryptoDomainsError(
+                adapters=[adapt.get_property("object-id")
+                          for adapt in combo_found]
+            )
+
+        # ===============================
+        # Implement more advanced algorithm
+        # Use random domains to avoid conflicts?
+        # Just pick the first ones
+        domains_to_use = [domains_found[i] for i in range(0, domain_count)]
+
+        domain_config = []
+        for domain in domains_to_use:
+
+            domain_config.append({
+                "domain-index": domain,
+                "access-mode": "control-usage"
+            })
+        # Conflicts are allowed when partition is in stopped state
+        # We need some error handling during start
+        self.partition.increase_crypto_config(combo,
+                                              domain_config)
+        # We need to try other free domains if somebody has picked ours
+        # in the meanwhile. Therefore we repeat this block. Of course this
+        # requires a different algorithm for determining the domain to be
+        # used from the returned list
+        # ===============================
+
     def attach_hbas(self):
         LOG.debug('Creating vhbas for instance',
                   instance=self.instance)
