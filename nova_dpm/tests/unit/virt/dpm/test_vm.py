@@ -18,6 +18,7 @@ from nova.compute import power_state
 from nova.objects import flavor as flavor_obj
 from nova.objects import instance as instance_obj
 from nova.test import TestCase
+from nova_dpm.virt.dpm import constants
 from nova_dpm.virt.dpm import exceptions
 from nova_dpm.virt.dpm import vm
 
@@ -53,6 +54,8 @@ def fake_session():
         'dpm-enabled': True,
         'processor-count-ifl': 10,
         'storage-customer': 2048,
+        # z13
+        'machine-type': '2964'
     })
     cpc1.partitions.add({
         'name': 'OpenStack-foo-6511ee0f-0d64-4392-b9e0-aaaaaaaaaaaa',
@@ -60,7 +63,8 @@ def fake_session():
         'initial-memory': 1,
         'status': 'ACTIVE',
         'maximum-memory': 512,
-        'ifl-processors': 3
+        'ifl-processors': 3,
+        'crypto-configuration': None
     })
     cpc1.partitions.add({
         'name': 'OpenStack-foo-cccccccc-cccc-cccc-cccc-cccccccccccc',
@@ -68,7 +72,8 @@ def fake_session():
         'initial-memory': 1,
         'status': 'paused',
         'maximum-memory': 512,
-        'ifl-processors': 3
+        'ifl-processors': 3,
+        'crypto-configuration': None
     })
     cpc1.partitions.add({
         'name': 'OpenStack-foo-6511ee0f-0d64-4392-aaaa-bbbbbbbbbbbb',
@@ -76,7 +81,8 @@ def fake_session():
         'initial-memory': 512,
         'status': 'stopped',
         'maximum-memory': 512,
-        'ifl-processors': 3
+        'ifl-processors': 3,
+        'crypto-configuration': None
     })
     adapter1 = cpc1.adapters.add({
         'object-id': '6511ee0f-0d64-4392-b9e0-cdbea10a17c3',
@@ -92,6 +98,47 @@ def fake_session():
         'name': 'virtual_switch',
         'object-id': '3ea09d2a-b18d-11e6-89a4-42f2e9ef1641'
     })
+    cpc1.adapters.add({
+        'object-id':
+            '11111111-2222-3333-4444-bbbbbbbbbbb1',
+        # object-uri is auto-generated
+        'name': 'ep11_1',
+        'description': 'EP11 #1 in CPC #2',
+        'type': 'crypto',
+        'crypto-type': 'ep11-coprocessor',
+        'detected-card-type': 'crypto-express-5s'
+    })
+    cpc1.adapters.add({
+        'object-id':
+            '11111111-2222-3333-4444-bbbbbbbbbbb2',
+        # object-uri is auto-generated
+        'name': 'ep11_2',
+        'description': 'EP11 #2 in CPC #2',
+        'type': 'crypto',
+        'crypto-type': 'ep11-coprocessor',
+        'detected-card-type': 'crypto-express-5s'
+    })
+    cpc1.adapters.add({
+        'object-id':
+            '11111111-2222-3333-4444-aaaaaaaaaaaa',
+        # object-uri is auto-generated
+        'name': 'cca_1',
+        'description': 'cca #1 in CPC #2',
+        'type': 'crypto',
+        'crypto-type': 'cca-coprocessor',
+        'detected-card-type': 'crypto-express-5s'
+    })
+    cpc1.adapters.add({
+        'object-id':
+            '11111111-2222-3333-4444-cccccccccccc',
+        # object-uri is auto-generated
+        'name': 'accelerator_1',
+        'description': 'accelerator #1 in CPC #2',
+        'type': 'crypto',
+        'crypto-type': 'accelerator',
+        'detected-card-type': 'crypto-express-5s'
+    })
+
     return session
 
 
@@ -130,6 +177,187 @@ class ValidPartitionNameTestCase(TestCase):
         self.assertFalse(vm.is_valid_partition_name(name5))
 
 
+class CryptoTestCase(TestCase):
+    def setUp(self):
+        super(CryptoTestCase, self).setUp()
+
+        self.session = fake_session()
+        self.client = zhmcclient.Client(self.session)
+        self.cpc = self.client.cpcs.find(**{"name": "cpc_1"})
+        self.flags(host="foo")
+
+        flavor = flavor_obj.Flavor()
+        flavor.id = 1
+        self.instance = instance_obj.Instance()
+        self.instance.uuid = "6511ee0f-0d64-4392-b9e0-aaaaaaaaaaaa"
+        self.instance.flavor = flavor
+
+        self.partition_inst = vm.PartitionInstance(
+            self.instance, self.cpc)
+
+        self.cca_1 = self.cpc.adapters.find(name='cca_1')
+        self.ep11_1 = self.cpc.adapters.find(name='ep11_1')
+        self.ep11_2 = self.cpc.adapters.find(name='ep11_1')
+        self.accelerator_1 = self.cpc.adapters.find(name='accelerator_1')
+        self.subset_cryptos = {"ep11-coprocessor": [self.ep11_1, self.ep11_2],
+                               "cca-coprocessor": [self.cca_1],
+                               "accelerator": [self.accelerator_1]}
+
+    def _test__validate_crypto_adapters(self, request):
+        self.instance.flavor.extra_specs = {
+            constants.FLAVOR_PROPERTY_CRYPTO_ADAPTERS: request}
+
+        return self.partition_inst._validate_crypto_adapters(
+            self.subset_cryptos)
+
+    def test__validate_crypto_adapters(self):
+        adapters = self._test__validate_crypto_adapters(
+            "ep11:2,cca:1,accelerator:1")
+        self.assertEqual(2, adapters["ep11"])
+        self.assertEqual(1, adapters["cca"])
+        self.assertEqual(1, adapters["accelerator"])
+
+    def test__validate_crypto_adapters2(self):
+        adapters = self._test__validate_crypto_adapters(
+            "ep11:1")
+        self.assertEqual(1, adapters["ep11"])
+        self.assertEqual(0, adapters["cca"])
+        self.assertEqual(0, adapters["accelerator"])
+
+    def test__validate_crypto_adapters_no_count(self):
+        adapters = self._test__validate_crypto_adapters(
+            "ep11")
+        self.assertEqual(1, adapters["ep11"])
+        self.assertEqual(0, adapters["cca"])
+        self.assertEqual(0, adapters["accelerator"])
+
+    def test__validate_crypto_adapters_insufficient(self):
+        self.assertRaises(exceptions.InsufficientCryptoAdaptersError,
+                          self._test__validate_crypto_adapters,
+                          "ep11:3")
+
+    def test__validate_crypto_adapters_invalid(self):
+        # Type is not a crypto type
+        self.assertRaises(exceptions.InvalidCryptoAdaptersFormatInFlavor,
+                          self._test__validate_crypto_adapters,
+                          "foo:3")
+
+        # count is not a integer
+        self.assertRaises(ValueError, self._test__validate_crypto_adapters,
+                          "ep11:foo")
+
+        # too many ':'
+        self.assertRaises(exceptions.InvalidCryptoAdaptersFormatInFlavor,
+                          self._test__validate_crypto_adapters,
+                          "ep11:abc:def")
+
+        # missing count after ':'
+        self.assertRaises(ValueError, self._test__validate_crypto_adapters,
+                          "ep11:")
+
+    def test__get_possible_adapter_combinations(self):
+        request_dict = {"ep11": 2, "cca": 1}
+        combos = self.partition_inst._get_possible_adapter_combinations(
+            request_dict, self.subset_cryptos)
+        # Currently only a single combination is returned
+        self.assertEqual(1, len(combos))
+        adapter_combo = combos[0]
+        self.assertEqual(3, len(adapter_combo))
+
+    def test__get_possible_adapter_combinations2(self):
+        request_dict = {"ep11": 2}
+        combos = self.partition_inst._get_possible_adapter_combinations(
+            request_dict, self.subset_cryptos)
+        # Currently only a single combination is returned
+        self.assertEqual(1, len(combos))
+        adapter_combo = combos[0]
+        self.assertEqual(2, len(adapter_combo))
+        self.assertEqual("ep11-coprocessor",
+                         adapter_combo[0].get_property("crypto-type"))
+        self.assertEqual("ep11-coprocessor",
+                         adapter_combo[1].get_property("crypto-type"))
+
+    def _test_attach_cryptos(self, adapter_request, domain_count):
+        self.instance.flavor.extra_specs = {
+            constants.FLAVOR_PROPERTY_CRYPTO_ADAPTERS: adapter_request,
+            constants.FLAVOR_PROPERTY_CRYPTO_DOMAIN_COUNT: domain_count}
+
+        self.partition_inst.attach_cryptos(self.subset_cryptos)
+
+        return self.partition_inst.partition.get_property(
+            "crypto-configuration")
+
+    def test_attach_cryptos(self):
+        crypto_config = self._test_attach_cryptos(
+            adapter_request="ep11:1,cca:1", domain_count="0")
+
+        # It's ep11_1 due to our simple algorithm
+        self.assertIn(self.ep11_1.get_property("object-uri"),
+                      crypto_config["crypto-adapter-uris"])
+        self.assertIn(self.cca_1.get_property("object-uri"),
+                      crypto_config["crypto-adapter-uris"])
+        self.assertEqual(2, len(crypto_config["crypto-adapter-uris"]))
+        self.assertEqual([], crypto_config["crypto-domain-configurations"])
+
+    def test_attach_cryptos2(self):
+        crypto_config = self._test_attach_cryptos(
+            adapter_request="accelerator", domain_count="2")
+
+        self.assertIn(self.accelerator_1.get_property("object-uri"),
+                      crypto_config["crypto-adapter-uris"])
+        self.assertEqual(1, len(crypto_config["crypto-adapter-uris"]))
+
+        # Index 0 and 1 are safe in this test due to our simple algorithm
+        self.assertIn({"access-mode": "control-usage", "domain-index": 1},
+                      crypto_config["crypto-domain-configurations"])
+        self.assertIn({"access-mode": "control-usage", "domain-index": 0},
+                      crypto_config["crypto-domain-configurations"])
+        self.assertEqual(2, len(crypto_config["crypto-domain-configurations"]))
+
+    def test_attach_cryptos_no_free_domain(self):
+        self.instance.flavor.extra_specs = {
+            constants.FLAVOR_PROPERTY_CRYPTO_ADAPTERS: "ep11:1,cca:1",
+            constants.FLAVOR_PROPERTY_CRYPTO_DOMAIN_COUNT: "0"}
+
+        # get_free_crypto_domains returns None of no free domain was found
+        self.cpc.get_free_crypto_domains = lambda adapt_list: None
+        self.assertRaises(exceptions.InsufficientCryptoDomainsError,
+                          self.partition_inst.attach_cryptos,
+                          self.subset_cryptos)
+
+    def test_attach_cryptos_insufficient_adapters(self):
+        self.instance.flavor.extra_specs = {
+            constants.FLAVOR_PROPERTY_CRYPTO_ADAPTERS: "ep11:1",
+            constants.FLAVOR_PROPERTY_CRYPTO_DOMAIN_COUNT: "0"}
+
+        cryptos = {"ep11-coprocessor": [], "cca-coprocessor": ["cca_oid"],
+                   "accelerator": ["accel_oid"]}
+        self.assertRaises(exceptions.InsufficientCryptoAdaptersError,
+                          self.partition_inst.attach_cryptos, cryptos)
+
+    def test_attach_cryptos_missing_flavor_crypto_domain(self):
+        self.instance.flavor.extra_specs = {
+            constants.FLAVOR_PROPERTY_CRYPTO_ADAPTERS: "accelerator"}
+        self.partition_inst.attach_cryptos(self.subset_cryptos)
+        crypto_config = self.partition_inst.partition.get_property(
+            "crypto-configuration")
+
+        self.assertIn(self.accelerator_1.get_property("object-uri"),
+                      crypto_config["crypto-adapter-uris"])
+        self.assertEqual(1, len(crypto_config["crypto-adapter-uris"]))
+        self.assertEqual([], crypto_config["crypto-domain-configurations"])
+
+    def test_attach_cryptos_missing_flavor_crypto_adapters(self):
+        # If only the domain is given in the flavor, ignore it
+        self.instance.flavor.extra_specs = {
+            constants.FLAVOR_PROPERTY_CRYPTO_DOMAIN_COUNT: "0"}
+        self.partition_inst.attach_cryptos(self.subset_cryptos)
+        crypto_config = self.partition_inst.partition.get_property(
+            "crypto-configuration")
+
+        self.assertIsNone(crypto_config)
+
+
 class VmPartitionInstanceTestCase(TestCase):
     def setUp(self):
         super(VmPartitionInstanceTestCase, self).setUp()
@@ -142,6 +370,7 @@ class VmPartitionInstanceTestCase(TestCase):
         flavor = flavor_obj.Flavor()
         flavor.vcpus = 1
         flavor.memory_mb = 512
+        flavor.id = 1
         self.instance = instance_obj.Instance()
         self.instance.uuid = '6511ee0f-0d64-4392-b9e0-aaaaaaaaaaaa'
         self.instance.flavor = flavor

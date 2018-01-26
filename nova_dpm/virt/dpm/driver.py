@@ -319,6 +319,7 @@ class DPMDriver(driver.ComputeDriver):
                 current_ports=len(network_info)
             ))
         inst.attach_nics(network_info)
+        inst.attach_cryptos(self._host.cryptos)
         inst.set_boot_properties()
         inst.launch()
 

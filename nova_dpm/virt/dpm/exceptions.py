@@ -16,7 +16,25 @@
 from nova.exception import NovaException
 from nova.i18n import _
 
+from nova_dpm.virt.dpm.constants import FLAVOR_PROPERTY_CRYPTO_ADAPTERS
 from nova_dpm.virt.dpm.constants import MAX_NICS_PER_PARTITION
+
+
+class InsufficientCryptoDomainsError(NovaException):
+    msg_fmt = _("Cannot find a free crypto domain for adapters %(adapters)s.")
+
+
+class InsufficientCryptoAdaptersError(NovaException):
+    msg_fmt = _("%(count_req)s adapters of type '%(type)s "
+                "have been requested but only %(count_avail)s are "
+                "available. Please increase the crypto adapter configuration "
+                "in the compute nodes config file and restart the service.")
+
+
+class InvalidCryptoAdaptersFormatInFlavor(NovaException):
+    msg_fmt = _("The crypto domain property '{}' of flavor '%(id)s' is "
+                "invalid. The given value is: '%(value)s'. Root cause: "
+                "%(cause)s.").format(FLAVOR_PROPERTY_CRYPTO_ADAPTERS)
 
 
 class InvalidAdapterTypeError(NovaException):
