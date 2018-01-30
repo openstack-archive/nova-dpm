@@ -53,6 +53,7 @@ Overview
     topology
     support-matrix
     storage
+    crypto
 
 Using the driver
 ================
