@@ -31,7 +31,9 @@ class BlockDevice(object):
 
     @property
     def host_wwpns(self):
-        return self.bd['connection_info']['connector']['wwpns']
+        return (
+            self.bd['connection_info']['data']['initiator_target_map'].keys()
+        )
 
     def get_target_wwpn(self, partition_wwpn):
         if partition_wwpn not in self.host_wwpns:

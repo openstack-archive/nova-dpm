@@ -22,9 +22,6 @@ LUN = 0
 BLOCK_DEVICE = {
     'connection_info': {
         'driver_volume_type': 'fibre_channel',
-        'connector': {
-            'wwpns': [PARTITION_WWPN],
-            'host': '3cfb165c-0df3-4d80-87b2-4c353e61318f'},
         'data': {
             'initiator_target_map': {
                 PARTITION_WWPN: [
