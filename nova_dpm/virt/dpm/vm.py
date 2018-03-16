@@ -397,6 +397,7 @@ class PartitionInstance(object):
     def power_on_vm(self):
         LOG.debug('Partition power on triggered')
 
+        self.partition.pull_full_properties()
         self._ensure_status_transitioned()
 
         if self.partition.get_property(
