@@ -1,0 +1,6 @@
+dpm
+cloud-init
+cloud-init-dependencies
+cloud-init-enable-root-ssh
+cleanup-ubuntu-networking
+openssh-server
