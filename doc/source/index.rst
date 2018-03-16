@@ -72,6 +72,7 @@ Creating DPM Images
 .. toctree::
     :maxdepth: 2
 
+    image/ubuntu16
     image/rhel7/rhel7_image
 
 

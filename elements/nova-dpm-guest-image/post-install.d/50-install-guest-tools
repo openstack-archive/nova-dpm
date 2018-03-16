@@ -1,0 +1,23 @@
+#!/bin/bash
+if [ ${DIB_DEBUG_TRACE:-1} -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+DIB_NOVA_DPM_GUEST_TOOLS_BRANCH="master"
+
+# Download the zip archive to /tmp location
+wget -q -O "/tmp/nova-dpm.zip" "https://github.com/openstack/nova-dpm/archive/$DIB_NOVA_DPM_GUEST_TOOLS_BRANCH.zip"
+# Extract it to /tmp location
+unzip /tmp/nova-dpm.zip -d /tmp/
+# Copy all files into their targets
+cp -r "/tmp/nova-dpm-$DIB_NOVA_DPM_GUEST_TOOLS_BRANCH/guest_image_tools/." /
+
+
+# Cleanup files
+rm -f /tmp/nova-dpm.zip
+rm -rf "/tmp/nova-dpm-$DIB_NOVA_DPM_GUEST_TOOLS_BRANCH"
+
+# Enable autoconfigure networking service for autostart
+systemctl enable autoconfigure_networking.service

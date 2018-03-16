@@ -1,0 +1,8 @@
+# TODO(andreas_s): This enabled multipath daemon in the image.
+# However when active, growpart is failing to resize the root disk.
+#multipath-tools-boot:
+#multipath-tools:
+
+# Installs chzdev
+sysconfig-hardware:
+

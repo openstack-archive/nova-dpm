@@ -1,0 +1,59 @@
+#!/bin/bash
+if [ ${DIB_DEBUG_TRACE:-1} -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+
+dib_enable_ipl_dev_path="/etc/initramfs-tools/scripts/local-premount/enable_ipl_dev"
+cat > "$dib_enable_ipl_dev_path"  <<'EOF'
+#!/bin/sh
+# Enable FCP IPL device
+
+PREREQ=""
+prereqs()
+{
+  echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+   prereqs
+   exit 0
+   ;;
+esac
+
+. /scripts/functions
+log_begin_msg "Starting configuration of IPL device"
+chzdev -e $(cat /sys/firmware/ipl/device)
+log_end_msg
+
+# blkid is used to determine the block device that should be mounted
+# as root file system. We need to ensure, that blkid resolves
+# it to /dev/mapper. We need to wait until multipathd finished its
+# processing.
+# If we don't wait, it is resolved as /dev/sdx. Mounting
+# /dev/sdx will fail, as one moment later multipathd starts
+# consuming /dev/sdx which makes it busy.
+max_retries=10
+log_begin_msg "Wait up to $max_retries seconds until multipathd consumed the root volume $ROOT."
+root_dev=""
+for i in $(seq 1 $max_retries); do
+    dev=$(blkid -l -t "$ROOT" -o device)
+    echo "Attempt $i of $max_retries. Resolved device: $dev"
+    if [ "$dev" != "${dev#/dev/mapper}" ]; then
+        # blkid returns device starting with "/dev/mapper"
+        root_dev="$dev"
+        break
+    fi
+    sleep 1
+done
+
+if [ "$root_dev" == "" ]; then
+  log_warning_msg "Multipathd did not yet configure $ROOT."
+fi
+log_end_msg
+EOF
+
+chmod 755 "$dib_enable_ipl_dev_path"

@@ -1,0 +1,6 @@
+# Required to download guest image tools
+wget:
+unzip:
+
+# Required by guest-image-tools to set mac address. contains "ip"
+iproute2:
