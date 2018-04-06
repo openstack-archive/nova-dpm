@@ -407,9 +407,7 @@ class PartitionInstance(object):
                 status=utils.PartitionState.STOPPED, status_timeout=60)
 
         if self.partition.get_property('status') not in STARTED_STATUSES:
-            self.partition.start(True)
-            self.partition.wait_for_status(
-                status=STARTED_STATUSES, status_timeout=60)
+            self.partition.start(True, status_timeout=STATUS_TIMEOUT)
 
     def _ensure_status_transitioned(self):
         partition_state = self.partition.get_property('status')
@@ -439,12 +437,7 @@ class PartitionInstance(object):
             status=utils.PartitionState.STOPPED,
             status_timeout=STATUS_TIMEOUT)
 
-        self.partition.start(True)
-        # TODO(preethipy): The below method to be removed once the bug
-        # on DPM(701894) is fixed to return correct status on API return
-        self.partition.wait_for_status(
-            status=utils.PartitionState.RUNNING,
-            status_timeout=STATUS_TIMEOUT)
+        self.partition.start(True, status_timeout=STATUS_TIMEOUT)
 
     def get_partition(self):
         """Get the zhmcclient partition object for this PartitionInstance
