@@ -83,9 +83,15 @@ Contributing to the project
 
     contributing
     devref
-    specs/ocata/index
-    specs/pike/index
-    specs/queens/index
+
+Specs
+=====
+
+.. toctree::
+    :glob:
+    :maxdepth: 2
+
+    specs/index
 
 
 
