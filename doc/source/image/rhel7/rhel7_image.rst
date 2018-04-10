@@ -83,7 +83,7 @@ This package is required for growing the filesystem.
 
 * install it::
 
-  rpm -i cloud-utils-growpart-0.27-9.fc20.noarch.rpm
+    rpm -i cloud-utils-growpart-0.27-9.fc20.noarch.rpm
 
 
 Add the RHEL7.3 yum repository

@@ -49,8 +49,8 @@ The following actions are done for the compute node.
       assign to a single instance?
 
       .. note::
-      OpenStack does *not* use those processors exclusively. These processors
-      are still shared with non-OpenStack partitions.
+        OpenStack does *not* use those processors exclusively. These processors
+        are still shared with non-OpenStack partitions.
 
     * What is the maximum amount of memory that can be consumed by all
       OpenStack instances on this CEC?
