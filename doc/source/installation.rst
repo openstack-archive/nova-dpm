@@ -12,7 +12,7 @@ compute node that has already been installed by some means.
 
 The nova-dpm virtualization driver is released on PyPI as package `nova-dpm`_.
 
-.. _`nova-dpm`: https://pypi.python.org/pypi/nova-dpm
+.. _`nova-dpm`: https://pypi.org/project/nova-dpm
 
 The following table indicates which version of the nova-dpm package on PyPI to
 use for a particular OpenStack release:

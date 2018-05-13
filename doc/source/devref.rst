@@ -197,7 +197,7 @@ At this point we are done with the release of a version. You might want to
 check if the artifacts show the new version number:
 
 * The read-only github repo: https://github.com/openstack/nova-dpm/releases
-* The package on PyPi: https://pypi.python.org/pypi/nova-dpm
+* The package on PyPi: https://pypi.org/project/nova-dpm
 * The docs on RTD: http://nova-dpm.readthedocs.io/en/latest/
 
 .. note:: RTD uses ``pbr`` to determine the version number and shows
