@@ -350,7 +350,7 @@ Read The Docs (RTD)
 Activate/deactivate docs for a branch or tag
 --------------------------------------------
 
-To create documentation for the stable stable branch, go to
+To create documentation for the stable branch, go to
 https://readthedocs.org/projects/nova-dpm/versions/.
 Edit the version you want to change and tick or untick "Active". Exit with
 "Save".
