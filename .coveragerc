@@ -1,7 +1,0 @@
-[run]
-branch = True
-source = nova_dpm
-omit = nova_dpm/tests/*
-
-[report]
-ignore_errors = True
